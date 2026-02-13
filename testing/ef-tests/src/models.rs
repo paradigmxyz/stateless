@@ -322,6 +322,8 @@ pub enum ForkSpec {
     CancunToPragueAtTime15k,
     /// Prague
     Prague,
+    /// Prague to Osaka at time 15k
+    PragueToOsakaAtTime15k,
     /// Osaka
     Osaka,
 }
@@ -391,6 +393,9 @@ impl ForkSpec {
                 .cancun_activated()
                 .with_fork(EthereumHardfork::Prague, ForkCondition::Timestamp(15_000)),
             Self::Prague => spec_builder.prague_activated(),
+            Self::PragueToOsakaAtTime15k => spec_builder
+                .prague_activated()
+                .with_fork(EthereumHardfork::Osaka, ForkCondition::Timestamp(15_000)),
             Self::Osaka => spec_builder.osaka_activated(),
         }
         .build()
