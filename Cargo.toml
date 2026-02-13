@@ -8,7 +8,7 @@ repository = "https://github.com/paradigmxyz/stateless"
 exclude = [".github/"]
 
 [workspace]
-members = ["crates/stateless", "testing/ef-tests"]
+members = ["crates/stateless", "testing/ef-tests", "testing/runner"]
 resolver = "2"
 
 [workspace.lints.rust]
@@ -82,4 +82,5 @@ serde_with = { version = "3.16", default-features = false, features = [
     "alloc",
 ] }
 thiserror = { version = "2.0", default-features = false }
+clap = "4"
 walkdir = "2.5"

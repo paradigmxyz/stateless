@@ -1768,6 +1768,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ef-test-runner"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "ef-tests",
+]
+
+[[package]]
 name = "ef-tests"
 version = "0.1.0"
 dependencies = [
