@@ -19,7 +19,7 @@ use core::{cell::RefCell, marker::PhantomData};
 use crate::{StatelessTrie, StatelessTrieError, WitnessDbError};
 use alloy_primitives::{
     Address, B256, Bytes, KECCAK256_EMPTY, U256, keccak256,
-    map::{B256IndexMap, B256Map, hash_map::Entry},
+    map::{B256IndexMap, indexmap::map::Entry},
 };
 use alloy_rpc_types_debug::ExecutionWitness;
 use alloy_trie::{EMPTY_ROOT_HASH, TrieAccount};
@@ -42,7 +42,7 @@ impl<T: alloy_rlp::Decodable + alloy_rlp::Encodable> RlpTrie<T> {
 
     pub fn from_prehashed(
         root: B256,
-        rlp_by_digest: &B256Map<impl AsRef<[u8]>>,
+        rlp_by_digest: &B256IndexMap<impl AsRef<[u8]>>,
     ) -> alloy_rlp::Result<Self> {
         Ok(Self::new(CachedTrie::from_prehashed_nodes(root, rlp_by_digest)?))
     }
@@ -71,10 +71,10 @@ pub struct SparseState {
     /// state MPT containing all used accounts
     state: RlpTrie<TrieAccount>,
     /// storage MPTs sorted by the hashed address of their account
-    storages: RefCell<B256Map<RlpTrie<U256>>>,
+    storages: RefCell<B256IndexMap<RlpTrie<U256>>>,
 
     /// all relevant MPT nodes by their Keccak hash
-    rlp_by_digest: B256Map<Bytes>,
+    rlp_by_digest: B256IndexMap<Bytes>,
 }
 
 impl SparseState {
@@ -119,7 +119,7 @@ impl StatelessTrie for SparseState {
         pre_state_root: B256,
     ) -> Result<(Self, B256IndexMap<Bytecode>), StatelessTrieError> {
         // fist, hash all the RLP nodes once
-        let rlp_by_digest: B256Map<_> =
+        let rlp_by_digest: B256IndexMap<_> =
             witness.state.iter().map(|rlp| (keccak256(rlp), rlp.clone())).collect();
 
         // construct the state trie from the witness data and the given state root
@@ -133,7 +133,10 @@ impl StatelessTrie for SparseState {
             .map(|code| (keccak256(code), Bytecode::new_raw(code.clone())))
             .collect();
 
-        Ok((Self { state, storages: RefCell::new(B256Map::default()), rlp_by_digest }, bytecode))
+        Ok((
+            Self { state, storages: RefCell::new(B256IndexMap::default()), rlp_by_digest },
+            bytecode,
+        ))
     }
 
     /// Returns the `TrieAccount` that corresponds to the `Address`.

@@ -18,11 +18,7 @@ use super::{
     node::Node,
 };
 use alloc::{vec, vec::Vec};
-use alloy_primitives::{
-    hex, keccak256,
-    map::{B256HashMap, B256Map},
-    Bytes, B256,
-};
+use alloy_primitives::{hex, keccak256, map::B256IndexMap, Bytes, B256};
 use alloy_rlp::{BufMut, Decodable, Encodable, Header, PayloadView, EMPTY_STRING_CODE};
 use alloy_trie::{nodes::encode_path_leaf, Nibbles, EMPTY_ROOT_HASH};
 use arrayvec::ArrayVec;
@@ -176,7 +172,7 @@ impl<M: Memoization> Node<M> {
 
         // compute the references of all the remaining nodes
         let (lower, _) = iterator.size_hint();
-        let mut rlp_by_digest = B256HashMap::with_capacity_and_hasher(lower, Default::default());
+        let mut rlp_by_digest = B256IndexMap::with_capacity_and_hasher(lower, Default::default());
         for rlp in iterator {
             rlp_by_digest.insert(keccak256(&rlp), rlp);
         }
@@ -189,7 +185,7 @@ impl<M: Memoization> Node<M> {
     /// Resolves all applicable digest nodes with the node corresponding to the RLP encoding.
     pub(super) fn resolve_digests(
         &mut self,
-        rlp_by_digest: &B256Map<impl AsRef<[u8]>>,
+        rlp_by_digest: &B256IndexMap<impl AsRef<[u8]>>,
     ) -> alloy_rlp::Result<()> {
         match self {
             Node::Null | Node::Leaf(..) => {}

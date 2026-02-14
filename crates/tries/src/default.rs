@@ -2,7 +2,7 @@ use crate::{StatelessTrie, StatelessTrieError, WitnessDbError};
 use alloc::{format, vec::Vec};
 use alloy_primitives::{Address, B256, U256, keccak256, map::B256IndexMap};
 // TODO: `reveal_witness` from reth uses B256Map. We would need to change it from
-// there first. 
+// there first.
 #[allow(clippy::disallowed_types)]
 use alloy_primitives::map::B256Map;
 use alloy_rlp::{Decodable, Encodable};

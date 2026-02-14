@@ -15,7 +15,7 @@
 //! A sparse Merkle Patricia trie implementation.
 
 use alloc::vec::Vec;
-use alloy_primitives::{keccak256, map::B256Map, Bytes, B256};
+use alloy_primitives::{keccak256, map::B256IndexMap, Bytes, B256};
 use alloy_trie::Nibbles;
 use children::Children;
 use core::{cmp::PartialEq, fmt::Debug};
@@ -198,7 +198,7 @@ impl Trie {
     #[inline]
     pub fn from_prehashed_nodes(
         root: B256,
-        rlp_by_digest: &B256Map<impl AsRef<[u8]>>,
+        rlp_by_digest: &B256IndexMap<impl AsRef<[u8]>>,
     ) -> alloy_rlp::Result<Self> {
         let mut trie = Self::from_digest(root);
         trie.0.resolve_digests(rlp_by_digest)?;
@@ -374,7 +374,7 @@ impl CachedTrie {
     #[inline]
     pub fn from_prehashed_nodes(
         root: B256,
-        rlp_by_digest: &B256Map<impl AsRef<[u8]>>,
+        rlp_by_digest: &B256IndexMap<impl AsRef<[u8]>>,
     ) -> alloy_rlp::Result<Self> {
         let mut trie = Self::from_digest(root);
         trie.inner.resolve_digests(rlp_by_digest)?;
