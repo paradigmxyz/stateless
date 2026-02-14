@@ -23,6 +23,9 @@ rust_2018_idioms = { level = "deny", priority = -1 }
 unreachable_pub = "warn"
 unused_must_use = "deny"
 
+[workspace.lints.clippy]
+disallowed_types = "deny"
+
 [workspace.lints.rustdoc]
 all = "warn"
 
@@ -63,7 +66,7 @@ reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", tag = "v1.11.0
 alloy-consensus = { version = "1.5", default-features = false }
 alloy-eips = { version = "1.5", default-features = false }
 alloy-genesis = { version = "1.5", default-features = false }
-alloy-primitives = { version = "1.5", default-features = false }
+alloy-primitives = { version = "1.5", default-features = false, features = ["map-indexmap"] }
 alloy-rlp = { version = "0.3", default-features = false }
 alloy-rpc-types-debug = { version = "1.5", default-features = false }
 alloy-trie = { version = "0.9", default-features = false }
