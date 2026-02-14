@@ -8,7 +8,6 @@ use alloy_primitives::{Address, B64, B256, Bloom, Bytes, U256, keccak256};
 use reth_chainspec::{ChainSpec, ChainSpecBuilder, EthereumHardfork, ForkCondition};
 use reth_db_api::{cursor::DbDupCursorRO, tables, transaction::DbTx};
 use reth_primitives_traits::SealedHeader;
-use revm::primitives::HashMap;
 use serde::Deserialize;
 use std::{
     collections::BTreeMap,
@@ -329,7 +328,7 @@ pub enum ForkSpec {
 impl ForkSpec {
     /// Converts this EF fork spec to a Reth [`ChainSpec`].
     pub fn to_chain_spec(self) -> Arc<ChainSpec> {
-        static MAP: OnceLock<RwLock<HashMap<ForkSpec, Arc<ChainSpec>>>> = OnceLock::new();
+        static MAP: OnceLock<RwLock<BTreeMap<ForkSpec, Arc<ChainSpec>>>> = OnceLock::new();
         let map = MAP.get_or_init(Default::default);
         if let Some(r) = map.read().unwrap().get(&self) {
             return r.clone();

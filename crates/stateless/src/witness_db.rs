@@ -2,7 +2,7 @@
 //! specifically designed for stateless execution environments.
 
 use alloc::{collections::btree_map::BTreeMap, format};
-use alloy_primitives::{Address, B256, U256, map::B256Map};
+use alloy_primitives::{Address, B256, U256, map::B256IndexMap};
 use revm_bytecode::Bytecode;
 use revm_database_interface::Database;
 use revm_state::AccountInfo;
@@ -27,7 +27,7 @@ where
     block_hashes_by_block_number: BTreeMap<u64, B256>,
     /// Map of code hashes to bytecode.
     /// Used to fetch contract code needed during execution.
-    bytecode: B256Map<Bytecode>,
+    bytecode: B256IndexMap<Bytecode>,
     /// The sparse Merkle Patricia Trie containing account and storage state.
     /// This is used to provide account/storage values during EVM execution.
     trie: &'a T,
@@ -52,7 +52,7 @@ where
     ///    the block limit.
     pub(crate) const fn new(
         trie: &'a T,
-        bytecode: B256Map<Bytecode>,
+        bytecode: B256IndexMap<Bytecode>,
         ancestor_hashes: BTreeMap<u64, B256>,
     ) -> Self {
         Self { trie, block_hashes_by_block_number: ancestor_hashes, bytecode }

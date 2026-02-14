@@ -19,7 +19,7 @@ pub mod zeth;
 
 pub use error::{StatelessTrieError, WitnessDbError};
 
-use alloy_primitives::{Address, B256, U256, map::B256Map};
+use alloy_primitives::{Address, B256, U256, map::B256IndexMap};
 use alloy_rpc_types_debug::ExecutionWitness;
 use alloy_trie::TrieAccount;
 use reth_trie_common::HashedPostState;
@@ -31,7 +31,7 @@ pub trait StatelessTrie: core::fmt::Debug {
     fn new(
         witness: &ExecutionWitness,
         pre_state_root: B256,
-    ) -> Result<(Self, B256Map<Bytecode>), StatelessTrieError>
+    ) -> Result<(Self, B256IndexMap<Bytecode>), StatelessTrieError>
     where
         Self: Sized;
 

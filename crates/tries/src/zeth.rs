@@ -19,7 +19,7 @@ use core::{cell::RefCell, marker::PhantomData};
 use crate::{StatelessTrie, StatelessTrieError, WitnessDbError};
 use alloy_primitives::{
     Address, B256, Bytes, KECCAK256_EMPTY, U256, keccak256,
-    map::{B256Map, hash_map::Entry},
+    map::{B256IndexMap, B256Map, hash_map::Entry},
 };
 use alloy_rpc_types_debug::ExecutionWitness;
 use alloy_trie::{EMPTY_ROOT_HASH, TrieAccount};
@@ -117,7 +117,7 @@ impl StatelessTrie for SparseState {
     fn new(
         witness: &ExecutionWitness,
         pre_state_root: B256,
-    ) -> Result<(Self, B256Map<Bytecode>), StatelessTrieError> {
+    ) -> Result<(Self, B256IndexMap<Bytecode>), StatelessTrieError> {
         // fist, hash all the RLP nodes once
         let rlp_by_digest: B256Map<_> =
             witness.state.iter().map(|rlp| (keccak256(rlp), rlp.clone())).collect();

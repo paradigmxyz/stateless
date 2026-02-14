@@ -1,6 +1,10 @@
 use crate::{StatelessTrie, StatelessTrieError, WitnessDbError};
 use alloc::{format, vec::Vec};
-use alloy_primitives::{Address, B256, U256, keccak256, map::B256Map};
+use alloy_primitives::{Address, B256, U256, keccak256, map::B256IndexMap};
+// TODO: `reveal_witness` from reth uses B256Map. We would need to change it from
+// there first. 
+#[allow(clippy::disallowed_types)]
+use alloy_primitives::map::B256Map;
 use alloy_rlp::{Decodable, Encodable};
 use alloy_rpc_types_debug::ExecutionWitness;
 use alloy_trie::{EMPTY_ROOT_HASH, TrieAccount};
@@ -27,7 +31,7 @@ impl StatelessSparseTrie {
     pub fn new(
         witness: &ExecutionWitness,
         pre_state_root: B256,
-    ) -> Result<(Self, B256Map<Bytecode>), StatelessTrieError> {
+    ) -> Result<(Self, B256IndexMap<Bytecode>), StatelessTrieError> {
         verify_execution_witness(witness, pre_state_root)
             .map(|(inner, bytecode)| (Self { inner }, bytecode))
     }
@@ -103,7 +107,7 @@ impl StatelessTrie for StatelessSparseTrie {
     fn new(
         witness: &ExecutionWitness,
         pre_state_root: B256,
-    ) -> Result<(Self, B256Map<Bytecode>), StatelessTrieError> {
+    ) -> Result<(Self, B256IndexMap<Bytecode>), StatelessTrieError> {
         Self::new(witness, pre_state_root)
     }
 
@@ -128,7 +132,7 @@ impl StatelessTrie for StatelessSparseTrie {
 ///
 /// If the computed root hash matches the `pre_state_root`, it signifies that the
 /// provided execution witness is consistent with that pre-state root. In this case, the function
-/// returns the populated [`SparseStateTrie`] and a [`B256Map`] containing the
+/// returns the populated [`SparseStateTrie`] and a [`B256IndexMap`] containing the
 /// contract bytecode (mapping code hash to [`Bytecode`]).
 ///
 /// The bytecode has a separate mapping because the [`SparseStateTrie`] does not store the
@@ -141,11 +145,13 @@ impl StatelessTrie for StatelessSparseTrie {
 fn verify_execution_witness(
     witness: &ExecutionWitness,
     pre_state_root: B256,
-) -> Result<(SparseStateTrie, B256Map<Bytecode>), StatelessTrieError> {
+) -> Result<(SparseStateTrie, B256IndexMap<Bytecode>), StatelessTrieError> {
     let provider_factory = DefaultTrieNodeProviderFactory;
     let mut trie = SparseStateTrie::new();
+    // `reveal_witness` requires `&B256Map`, so we must use the disallowed type here.
+    #[allow(clippy::disallowed_types)]
     let mut state_witness = B256Map::default();
-    let mut bytecode = B256Map::default();
+    let mut bytecode = B256IndexMap::default();
 
     for rlp_encoded in &witness.state {
         let hash = keccak256(rlp_encoded);
