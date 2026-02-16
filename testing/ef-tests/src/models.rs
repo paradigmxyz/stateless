@@ -10,8 +10,9 @@ use reth_db_api::{cursor::DbDupCursorRO, tables, transaction::DbTx};
 use reth_primitives_traits::SealedHeader;
 use revm::primitives::HashMap;
 use serde::Deserialize;
+use stateless::ExecutionWitness;
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     ops::Deref,
     sync::{Arc, OnceLock, RwLock},
 };
@@ -141,6 +142,103 @@ pub struct Block {
     pub transaction_sequence: Option<Vec<TransactionSequence>>,
     /// Withdrawals
     pub withdrawals: Option<Withdrawals>,
+    /// Execution witness for stateless validation.
+    pub execution_witness: Option<FixtureExecutionWitness>,
+}
+
+/// Execution witness from test fixtures.
+///
+/// Uses serde aliases to accept both alloy's field names (`state`/`codes`/`headers`)
+/// and the fixture's field names (`nodes`/`bytecodes`/`ancestors`).
+#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Default)]
+pub struct FixtureExecutionWitness {
+    /// Trie nodes / state witness.
+    #[serde(alias = "nodes", default)]
+    pub state: Vec<Bytes>,
+    /// Contract bytecodes.
+    #[serde(alias = "bytecodes", default)]
+    pub codes: Vec<Bytes>,
+    /// Ancestor block headers.
+    #[serde(alias = "ancestors", default)]
+    pub headers: Vec<Bytes>,
+}
+
+impl FixtureExecutionWitness {
+    /// Asserts that the generated [`ExecutionWitness`] matches this fixture witness.
+    ///
+    /// Compares `state`, `codes`, and `headers` fields individually (sorted).
+    /// The `keys` field from the generated witness is ignored since fixtures don't include it.
+    pub fn assert_matches(&self, generated: &ExecutionWitness) -> Result<(), Error> {
+        let mut expected_state = self.state.clone();
+        let mut generated_state = generated.state.clone();
+        expected_state.sort();
+        generated_state.sort();
+        assert_equal_bytes_vecs(
+            &expected_state,
+            &generated_state,
+            "execution witness state (nodes)",
+        )?;
+
+        let mut expected_codes = self.codes.clone();
+        let mut generated_codes = generated.codes.clone();
+        expected_codes.sort();
+        generated_codes.sort();
+        assert_equal_bytes_vecs(
+            &expected_codes,
+            &generated_codes,
+            "execution witness codes (bytecodes)",
+        )?;
+
+        let mut expected_headers = self.headers.clone();
+        let mut generated_headers = generated.headers.clone();
+        expected_headers.sort();
+        generated_headers.sort();
+        assert_equal_bytes_vecs(
+            &expected_headers,
+            &generated_headers,
+            "execution witness headers (ancestors)",
+        )?;
+
+        Ok(())
+    }
+}
+
+/// Compares two sorted `Vec<Bytes>`, producing a detailed error on mismatch that includes
+/// counts and the items present in one side but not the other.
+fn assert_equal_bytes_vecs(
+    expected: &[Bytes],
+    generated: &[Bytes],
+    label: &str,
+) -> Result<(), Error> {
+    if expected == generated {
+        return Ok(());
+    }
+
+    let expected_set: BTreeSet<&Bytes> = expected.iter().collect();
+    let generated_set: BTreeSet<&Bytes> = generated.iter().collect();
+
+    let in_expected_only: Vec<_> = expected_set.difference(&generated_set).collect();
+    let in_generated_only: Vec<_> = generated_set.difference(&expected_set).collect();
+
+    let mut msg =
+        format!("{label} mismatch — expected {}, generated {}", expected.len(), generated.len());
+
+    if !in_expected_only.is_empty() {
+        msg.push_str(&format!(
+            "\n  in expected but not generated ({}):\n    {}",
+            in_expected_only.len(),
+            in_expected_only.iter().map(|b| format!("{b}")).collect::<Vec<_>>().join("\n    ")
+        ));
+    }
+    if !in_generated_only.is_empty() {
+        msg.push_str(&format!(
+            "\n  in generated but not expected ({}):\n    {}",
+            in_generated_only.len(),
+            in_generated_only.iter().map(|b| format!("{b}")).collect::<Vec<_>>().join("\n    ")
+        ));
+    }
+
+    Err(Error::Assertion(msg))
 }
 
 /// Transaction sequence in block

@@ -251,19 +251,27 @@ fn calculate_state_root(
             storage_trie.wipe()?;
         }
 
-        // Apply slot‑level changes
-        for (hashed_slot, value) in
-            storage.storage.into_iter().sorted_unstable_by_key(|(slot, _)| *slot)
-        {
-            let nibbles = Nibbles::unpack(hashed_slot);
-            if value.is_zero() {
-                storage_trie.remove_leaf(&nibbles, &storage_provider)?;
-            } else {
-                storage_trie.update_leaf(
-                    nibbles,
-                    alloy_rlp::encode_fixed_size(&value).to_vec(),
-                    &storage_provider,
-                )?;
+        // Apply slot-level changes in two passes:
+        // update/insert first, then delete. This matches witness generation ordering.
+        let sorted_slots = storage.storage.into_iter().sorted_unstable_by_key(|(slot, _)| *slot);
+        let sorted_slots = sorted_slots.collect::<Vec<_>>();
+        for is_delete_pass in [false, true] {
+            for (hashed_slot, value) in &sorted_slots {
+                let is_delete = value.is_zero();
+                if is_delete != is_delete_pass {
+                    continue;
+                }
+
+                let nibbles = Nibbles::unpack(*hashed_slot);
+                if is_delete {
+                    storage_trie.remove_leaf(&nibbles, &storage_provider)?;
+                } else {
+                    storage_trie.update_leaf(
+                        nibbles,
+                        alloy_rlp::encode_fixed_size(value).to_vec(),
+                        &storage_provider,
+                    )?;
+                }
             }
         }
 

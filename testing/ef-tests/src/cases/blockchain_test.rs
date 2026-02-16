@@ -189,7 +189,11 @@ impl Case for BlockchainTestCase {
             .filter(|(_, case)| !Self::excluded_fork(case.network))
             .par_bridge_buffered()
             .with_min_len(64)
-            .try_for_each(|(name, case)| Self::run_single_case(&name, &case).map(|_| ()))
+            .try_for_each(|(name, case)| {
+                Self::run_single_case(&name, &case)
+                    .map(|_| ())
+                    .map_err(|err| Error::TestCaseFailed { name, err: Box::new(err) })
+            })
     }
 }
 
@@ -312,6 +316,14 @@ fn run_case(
             .collect();
 
         program_inputs.push((block.clone(), exec_witness));
+
+        // Compare the generated witness against the fixture's expected witness (if present)
+        if let Some(expected_witness) = &case.blocks[block_index].execution_witness {
+            let (_, exec_witness) = program_inputs.last().unwrap();
+            expected_witness
+                .assert_matches(exec_witness)
+                .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
+        }
 
         // Compute and check the post state root
         let hashed_state =
