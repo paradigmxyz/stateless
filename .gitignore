@@ -1,5 +1,4 @@
 /target
-Cargo.lock
 
 # EF test fixtures (downloaded by scripts/setup_ef_tests.sh)
 testing/ef-tests/ethereum-tests
