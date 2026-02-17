@@ -44,6 +44,23 @@ jobs:
       - name: Run EF tests
         run: ./scripts/run_ef_tests.sh
 
+  execution-witness-tests:
+    name: Execution Witness tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RUST_LOG: info
+      RUST_BACKTRACE: 1
+      EXECUTION_WITNESS_TESTS_URL: https://github.com/jsign/artifacts/releases/download/execution_witness_v0.0.1/execution_witness_tests_409fae8.tar.gz
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - name: Run Execution Witness tests
+        run: cargo run -p ef-test-runner --release -- $EXECUTION_WITNESS_TESTS_URL
+
   no-std:
     name: no_std (RISC-V)
     runs-on: ubuntu-latest
