@@ -169,36 +169,17 @@ impl FixtureExecutionWitness {
     /// Compares `state`, `codes`, and `headers` fields individually (sorted).
     /// The `keys` field from the generated witness is ignored since fixtures don't include it.
     pub fn assert_matches(&self, generated: &ExecutionWitness) -> Result<(), Error> {
-        let mut expected_state = self.state.clone();
-        let mut generated_state = generated.state.clone();
-        expected_state.sort();
-        generated_state.sort();
+        assert_equal_bytes_vecs(&self.state, &generated.state, "execution witness state (nodes)")?;
         assert_equal_bytes_vecs(
-            &expected_state,
-            &generated_state,
-            "execution witness state (nodes)",
-        )?;
-
-        let mut expected_codes = self.codes.clone();
-        let mut generated_codes = generated.codes.clone();
-        expected_codes.sort();
-        generated_codes.sort();
-        assert_equal_bytes_vecs(
-            &expected_codes,
-            &generated_codes,
+            &self.codes,
+            &generated.codes,
             "execution witness codes (bytecodes)",
         )?;
-
-        let mut expected_headers = self.headers.clone();
-        let mut generated_headers = generated.headers.clone();
-        expected_headers.sort();
-        generated_headers.sort();
         assert_equal_bytes_vecs(
-            &expected_headers,
-            &generated_headers,
+            &self.headers,
+            &generated.headers,
             "execution witness headers (ancestors)",
         )?;
-
         Ok(())
     }
 }
