@@ -84,26 +84,29 @@ serde_with = { version = "3.16", default-features = false, features = [
 thiserror = { version = "2.0", default-features = false }
 clap = "4"
 flate2 = "1"
-reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = [
+    "blocking",
+    "rustls-tls",
+] }
 tar = "0.4"
 tempfile = "3"
 walkdir = "2.5"
 
 [patch."https://github.com/paradigmxyz/reth"]
-reth-chainspec = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-consensus = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-db = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-db-api = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-db-common = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-ethereum-consensus = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-ethereum-primitives = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-evm = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-evm-ethereum = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-primitives-traits = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-provider = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-revm = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-tracing = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-trie = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-trie-common = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-trie-db = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
-reth-trie-sparse = { git = "https://github.com/jsign/reth", rev = "878e9e2451e85c90d63c1ba1b197ae6de88c1488" }
+reth-chainspec = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-consensus = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-db = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-db-api = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-db-common = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-ethereum-consensus = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-ethereum-primitives = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-evm = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-evm-ethereum = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-primitives-traits = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-provider = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-revm = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-tracing = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-trie = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-trie-common = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-trie-db = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
+reth-trie-sparse = { git = "https://github.com/jsign/reth", rev = "3a797feaa24be22b7a3367cc0cb0fc40c921907d" }
