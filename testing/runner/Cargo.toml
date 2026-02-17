@@ -11,6 +11,10 @@ exclude.workspace = true
 [dependencies]
 clap = { workspace = true, features = ["derive"] }
 ef-tests.path = "../ef-tests"
+flate2 = { workspace = true }
+reqwest = { workspace = true }
+tar = { workspace = true }
+tempfile = { workspace = true }
 
 [lints]
 workspace = true
