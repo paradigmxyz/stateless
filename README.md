@@ -48,7 +48,8 @@ To run the Ethereum Foundation blockchain tests with stateless validation:
 
 ```bash
 # From the repository root:
-./scripts/run_ef_tests.sh
+./scripts/run_ef_tests.sh default
+./scripts/run_ef_tests.sh zeth
 ```
 
 Or manually:
@@ -56,7 +57,7 @@ Or manually:
 ```bash
 # From the repository root:
 ./scripts/setup_ef_tests.sh
-cargo test -p ef-tests --release --features "asm-keccak ef-tests"
+EF_TEST_TRIE=default cargo test -p ef-tests --release --features "asm-keccak ef-tests"
 ```
 
 ## Contributing

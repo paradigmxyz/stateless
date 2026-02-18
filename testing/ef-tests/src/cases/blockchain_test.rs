@@ -30,11 +30,38 @@ use stateless::{
 };
 use std::{
     collections::BTreeMap,
-    fs,
+    env, fs,
     path::{Path, PathBuf},
     sync::Arc,
 };
-use tries::default::StatelessSparseTrie;
+use tries::{StatelessTrie, default::StatelessSparseTrie, zeth::SparseState};
+
+/// Environment variable used by EF tests to select the trie implementation.
+const EF_TEST_TRIE_ENV_VAR: &str = "EF_TEST_TRIE";
+
+#[derive(Debug, Clone, Copy)]
+enum EfTestTrie {
+    Default,
+    Zeth,
+}
+
+impl EfTestTrie {
+    fn from_env() -> Result<Self, Error> {
+        let value = env::var(EF_TEST_TRIE_ENV_VAR).map_err(|_| {
+            Error::Assertion(format!(
+                "missing {EF_TEST_TRIE_ENV_VAR} env var; expected one of: `default`, `zeth`"
+            ))
+        })?;
+
+        match value.as_str() {
+            "default" => Ok(Self::Default),
+            "zeth" => Ok(Self::Zeth),
+            _ => Err(Error::Assertion(format!(
+                "invalid {EF_TEST_TRIE_ENV_VAR} value `{value}`; expected `default` or `zeth`"
+            ))),
+        }
+    }
+}
 
 /// A handler for the blockchain test suite.
 #[derive(Debug)]
@@ -210,6 +237,18 @@ impl Case for BlockchainTestCase {
 fn run_case(
     case: &BlockchainTest,
 ) -> Result<Vec<(RecoveredBlock<Block>, ExecutionWitness)>, Error> {
+    match EfTestTrie::from_env()? {
+        EfTestTrie::Default => run_case_with_trie::<StatelessSparseTrie>(case),
+        EfTestTrie::Zeth => run_case_with_trie::<SparseState>(case),
+    }
+}
+
+fn run_case_with_trie<T>(
+    case: &BlockchainTest,
+) -> Result<Vec<(RecoveredBlock<Block>, ExecutionWitness)>, Error>
+where
+    T: StatelessTrie,
+{
     // Create a new test database and initialize a provider for the test case.
     let chain_spec = case.network.to_chain_spec();
     let factory = create_test_provider_factory_with_chain_spec(chain_spec.clone());
@@ -378,7 +417,7 @@ fn run_case(
         let public_keys = recover_signers(block.body().transactions())
             .expect("Failed to recover public keys from transaction signatures");
 
-        stateless_validation_with_trie::<StatelessSparseTrie, _, _>(
+        stateless_validation_with_trie::<T, _, _>(
             block,
             public_keys,
             execution_witness.clone(),

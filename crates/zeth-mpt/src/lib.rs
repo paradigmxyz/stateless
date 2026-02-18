@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Sparse Merkle Patricia Trie implementation used by the optimized state trie.
+//! Sparse Merkle Patricia Trie implementation used by the zeth state trie.
 
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![no_std]

@@ -1,4 +1,4 @@
-//! Provides an optimized sparse MPT implementation for the stateless validator guest program.
+//! Provides a zeth-backed sparse MPT implementation for the stateless validator guest program.
 #![allow(warnings)]
 // Copyright 2025 RISC Zero, Inc.
 //
