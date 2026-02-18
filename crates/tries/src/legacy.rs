@@ -1,5 +1,4 @@
-use crate::error::WitnessDbError;
-use crate::validation::StatelessValidationError;
+use crate::{StatelessTrie, StatelessTrieError, WitnessDbError};
 use alloc::{format, vec::Vec};
 use alloy_primitives::{Address, B256, U256, keccak256, map::B256Map};
 use alloy_rlp::{Decodable, Encodable};
@@ -13,35 +12,6 @@ use reth_trie_sparse::{
     provider::{DefaultTrieNodeProvider, DefaultTrieNodeProviderFactory},
 };
 use revm_bytecode::Bytecode;
-
-/// Trait for stateless trie implementations that can be used for stateless validation.
-pub trait StatelessTrie: core::fmt::Debug {
-    /// Initialize the stateless trie using the `ExecutionWitness`
-    fn new(
-        witness: &ExecutionWitness,
-        pre_state_root: B256,
-    ) -> Result<(Self, B256Map<Bytecode>), StatelessValidationError>
-    where
-        Self: Sized;
-
-    /// Returns the `TrieAccount` that corresponds to the `Address`
-    ///
-    /// This method will error if the `ExecutionWitness` is not able to guarantee
-    /// that the account is missing from the Trie _and_ the witness was complete.
-    fn account(&self, address: Address) -> Result<Option<TrieAccount>, WitnessDbError>;
-
-    /// Returns the storage slot value that corresponds to the given (address, slot) tuple.
-    ///
-    /// This method will error if the `ExecutionWitness` is not able to guarantee
-    /// that the storage was missing from the Trie _and_ the witness was complete.
-    fn storage(&self, address: Address, slot: U256) -> Result<U256, WitnessDbError>;
-
-    /// Computes the new state root from the `HashedPostState`.
-    fn calculate_state_root(
-        &mut self,
-        state: HashedPostState,
-    ) -> Result<B256, StatelessValidationError>;
-}
 
 /// `StatelessSparseTrie` structure for usage during stateless validation
 #[derive(Debug)]
@@ -57,7 +27,7 @@ impl StatelessSparseTrie {
     pub fn new(
         witness: &ExecutionWitness,
         pre_state_root: B256,
-    ) -> Result<(Self, B256Map<Bytecode>), StatelessValidationError> {
+    ) -> Result<(Self, B256Map<Bytecode>), StatelessTrieError> {
         verify_execution_witness(witness, pre_state_root)
             .map(|(inner, bytecode)| (Self { inner }, bytecode))
     }
@@ -123,9 +93,9 @@ impl StatelessSparseTrie {
     pub fn calculate_state_root(
         &mut self,
         state: HashedPostState,
-    ) -> Result<B256, StatelessValidationError> {
+    ) -> Result<B256, StatelessTrieError> {
         calculate_state_root(&mut self.inner, state)
-            .map_err(|_e| StatelessValidationError::StatelessStateRootCalculationFailed)
+            .map_err(|_e| StatelessTrieError::StatelessStateRootCalculationFailed)
     }
 }
 
@@ -133,7 +103,7 @@ impl StatelessTrie for StatelessSparseTrie {
     fn new(
         witness: &ExecutionWitness,
         pre_state_root: B256,
-    ) -> Result<(Self, B256Map<Bytecode>), StatelessValidationError> {
+    ) -> Result<(Self, B256Map<Bytecode>), StatelessTrieError> {
         Self::new(witness, pre_state_root)
     }
 
@@ -145,10 +115,7 @@ impl StatelessTrie for StatelessSparseTrie {
         self.storage(address, slot)
     }
 
-    fn calculate_state_root(
-        &mut self,
-        state: HashedPostState,
-    ) -> Result<B256, StatelessValidationError> {
+    fn calculate_state_root(&mut self, state: HashedPostState) -> Result<B256, StatelessTrieError> {
         self.calculate_state_root(state)
     }
 }
@@ -168,13 +135,13 @@ impl StatelessTrie for StatelessSparseTrie {
 /// contract bytecode, only the hash of it (code hash).
 ///
 /// If the roots do not match, it returns an error indicating the witness is invalid
-/// for the given `pre_state_root` (see `StatelessValidationError::PreStateRootMismatch`).
+/// for the given `pre_state_root` (see [`StatelessTrieError::PreStateRootMismatch`]).
 // Note: This approach might be inefficient for ZKVMs requiring minimal memory operations, which
 // would explain why they have for the most part re-implemented this function.
 fn verify_execution_witness(
     witness: &ExecutionWitness,
     pre_state_root: B256,
-) -> Result<(SparseStateTrie, B256Map<Bytecode>), StatelessValidationError> {
+) -> Result<(SparseStateTrie, B256Map<Bytecode>), StatelessTrieError> {
     let provider_factory = DefaultTrieNodeProviderFactory;
     let mut trie = SparseStateTrie::new();
     let mut state_witness = B256Map::default();
@@ -198,17 +165,17 @@ fn verify_execution_witness(
     // was not inserted into the Trie. It does not mean that the account does not exist.
     // In order to determine an account not existing, we must do an exclusion proof.
     trie.reveal_witness(pre_state_root, &state_witness)
-        .map_err(|_e| StatelessValidationError::WitnessRevealFailed { pre_state_root })?;
+        .map_err(|_e| StatelessTrieError::WitnessRevealFailed { pre_state_root })?;
 
     // Calculate the root
     let computed_root = trie
         .root(&provider_factory)
-        .map_err(|_e| StatelessValidationError::StatelessPreStateRootCalculationFailed)?;
+        .map_err(|_e| StatelessTrieError::StatelessPreStateRootCalculationFailed)?;
 
     if computed_root == pre_state_root {
         Ok((trie, bytecode))
     } else {
-        Err(StatelessValidationError::PreStateRootMismatch {
+        Err(StatelessTrieError::PreStateRootMismatch {
             got: computed_root,
             expected: pre_state_root,
         })

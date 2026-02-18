@@ -12,10 +12,12 @@ description = "Stateless Ethereum block validation using execution witnesses"
 workspace = true
 
 [dependencies]
+# internal
+tries.workspace = true
+
 # alloy
 alloy-primitives.workspace = true
 alloy-rlp.workspace = true
-alloy-trie.workspace = true
 alloy-consensus.workspace = true
 alloy-rpc-types-debug.workspace = true
 alloy-genesis = { workspace = true, features = ["serde-bincode-compat"] }
@@ -26,7 +28,6 @@ reth-primitives-traits.workspace = true
 reth-ethereum-primitives = { workspace = true, features = ["serde", "serde-bincode-compat"] }
 reth-evm.workspace = true
 reth-trie-common.workspace = true
-reth-trie-sparse.workspace = true
 reth-chainspec.workspace = true
 reth-consensus.workspace = true
 
@@ -37,6 +38,5 @@ revm-state.workspace = true
 
 # misc
 thiserror.workspace = true
-itertools.workspace = true
 serde.workspace = true
 serde_with.workspace = true

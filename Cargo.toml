@@ -8,7 +8,11 @@ repository = "https://github.com/paradigmxyz/stateless"
 exclude = [".github/"]
 
 [workspace]
-members = ["crates/stateless", "testing/ef-tests"]
+members = [
+    "crates/stateless",
+    "crates/tries",
+    "testing/ef-tests",
+]
 resolver = "2"
 
 [workspace.lints.rust]
@@ -33,6 +37,7 @@ strip = "symbols"
 [workspace.dependencies]
 # internal
 stateless = { path = "crates/stateless" }
+tries = { path = "crates/tries" }
 
 # reth
 reth-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.11.0", default-features = false }

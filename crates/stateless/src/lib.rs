@@ -7,7 +7,7 @@
 //! # Key Components
 //!
 //! * `WitnessDatabase`: An implementation of [`revm_database_interface::Database`] that uses a
-//!   [`reth_trie_sparse::SparseStateTrie`] populated from witness data, along with provided
+//!   [`tries::StatelessTrie`] implementation populated from witness data, along with provided
 //!   bytecode and ancestor block hashes, to serve state reads during execution.
 //! * `stateless_validation`: The core function that orchestrates the stateless validation process.
 //!   It takes a block, its execution witness, ancestor headers, and chain specification, then
@@ -35,17 +35,13 @@
 
 extern crate alloc;
 
-/// Error types for witness database operations.
-pub mod error;
 mod recover_block;
-/// Sparse trie implementation for stateless validation
-pub mod trie;
 
 use alloy_genesis::ChainConfig;
 #[doc(inline)]
 pub use recover_block::UncompressedPublicKey;
 #[doc(inline)]
-pub use trie::StatelessTrie;
+pub use tries::StatelessTrie;
 #[doc(inline)]
 pub use validation::stateless_validation;
 #[doc(inline)]

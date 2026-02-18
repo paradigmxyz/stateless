@@ -26,8 +26,7 @@ use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnes
 use reth_trie::{HashedPostState, KeccakKeyHasher, StateRoot};
 use reth_trie_db::DatabaseStateRoot;
 use stateless::{
-    ExecutionWitness, UncompressedPublicKey, trie::StatelessSparseTrie,
-    validation::stateless_validation_with_trie,
+    ExecutionWitness, UncompressedPublicKey, validation::stateless_validation_with_trie,
 };
 use std::{
     collections::BTreeMap,
@@ -35,6 +34,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use tries::legacy::StatelessSparseTrie;
 
 /// A handler for the blockchain test suite.
 #[derive(Debug)]
