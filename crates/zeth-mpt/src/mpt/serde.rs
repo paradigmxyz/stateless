@@ -20,8 +20,7 @@
 #[cfg(feature = "rlp_serialize")]
 pub(crate) mod rlp_nodes {
     use crate::mpt::{memoize::Memoization, node::Node};
-    use alloy_primitives::Bytes;
-    use itertools::Itertools;
+    use alloc::vec::Vec;
     use serde::{de, ser::SerializeSeq, Deserialize, Deserializer, Serializer};
 
     #[inline]
@@ -31,7 +30,12 @@ pub(crate) mod rlp_nodes {
         M: Memoization,
     {
         // deduplicate the RLP nodes
-        let nodes: Vec<Bytes> = trie.rlp_nodes().into_iter().unique().collect();
+        let mut nodes = Vec::new();
+        for node in trie.rlp_nodes() {
+            if !nodes.contains(&node) {
+                nodes.push(node);
+            }
+        }
 
         let mut seq = serializer.serialize_seq(Some(nodes.len()))?;
         for node in &nodes {

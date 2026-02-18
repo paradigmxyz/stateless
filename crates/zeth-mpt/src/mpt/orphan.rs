@@ -24,7 +24,6 @@ use crate::{
 };
 use alloy_primitives::{keccak256, map::B256Map};
 use alloy_trie::Nibbles;
-use std::fmt::Debug;
 
 /// Error returned by the `resolve_orphan` method.
 #[derive(Clone, Debug, Eq, PartialEq, thiserror::Error)]
@@ -225,9 +224,11 @@ impl<M: Memoization + Clone> Node<M> {
 mod tests {
     use super::*;
     use crate::Trie;
+    use alloc::{vec, vec::Vec};
     use alloy_primitives::{Bytes, B256};
     use alloy_trie::{proof::ProofRetainer, HashBuilder, Nibbles};
-    use core::{borrow::Borrow, panic};
+    use core::borrow::Borrow;
+    use std::panic;
 
     fn create_eip1186_proof<K, V>(
         key: K,

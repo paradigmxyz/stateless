@@ -9,7 +9,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-alloy-trie = { version = "0.8.0", default-features = false }
+alloy-trie = { version = "0.8.0", default-features = false, features = ["ethereum"] }
 alloy-rlp.workspace = true
 alloy-primitives.workspace = true
 
@@ -17,15 +17,20 @@ arrayvec.workspace = true
 bincode = { workspace = true, optional = true }
 rkyv = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
+itertools = { workspace = true, optional = true }
+thiserror = { workspace = true, optional = true }
+
+[dev-dependencies]
+serde_json.workspace = true
 
 [features]
 default = []
-rkyv = ["dep:rkyv"]
+rkyv = ["dep:rkyv", "dep:itertools"]
 serde = [
     "dep:serde",
     "dep:bincode",
     "alloy-primitives/serde",
     "alloy-trie/serde",
 ]
-rlp_serialize = []
-orphan = []
+rlp_serialize = ["dep:itertools"]
+orphan = ["dep:thiserror"]

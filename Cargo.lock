@@ -6933,8 +6933,11 @@ dependencies = [
  "alloy-trie 0.8.1",
  "arrayvec",
  "bincode",
+ "itertools 0.14.0",
  "rkyv",
  "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]

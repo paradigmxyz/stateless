@@ -16,9 +16,9 @@ use super::{
     memoize::{Cache, Memoization},
     node::Node,
 };
+use alloc::vec::Vec;
 use alloy_primitives::{Bytes, B256};
 use alloy_trie::nybbles::Nibbles;
-use itertools::Itertools;
 use rkyv::{
     rancor::{Fallible, Source},
     ser::{Allocator, Writer},
@@ -107,7 +107,14 @@ where
 pub(super) struct RlpNodes(#[rkyv(getter = rlp_nodes)] Vec<Vec<u8>>);
 
 fn rlp_nodes<M: Memoization>(node: &Node<M>) -> Vec<Vec<u8>> {
-    node.rlp_nodes().into_iter().unique().map(Vec::from).collect()
+    let mut unique = Vec::new();
+    for node in node.rlp_nodes() {
+        if !unique.contains(&node) {
+            unique.push(node);
+        }
+    }
+
+    unique.into_iter().map(Vec::from).collect()
 }
 
 impl<M: Memoization> From<RlpNodes> for Node<M> {
