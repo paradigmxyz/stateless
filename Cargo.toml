@@ -11,6 +11,7 @@ exclude = [".github/"]
 members = [
     "crates/stateless",
     "crates/tries",
+    "crates/zeth-mpt",
     "testing/ef-tests",
 ]
 resolver = "2"

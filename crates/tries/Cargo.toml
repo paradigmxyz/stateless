@@ -22,3 +22,4 @@ reth-trie-sparse.workspace = true
 revm-bytecode.workspace = true
 revm-database-interface.workspace = true
 thiserror.workspace = true
+zeth-mpt = { path = "../zeth-mpt" }

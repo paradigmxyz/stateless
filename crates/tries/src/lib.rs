@@ -14,6 +14,8 @@ extern crate alloc;
 mod error;
 /// Legacy trie implementation based on `reth_trie_sparse`.
 pub mod legacy;
+/// Optimized trie implementation backed by `zeth-mpt`.
+pub mod optimized;
 
 pub use error::{StatelessTrieError, WitnessDbError};
 
