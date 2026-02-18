@@ -34,7 +34,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use tries::legacy::StatelessSparseTrie;
+use tries::default::StatelessSparseTrie;
 
 /// A handler for the blockchain test suite.
 #[derive(Debug)]

@@ -23,7 +23,7 @@ use reth_evm::{
 };
 use reth_primitives_traits::{RecoveredBlock, SealedHeader};
 use reth_trie_common::{HashedPostState, KeccakKeyHasher};
-use tries::{StatelessTrie, StatelessTrieError, legacy::StatelessSparseTrie};
+use tries::{StatelessTrie, StatelessTrieError, default::StatelessSparseTrie};
 
 /// BLOCKHASH ancestor lookup window limit per EVM (number of most recent blocks accessible).
 const BLOCKHASH_ANCESTOR_LIMIT: usize = 256;
