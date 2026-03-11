@@ -45,11 +45,17 @@ use alloy_genesis::ChainConfig;
 #[doc(inline)]
 pub use recover_block::UncompressedPublicKey;
 #[doc(inline)]
+pub use recover_block::recover_block_with_public_keys;
+#[doc(inline)]
 pub use trie::StatelessTrie;
 #[doc(inline)]
 pub use validation::stateless_validation;
 #[doc(inline)]
 pub use validation::stateless_validation_with_trie;
+#[doc(inline)]
+pub use validation::stateless_validation_recovered;
+#[doc(inline)]
+pub use validation::stateless_validation_recovered_with_trie;
 
 /// Implementation of stateless validation
 pub mod validation;

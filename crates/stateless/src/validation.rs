@@ -140,8 +140,47 @@ where
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
     E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
 {
-    let current_block = recover_block_with_public_keys(current_block, public_keys, &*chain_spec)?;
+    let recovered_block = recover_block_with_public_keys(current_block, public_keys, &*chain_spec)?;
 
+    stateless_validation_recovered_with_trie::<T, ChainSpec, E>(
+        recovered_block,
+        witness,
+        chain_spec,
+        evm_config,
+    )
+}
+
+/// Performs stateless validation of an already-recovered block.
+pub fn stateless_validation_recovered<ChainSpec, E>(
+    recovered_block: RecoveredBlock<Block>,
+    witness: ExecutionWitness,
+    chain_spec: Arc<ChainSpec>,
+    evm_config: E,
+) -> Result<(B256, BlockExecutionOutput<EthereumReceipt>), StatelessValidationError>
+where
+    ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
+    E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
+{
+    stateless_validation_recovered_with_trie::<StatelessSparseTrie, ChainSpec, E>(
+        recovered_block,
+        witness,
+        chain_spec,
+        evm_config,
+    )
+}
+
+/// Performs stateless validation of an already-recovered block using a custom `StatelessTrie` implementation.
+pub fn stateless_validation_recovered_with_trie<T, ChainSpec, E>(
+    current_block: RecoveredBlock<Block>,
+    witness: ExecutionWitness,
+    chain_spec: Arc<ChainSpec>,
+    evm_config: E,
+) -> Result<(B256, BlockExecutionOutput<EthereumReceipt>), StatelessValidationError>
+where
+    T: StatelessTrie,
+    ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
+    E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
+{
     let mut ancestor_headers: Vec<_> = witness
         .headers
         .iter()
