@@ -28,9 +28,18 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
   ef-tests:
-    name: Ethereum Foundation tests
+    name: Ethereum Foundation tests (${{ matrix.trie }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    continue-on-error: ${{ matrix.allow_failure }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - trie: default
+            allow_failure: false
+          - trie: zeth
+            allow_failure: true
     env:
       RUST_LOG: info,sync=error
       RUST_BACKTRACE: 1
@@ -42,7 +51,7 @@ jobs:
         with:
           cache-on-failure: true
       - name: Run EF tests
-        run: ./scripts/run_ef_tests.sh
+        run: ./scripts/run_ef_tests.sh ${{ matrix.trie }}
 
   no-std:
     name: no_std (RISC-V)

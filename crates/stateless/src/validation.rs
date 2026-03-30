@@ -1,7 +1,6 @@
 use crate::{
     ExecutionWitness,
     recover_block::{UncompressedPublicKey, recover_block_with_public_keys},
-    trie::{StatelessSparseTrie, StatelessTrie},
     witness_db::WitnessDatabase,
 };
 use alloc::{
@@ -24,6 +23,7 @@ use reth_evm::{
 };
 use reth_primitives_traits::{RecoveredBlock, SealedHeader};
 use reth_trie_common::{HashedPostState, KeccakKeyHasher};
+use tries::{StatelessTrie, StatelessTrieError, default::StatelessSparseTrie};
 
 /// BLOCKHASH ancestor lookup window limit per EVM (number of most recent blocks accessible).
 const BLOCKHASH_ANCESTOR_LIMIT: usize = 256;
@@ -104,6 +104,25 @@ pub enum StatelessValidationError {
     /// Custom error.
     #[error("{0}")]
     Custom(&'static str),
+}
+
+impl From<StatelessTrieError> for StatelessValidationError {
+    fn from(err: StatelessTrieError) -> Self {
+        match err {
+            StatelessTrieError::WitnessRevealFailed { pre_state_root } => {
+                Self::WitnessRevealFailed { pre_state_root }
+            }
+            StatelessTrieError::StatelessStateRootCalculationFailed => {
+                Self::StatelessStateRootCalculationFailed
+            }
+            StatelessTrieError::StatelessPreStateRootCalculationFailed => {
+                Self::StatelessPreStateRootCalculationFailed
+            }
+            StatelessTrieError::PreStateRootMismatch { got, expected } => {
+                Self::PreStateRootMismatch { got, expected }
+            }
+        }
+    }
 }
 
 /// Performs stateless validation of a block using the provided witness data.
