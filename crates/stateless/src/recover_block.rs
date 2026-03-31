@@ -25,7 +25,7 @@ impl Deref for UncompressedPublicKey {
 /// Verifies all transactions in a block against a list of public keys and signatures.
 ///
 /// Returns a `RecoveredBlock`
-pub(crate) fn recover_block_with_public_keys<ChainSpec>(
+pub fn recover_block_with_public_keys<ChainSpec>(
     block: Block,
     public_keys: Vec<UncompressedPublicKey>,
     chain_spec: &ChainSpec,

@@ -17,6 +17,7 @@ asm-keccak = ["alloy-primitives/asm-keccak", "revm/asm-keccak"]
 
 [dependencies]
 stateless.workspace = true
+tries.workspace = true
 
 reth-chainspec = { workspace = true, features = ["std"] }
 reth-ethereum-primitives = { workspace = true, features = ["std"] }

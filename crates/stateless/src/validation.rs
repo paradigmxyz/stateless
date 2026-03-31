@@ -1,7 +1,6 @@
 use crate::{
     ExecutionWitness,
     recover_block::{UncompressedPublicKey, recover_block_with_public_keys},
-    trie::{StatelessSparseTrie, StatelessTrie},
     witness_db::WitnessDatabase,
 };
 use alloc::{
@@ -24,6 +23,7 @@ use reth_evm::{
 };
 use reth_primitives_traits::{RecoveredBlock, SealedHeader};
 use reth_trie_common::{HashedPostState, KeccakKeyHasher};
+use tries::{StatelessTrie, StatelessTrieError, default::StatelessSparseTrie};
 
 /// BLOCKHASH ancestor lookup window limit per EVM (number of most recent blocks accessible).
 const BLOCKHASH_ANCESTOR_LIMIT: usize = 256;
@@ -106,6 +106,25 @@ pub enum StatelessValidationError {
     Custom(&'static str),
 }
 
+impl From<StatelessTrieError> for StatelessValidationError {
+    fn from(err: StatelessTrieError) -> Self {
+        match err {
+            StatelessTrieError::WitnessRevealFailed { pre_state_root } => {
+                Self::WitnessRevealFailed { pre_state_root }
+            }
+            StatelessTrieError::StatelessStateRootCalculationFailed => {
+                Self::StatelessStateRootCalculationFailed
+            }
+            StatelessTrieError::StatelessPreStateRootCalculationFailed => {
+                Self::StatelessPreStateRootCalculationFailed
+            }
+            StatelessTrieError::PreStateRootMismatch { got, expected } => {
+                Self::PreStateRootMismatch { got, expected }
+            }
+        }
+    }
+}
+
 /// Performs stateless validation of a block using the provided witness data.
 pub fn stateless_validation<ChainSpec, E>(
     current_block: Block,
@@ -140,8 +159,47 @@ where
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
     E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
 {
-    let current_block = recover_block_with_public_keys(current_block, public_keys, &*chain_spec)?;
+    let recovered_block = recover_block_with_public_keys(current_block, public_keys, &*chain_spec)?;
 
+    stateless_validation_recovered_with_trie::<T, ChainSpec, E>(
+        recovered_block,
+        witness,
+        chain_spec,
+        evm_config,
+    )
+}
+
+/// Performs stateless validation of an already-recovered block.
+pub fn stateless_validation_recovered<ChainSpec, E>(
+    recovered_block: RecoveredBlock<Block>,
+    witness: ExecutionWitness,
+    chain_spec: Arc<ChainSpec>,
+    evm_config: E,
+) -> Result<(B256, BlockExecutionOutput<EthereumReceipt>), StatelessValidationError>
+where
+    ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
+    E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
+{
+    stateless_validation_recovered_with_trie::<StatelessSparseTrie, ChainSpec, E>(
+        recovered_block,
+        witness,
+        chain_spec,
+        evm_config,
+    )
+}
+
+/// Performs stateless validation of an already-recovered block using a custom `StatelessTrie` implementation.
+pub fn stateless_validation_recovered_with_trie<T, ChainSpec, E>(
+    current_block: RecoveredBlock<Block>,
+    witness: ExecutionWitness,
+    chain_spec: Arc<ChainSpec>,
+    evm_config: E,
+) -> Result<(B256, BlockExecutionOutput<EthereumReceipt>), StatelessValidationError>
+where
+    T: StatelessTrie,
+    ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
+    E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
+{
     let mut ancestor_headers: Vec<_> = witness
         .headers
         .iter()

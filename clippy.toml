@@ -1,0 +1,10 @@
+disallowed-types = [
+    { path = "std::collections::HashMap", reason = "use B256IndexMap, IndexMap, or BTreeMap for deterministic iteration" },
+    { path = "std::collections::HashSet", reason = "use B256IndexSet, IndexSet, or BTreeSet for deterministic iteration" },
+    { path = "hashbrown::HashMap", reason = "use B256IndexMap, IndexMap, or BTreeMap for deterministic iteration" },
+    { path = "hashbrown::HashSet", reason = "use B256IndexSet, IndexSet, or BTreeSet for deterministic iteration" },
+    { path = "alloy_primitives::map::HashMap", reason = "use B256IndexMap, IndexMap, or BTreeMap for deterministic iteration" },
+    { path = "alloy_primitives::map::HashSet", reason = "use B256IndexSet, IndexSet, or BTreeSet for deterministic iteration" },
+    { path = "alloy_primitives::map::B256Map", reason = "use B256IndexMap or BTreeMap for deterministic iteration" },
+    { path = "alloy_primitives::map::B256Set", reason = "use B256IndexSet or BTreeSet for deterministic iteration" },
+]
