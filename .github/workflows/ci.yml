@@ -60,6 +60,7 @@ jobs:
     env:
       RUST_LOG: info
       RUST_BACKTRACE: 1
+      EF_TEST_TRIE: default
       EXECUTION_WITNESS_TESTS_URL: https://github.com/jsign/artifacts/releases/download/execution_witness_v0.0.1/execution_witness_tests_409fae8.tar.gz
     steps:
       - uses: actions/checkout@v4
