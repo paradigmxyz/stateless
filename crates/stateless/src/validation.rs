@@ -244,6 +244,9 @@ where
         &output.receipts,
         &output.requests,
         None,
+        &None,
+        false,
+        None,
     )
     .map_err(StatelessValidationError::ConsensusValidationFailed)?;
 

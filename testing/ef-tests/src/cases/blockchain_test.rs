@@ -17,9 +17,9 @@ use reth_primitives_traits::{
     Block as BlockTrait, ParallelBridgeBuffered, RecoveredBlock, SealedBlock,
 };
 use reth_provider::{
-    BlockWriter, DatabaseProviderFactory, ExecutionOutcome, HistoryWriter, OriginalValuesKnown,
-    StateWriteConfig, StateWriter, StaticFileProviderFactory, StaticFileSegment, StaticFileWriter,
-    test_utils::create_test_provider_factory_with_chain_spec_and_db_args,
+    BlockWriter, DatabaseProviderFactory, ExecutionOutcome, HeaderProvider, HistoryWriter,
+    OriginalValuesKnown, StateWriteConfig, StateWriter, StaticFileProviderFactory,
+    StaticFileSegment, StaticFileWriter, test_utils::create_test_provider_factory_with_chain_spec,
 };
 use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnessRecord};
 use reth_trie::{HashedPostState, KeccakKeyHasher, StateRoot};
@@ -252,10 +252,7 @@ where
 {
     // Create a new test database and initialize a provider for the test case.
     let chain_spec = case.network.to_chain_spec();
-    let factory = create_test_provider_factory_with_chain_spec_and_db_args(
-        chain_spec.clone(),
-        reth_db::mdbx::DatabaseArguments::test().with_geometry_max_size(Some(1024 * 1024 * 1024)),
-    );
+    let factory = create_test_provider_factory_with_chain_spec(chain_spec.clone());
     let provider = factory.database_provider_rw().unwrap();
 
     // Insert initial test state into the provider.
@@ -326,12 +323,37 @@ where
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
         // Consensus checks after block execution
-        validate_block_post_execution(block, &chain_spec, &output.receipts, &output.requests, None)
-            .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
+        validate_block_post_execution(
+            block,
+            &chain_spec,
+            &output.receipts,
+            &output.requests,
+            None,
+            &None,
+            false,
+            None,
+        )
+        .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
         // Generate the stateless witness
-        let exec_witness =
-            witness_record.into_execution_witness(&state_provider, &provider, block_number)?;
+        let ExecutionWitnessRecord { hashed_state, codes, keys, lowest_block_number } =
+            witness_record;
+        let state = state_provider.witness(Default::default(), hashed_state)?;
+        let mut exec_witness = ExecutionWitness { state, codes, keys, headers: Default::default() };
+
+        let smallest = lowest_block_number.unwrap_or_else(|| block_number.saturating_sub(1));
+
+        let range = smallest..block_number;
+
+        exec_witness.headers = provider
+            .headers_range(range)?
+            .into_iter()
+            .map(|header| {
+                let mut serialized_header = Vec::new();
+                header.encode(&mut serialized_header);
+                serialized_header.into()
+            })
+            .collect();
 
         program_inputs.push((block.clone(), exec_witness));
 

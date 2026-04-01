@@ -44,31 +44,31 @@ stateless = { path = "crates/stateless" }
 tries = { path = "crates/tries" }
 
 # reth
-reth-chainspec = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-db = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-db-api = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-db-common = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-evm = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-primitives-traits = { version = "0.1.0", default-features = false }
-reth-provider = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-revm = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-tracing = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-trie = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-trie-common = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-trie-db = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
+reth-chainspec = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3", default-features = false }
+reth-consensus = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3", default-features = false }
+reth-db = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3" }
+reth-db-api = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3" }
+reth-db-common = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3" }
+reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3", default-features = false }
+reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3", default-features = false }
+reth-evm = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3", default-features = false }
+reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3" }
+reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3", default-features = false }
+reth-provider = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3" }
+reth-revm = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3", default-features = false }
+reth-tracing = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3" }
+reth-trie = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3" }
+reth-trie-common = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3", default-features = false }
+reth-trie-db = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3" }
+reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", branch = "bal-devnet-3", default-features = false }
 
 # alloy
-alloy-consensus = { version = "1.8", default-features = false }
-alloy-eips = { version = "1.8", default-features = false }
-alloy-genesis = { version = "1.8", default-features = false }
-alloy-primitives = { version = "1.5.6", default-features = false, features = ["map-foldhash"] }
+alloy-consensus = { version = "1.7", default-features = false }
+alloy-eips = { version = "1.7", default-features = false }
+alloy-genesis = { version = "1.7", default-features = false }
+alloy-primitives = { version = "1.5", default-features = false, features = ["map-indexmap"] }
 alloy-rlp = { version = "0.3", default-features = false }
-alloy-rpc-types-debug = { version = "1.8", default-features = false }
+alloy-rpc-types-debug = { version = "1.7", default-features = false }
 alloy-trie = { version = "0.9", default-features = false }
 
 # revm
@@ -95,3 +95,32 @@ serde_with = { version = "3.16", default-features = false, features = [
 ] }
 thiserror = { version = "2.0", default-features = false }
 walkdir = "2.5"
+
+[patch.crates-io]
+# revm patches (same rev as reth bal-devnet-3)
+revm = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-bytecode = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-database = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-database-interface = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-state = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-primitives = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-interpreter = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-precompile = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-context = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-context-interface = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-handler = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+revm-inspector = { git = "https://github.com/bluealloy/revm", rev = "30e1c40" }
+
+# alloy patches (BAL/Glamsterdam header extensions)
+alloy-evm = { git = "https://github.com/alloy-rs/evm", branch = "bal-devnet3" }
+alloy-consensus = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
+alloy-consensus-any = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
+alloy-eips = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
+alloy-genesis = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
+alloy-network = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
+alloy-network-primitives = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
+alloy-rpc-types-debug = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
+alloy-rpc-types-engine = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
+alloy-rpc-types-eth = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
+alloy-serde = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
+alloy-signer = { git = "https://github.com/alloy-rs/alloy", branch = "bal-devnet2" }
