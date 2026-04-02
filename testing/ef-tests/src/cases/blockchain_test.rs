@@ -323,6 +323,7 @@ where
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
         // Consensus checks after block execution
+        // TODO: Pass actual BlockAccessList and enable BAL validation for Amsterdam-era blocks.
         validate_block_post_execution(
             block,
             &chain_spec,
@@ -331,7 +332,7 @@ where
             None,
             &None,
             false,
-            None,
+            Some(output.gas_used),
         )
         .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 

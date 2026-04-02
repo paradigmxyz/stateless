@@ -238,6 +238,8 @@ where
         .execute(&current_block)
         .map_err(|e| StatelessValidationError::StatelessExecutionFailed(e.to_string()))?;
 
+    // TODO: Pass actual BlockAccessList and enable BAL validation for Amsterdam-era blocks.
+    // Currently BAL tracking during execution is not implemented in stateless validation.
     validate_block_post_execution(
         &current_block,
         &chain_spec,
@@ -246,7 +248,7 @@ where
         None,
         &None,
         false,
-        None,
+        Some(output.gas_used),
     )
     .map_err(StatelessValidationError::ConsensusValidationFailed)?;
 
