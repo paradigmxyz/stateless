@@ -333,6 +333,11 @@ pub enum ForkSpec {
     /// BPO1 to BPO2 at time 15k
     #[serde(alias = "BPO1ToBPO2AtTime15k")]
     Bpo1ToBpo2AtTime15k,
+    /// BPO2 to Amsterdam at time 15k
+    #[serde(alias = "BPO2ToAmsterdamAtTime15k")]
+    Bpo2ToAmsterdamAtTime15k,
+    /// Amsterdam
+    Amsterdam,
 }
 
 impl ForkSpec {
@@ -411,6 +416,12 @@ impl ForkSpec {
                 .osaka_activated()
                 .with_fork(EthereumHardfork::Bpo1, ForkCondition::Timestamp(0))
                 .with_fork(EthereumHardfork::Bpo2, ForkCondition::Timestamp(15_000)),
+            Self::Bpo2ToAmsterdamAtTime15k => spec_builder
+                .osaka_activated()
+                .with_fork(EthereumHardfork::Bpo1, ForkCondition::Timestamp(0))
+                .with_fork(EthereumHardfork::Bpo2, ForkCondition::Timestamp(0))
+                .with_amsterdam_at(15_000),
+            Self::Amsterdam => spec_builder.amsterdam_activated(),
         }
         .build()
     }
