@@ -4,6 +4,7 @@ set -euo pipefail
 ETHEREUM_TESTS_REF="81862e4848585a438d64f911a19b3825f0f4cd95"
 EEST_TESTS_TAG="v4.5.0"
 ZKEVM_TESTS_TAG="zkevm@v0.3.2"
+BAL_TESTS_TAG="bal@v5.6.0"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EF_TESTS_DIR="$SCRIPT_DIR/../testing/ef-tests"
@@ -36,6 +37,16 @@ if [ ! -d "$EF_TESTS_DIR/zkevm-tests" ] || [ -z "$(ls -A "$EF_TESTS_DIR/zkevm-te
     curl -L "$URL" | tar -xz --strip-components=1 -C "$EF_TESTS_DIR/zkevm-tests"
 else
     echo "zkevm-tests already exists, skipping download."
+fi
+
+# Download BAL fixtures if not already present
+if [ ! -d "$EF_TESTS_DIR/bal-tests" ] || [ -z "$(ls -A "$EF_TESTS_DIR/bal-tests" 2>/dev/null)" ]; then
+    echo "Downloading BAL fixtures ($BAL_TESTS_TAG)..."
+    mkdir -p "$EF_TESTS_DIR/bal-tests"
+    URL="https://github.com/ethereum/execution-spec-tests/releases/download/${BAL_TESTS_TAG}/fixtures_bal.tar.gz"
+    curl -L "$URL" | tar -xz --strip-components=1 -C "$EF_TESTS_DIR/bal-tests"
+else
+    echo "bal-tests already exists, skipping download."
 fi
 
 echo "EF test fixtures are ready."

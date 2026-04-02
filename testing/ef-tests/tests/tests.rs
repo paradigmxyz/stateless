@@ -116,6 +116,19 @@ fn eest_fixtures() {
 }
 
 #[test]
+fn bal_fixtures() {
+    reth_tracing::init_test_tracing();
+    let suite_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("bal-tests").join("blockchain_tests");
+
+    if !suite_path.exists() {
+        return;
+    }
+
+    BlockchainTests::new(suite_path).run();
+}
+
+#[test]
 fn zkevm_fixtures() {
     reth_tracing::init_test_tracing();
     let suite_path =
