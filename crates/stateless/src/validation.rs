@@ -233,21 +233,26 @@ where
 
     let db = WitnessDatabase::new(&trie, bytecode, ancestor_hashes);
 
-    let executor = evm_config.executor(db);
-    let output = executor
-        .execute(&current_block)
+    let mut executor = evm_config.executor(db);
+    let result = executor
+        .execute_one(&current_block)
         .map_err(|e| StatelessValidationError::StatelessExecutionFailed(e.to_string()))?;
 
-    // TODO: Pass actual BlockAccessList and enable BAL validation for Amsterdam-era blocks.
-    // Currently BAL tracking during execution is not implemented in stateless validation.
+    let block_access_list = executor.take_bal();
+    let allow_bal_check =
+        chain_spec.is_amsterdam_active_at_timestamp(current_block.header().timestamp());
+
+    let mut state = executor.into_state();
+    let output = BlockExecutionOutput { state: state.take_bundle(), result };
+
     validate_block_post_execution(
         &current_block,
         &chain_spec,
         &output.receipts,
         &output.requests,
         None,
-        &None,
-        false,
+        &block_access_list,
+        allow_bal_check,
         Some(output.gas_used),
     )
     .map_err(StatelessValidationError::ConsensusValidationFailed)?;

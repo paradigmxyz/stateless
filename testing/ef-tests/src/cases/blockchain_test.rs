@@ -4,14 +4,18 @@ use crate::{
     Case, Error, Suite,
     models::{BlockchainTest, ForkSpec},
 };
+use alloy_consensus::BlockHeader;
 use alloy_rlp::{Decodable, Encodable};
 use rayon::iter::{IndexedParallelIterator, ParallelIterator};
-use reth_chainspec::ChainSpec;
+use reth_chainspec::{ChainSpec, EthereumHardforks};
 use reth_consensus::{Consensus, HeaderValidator};
 use reth_db_common::init::{insert_genesis_hashes, insert_genesis_history, insert_genesis_state};
 use reth_ethereum_consensus::{EthBeaconConsensus, validate_block_post_execution};
 use reth_ethereum_primitives::{Block, TransactionSigned};
-use reth_evm::{ConfigureEvm, execute::Executor};
+use reth_evm::{
+    ConfigureEvm,
+    execute::{BlockExecutionOutput, Executor},
+};
 use reth_evm_ethereum::EthEvmConfig;
 use reth_primitives_traits::{
     Block as BlockTrait, ParallelBridgeBuffered, RecoveredBlock, SealedBlock,
@@ -21,7 +25,7 @@ use reth_provider::{
     OriginalValuesKnown, StateWriteConfig, StateWriter, StaticFileProviderFactory,
     StaticFileSegment, StaticFileWriter, test_utils::create_test_provider_factory_with_chain_spec,
 };
-use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnessRecord};
+use reth_revm::{database::StateProviderDatabase, witness::ExecutionWitnessRecord};
 use reth_trie::{HashedPostState, KeccakKeyHasher, StateRoot};
 use reth_trie_db::{
     DatabaseHashedCursorFactory, DatabaseStateRoot, DatabaseTrieCursorFactory, LegacyKeyAdapter,
@@ -314,24 +318,29 @@ where
         // Execute the block
         let state_provider = provider.latest();
         let state_db = StateProviderDatabase(&state_provider);
-        let executor = executor_provider.batch_executor(state_db);
+        let mut executor = executor_provider.batch_executor(state_db);
 
-        let output = executor
-            .execute_with_state_closure_always(&(*block).clone(), |statedb: &State<_>| {
-                witness_record.record_executed_state(statedb);
-            })
+        let result = executor
+            .execute_one(&(*block).clone())
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
+        let block_access_list = executor.take_bal();
+        let allow_bal_check =
+            chain_spec.is_amsterdam_active_at_timestamp(block.header().timestamp());
+
+        let mut state = executor.into_state();
+        witness_record.record_executed_state(&state);
+        let output = BlockExecutionOutput { state: state.take_bundle(), result };
+
         // Consensus checks after block execution
-        // TODO: Pass actual BlockAccessList and enable BAL validation for Amsterdam-era blocks.
         validate_block_post_execution(
             block,
             &chain_spec,
             &output.receipts,
             &output.requests,
             None,
-            &None,
-            false,
+            &block_access_list,
+            allow_bal_check,
             Some(output.gas_used),
         )
         .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
