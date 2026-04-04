@@ -24,7 +24,9 @@ use reth_provider::{
 };
 use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnessRecord};
 use reth_trie::{HashedPostState, KeccakKeyHasher, StateRoot};
-use reth_trie_db::DatabaseStateRoot;
+use reth_trie_db::{
+    DatabaseHashedCursorFactory, DatabaseStateRoot, DatabaseTrieCursorFactory, LegacyKeyAdapter,
+};
 use stateless::{
     ExecutionWitness, UncompressedPublicKey, validation::stateless_validation_with_trie,
 };
@@ -355,7 +357,10 @@ where
         // Compute and check the post state root
         let hashed_state =
             HashedPostState::from_bundle_state::<KeccakKeyHasher>(output.state.state());
-        let (computed_state_root, _) = StateRoot::overlay_root_with_updates(
+        let (computed_state_root, _) = <StateRoot<
+            DatabaseTrieCursorFactory<_, LegacyKeyAdapter>,
+            DatabaseHashedCursorFactory<_>,
+        > as DatabaseStateRoot<_>>::overlay_root_with_updates(
             provider.tx_ref(),
             &hashed_state.clone_into_sorted(),
         )
