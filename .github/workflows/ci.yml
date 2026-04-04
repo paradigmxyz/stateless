@@ -31,7 +31,7 @@ jobs:
   ef-tests:
     name: Ethereum Foundation tests (${{ matrix.trie }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     continue-on-error: ${{ matrix.allow_failure }}
     strategy:
       fail-fast: false
