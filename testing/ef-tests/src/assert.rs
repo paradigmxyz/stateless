@@ -1,7 +1,8 @@
 //! Various assertion helpers.
 
+use alloy_primitives::Bytes;
 use crate::Error;
-use std::fmt::Debug;
+use std::{collections::BTreeSet, fmt::Debug};
 
 /// A helper like `assert_eq!` that instead returns `Err(Error::Assertion)` on failure.
 pub fn assert_equal<T>(left: T, right: T, msg: &str) -> Result<(), Error>
@@ -17,7 +18,7 @@ where
 
 /// Compares two sorted `Vec<Bytes>`, producing a detailed error on mismatch that includes
 /// counts and the items present in one side but not the other.
-fn assert_equal_bytes_vecs(
+pub fn assert_equal_bytes_vecs(
     expected: &[Bytes],
     generated: &[Bytes],
     label: &str,

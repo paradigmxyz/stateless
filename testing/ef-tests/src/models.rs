@@ -1,6 +1,6 @@
 //! Shared models for <https://github.com/ethereum/tests>
 
-use crate::{Error, assert::assert_equal};
+use crate::{Error, assert::{assert_equal, assert_equal_bytes_vecs}};
 use alloy_consensus::Header as RethHeader;
 use alloy_eips::eip4895::Withdrawals;
 use alloy_genesis::GenesisAccount;
@@ -11,7 +11,7 @@ use reth_primitives_traits::SealedHeader;
 use serde::Deserialize;
 use stateless::ExecutionWitness;
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeMap,
     ops::Deref,
     sync::{Arc, OnceLock, RwLock},
 };
