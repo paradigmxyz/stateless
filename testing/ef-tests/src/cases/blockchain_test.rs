@@ -19,7 +19,7 @@ use reth_primitives_traits::{
 use reth_provider::{
     BlockWriter, DatabaseProviderFactory, ExecutionOutcome, HistoryWriter, OriginalValuesKnown,
     StateWriteConfig, StateWriter, StaticFileProviderFactory, StaticFileSegment, StaticFileWriter,
-    test_utils::create_test_provider_factory_with_chain_spec,
+    test_utils::create_test_provider_factory_with_chain_spec_and_db_args,
 };
 use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnessRecord};
 use reth_trie::{HashedPostState, KeccakKeyHasher, StateRoot};
@@ -252,7 +252,10 @@ where
 {
     // Create a new test database and initialize a provider for the test case.
     let chain_spec = case.network.to_chain_spec();
-    let factory = create_test_provider_factory_with_chain_spec(chain_spec.clone());
+    let factory = create_test_provider_factory_with_chain_spec_and_db_args(
+        chain_spec.clone(),
+        reth_db::mdbx::DatabaseArguments::test().with_geometry_max_size(Some(1024 * 1024 * 1024)),
+    );
     let provider = factory.database_provider_rw().unwrap();
 
     // Insert initial test state into the provider.
