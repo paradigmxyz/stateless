@@ -17,9 +17,8 @@ use reth_primitives_traits::{
     Block as BlockTrait, ParallelBridgeBuffered, RecoveredBlock, SealedBlock,
 };
 use reth_provider::{
-    BlockWriter, DatabaseProviderFactory, ExecutionOutcome, HeaderProvider, HistoryWriter,
-    OriginalValuesKnown, StateProofProvider, StateWriteConfig, StateWriter,
-    StaticFileProviderFactory, StaticFileSegment, StaticFileWriter,
+    BlockWriter, DatabaseProviderFactory, ExecutionOutcome, HistoryWriter, OriginalValuesKnown,
+    StateWriteConfig, StateWriter, StaticFileProviderFactory, StaticFileSegment, StaticFileWriter,
     test_utils::create_test_provider_factory_with_chain_spec,
 };
 use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnessRecord};
@@ -328,29 +327,8 @@ where
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
         // Generate the stateless witness
-        // TODO: Most of this code is copy-pasted from debug_executionWitness
-        let ExecutionWitnessRecord { hashed_state, codes, keys, lowest_block_number } =
-            witness_record;
-        let state = state_provider.witness(Default::default(), hashed_state)?;
-        let mut exec_witness = ExecutionWitness { state, codes, keys, headers: Default::default() };
-
-        let smallest = lowest_block_number.unwrap_or_else(|| {
-            // Return only the parent header, if there were no calls to the
-            // BLOCKHASH opcode.
-            block_number.saturating_sub(1)
-        });
-
-        let range = smallest..block_number;
-
-        exec_witness.headers = provider
-            .headers_range(range)?
-            .into_iter()
-            .map(|header| {
-                let mut serialized_header = Vec::new();
-                header.encode(&mut serialized_header);
-                serialized_header.into()
-            })
-            .collect();
+        let exec_witness =
+            witness_record.into_execution_witness(&state_provider, &provider, block_number)?;
 
         program_inputs.push((block.clone(), exec_witness));
 
