@@ -1,16 +1,15 @@
 use crate::{StatelessTrie, StatelessTrieError, WitnessDbError};
 use alloc::{collections::VecDeque, format, vec::Vec};
 use alloy_primitives::{Address, B256, U256, keccak256, map::B256IndexMap};
-use alloy_rlp::{Decodable, Encodable};
+use alloy_rlp::Decodable;
 use alloy_rpc_types_debug::ExecutionWitness;
 use alloy_trie::{EMPTY_ROOT_HASH, TrieAccount, nodes::TrieNode};
 use itertools::Itertools;
 use reth_trie_common::{
     BranchNodeMasks, DecodedMultiProofV2, HashedPostState, Nibbles, ProofTrieNodeV2,
-    TRIE_ACCOUNT_RLP_MAX_SIZE,
 };
 use reth_trie_sparse::{
-    RevealableSparseTrie, SparseStateTrie, SparseTrie,
+    RevealableSparseTrie, SparseStateTrie,
     errors::SparseStateTrieResult,
     provider::{DefaultTrieNodeProvider, DefaultTrieNodeProviderFactory},
 };
@@ -332,31 +331,10 @@ fn calculate_state_root(
     }
 
     // 2. Apply account‑level updates and (re)encode the account nodes
-    // Update accounts with new values
-    let mut account_rlp_buf = Vec::with_capacity(TRIE_ACCOUNT_RLP_MAX_SIZE);
-
     for (hashed_address, account) in
         state.accounts.into_iter().sorted_unstable_by_key(|(addr, _)| *addr)
     {
-        let nibbles = Nibbles::unpack(hashed_address);
-
-        // Determine which storage root should be used for this account
-        let storage_root = if let Some(storage_trie) = trie.storage_trie_mut(&hashed_address) {
-            storage_trie.root()
-        } else if let Some(value) = trie.get_account_value(&hashed_address) {
-            TrieAccount::decode(&mut &value[..])?.storage_root
-        } else {
-            EMPTY_ROOT_HASH
-        };
-
-        // Decide whether to remove or update the account leaf
-        if let Some(account) = account {
-            account_rlp_buf.clear();
-            account.into_trie_account(storage_root).encode(&mut account_rlp_buf);
-            trie.update_account_leaf(nibbles, account_rlp_buf.clone(), &provider_factory)?;
-        } else {
-            trie.remove_account_leaf(&nibbles, &provider_factory)?;
-        }
+        trie.update_account_stateless(hashed_address, account, &provider_factory)?;
     }
 
     // Return new state root
