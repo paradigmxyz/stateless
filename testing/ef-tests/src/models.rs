@@ -1,6 +1,9 @@
 //! Shared models for <https://github.com/ethereum/tests>
 
-use crate::{Error, assert::{assert_equal, assert_equal_bytes_vecs}};
+use crate::{
+    Error,
+    assert::{assert_equal, assert_equal_bytes_vecs},
+};
 use alloy_consensus::Header as RethHeader;
 use alloy_eips::eip4895::Withdrawals;
 use alloy_genesis::GenesisAccount;
@@ -362,8 +365,6 @@ pub enum ForkSpec {
     CancunToPragueAtTime15k,
     /// Prague
     Prague,
-    /// Prague to Osaka at time 15k
-    PragueToOsakaAtTime15k,
     /// Osaka
     Osaka,
     /// Prague to Osaka at time 15k
