@@ -23,8 +23,10 @@ use reth_provider::{
     test_utils::create_test_provider_factory_with_chain_spec,
 };
 use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnessRecord};
-use reth_trie::{HashedPostState, KeccakKeyHasher, StateRoot};
-use reth_trie_db::DatabaseStateRoot;
+use reth_trie::{ExecutionWitnessMode, HashedPostState, KeccakKeyHasher, StateRoot};
+use reth_trie_db::{
+    DatabaseHashedCursorFactory, DatabaseStateRoot, DatabaseTrieCursorFactory, LegacyKeyAdapter,
+};
 use stateless::{
     ExecutionWitness, UncompressedPublicKey, validation::stateless_validation_with_trie,
 };
@@ -136,9 +138,10 @@ impl BlockchainTestCase {
     pub fn run_single_case(
         name: &str,
         case: &BlockchainTest,
+        witness_mode: ExecutionWitnessMode,
     ) -> Result<Vec<(RecoveredBlock<Block>, ExecutionWitness)>, Error> {
         let expectation = Self::expected_failure(case);
-        match run_case(case) {
+        match run_case(case, witness_mode) {
             // All blocks executed successfully.
             Ok(program_inputs) => {
                 // Check if the test case specifies that it should have failed
@@ -200,6 +203,14 @@ impl Case for BlockchainTestCase {
         })
     }
 
+    fn test_names(&self) -> Vec<&str> {
+        self.tests.keys().map(|s| s.as_str()).collect()
+    }
+
+    fn filter_by_name(&mut self, filter: &str) {
+        self.tests.retain(|name, _| name.contains(filter));
+    }
+
     /// Runs the test cases for the Ethereum Forks test suite.
     ///
     /// # Errors
@@ -217,7 +228,7 @@ impl Case for BlockchainTestCase {
             .par_bridge_buffered()
             .with_min_len(64)
             .try_for_each(|(name, case)| {
-                Self::run_single_case(&name, &case)
+                Self::run_single_case(&name, &case, ExecutionWitnessMode::Canonical)
                     .map(|_| ())
                     .map_err(|err| Error::TestCaseFailed { name, err: Box::new(err) })
             })
@@ -240,15 +251,17 @@ impl Case for BlockchainTestCase {
 ///   witness if the error is of variant `BlockProcessingFailed`.
 fn run_case(
     case: &BlockchainTest,
+    witness_mode: ExecutionWitnessMode,
 ) -> Result<Vec<(RecoveredBlock<Block>, ExecutionWitness)>, Error> {
     match EfTestTrie::from_env()? {
-        EfTestTrie::Default => run_case_with_trie::<StatelessSparseTrie>(case),
-        EfTestTrie::Zeth => run_case_with_trie::<SparseState>(case),
+        EfTestTrie::Default => run_case_with_trie::<StatelessSparseTrie>(case, witness_mode),
+        EfTestTrie::Zeth => run_case_with_trie::<SparseState>(case, witness_mode),
     }
 }
 
 fn run_case_with_trie<T>(
     case: &BlockchainTest,
+    witness_mode: ExecutionWitnessMode,
 ) -> Result<Vec<(RecoveredBlock<Block>, ExecutionWitness)>, Error>
 where
     T: StatelessTrie,
@@ -321,7 +334,7 @@ where
 
         let output = executor
             .execute_with_state_closure_always(&(*block).clone(), |statedb: &State<_>| {
-                witness_record.record_executed_state(statedb);
+                witness_record.record_executed_state(statedb, witness_mode);
             })
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
@@ -333,7 +346,11 @@ where
         // TODO: Most of this code is copy-pasted from debug_executionWitness
         let ExecutionWitnessRecord { hashed_state, codes, keys, lowest_block_number } =
             witness_record;
-        let state = state_provider.witness(Default::default(), hashed_state)?;
+        let state = state_provider.witness(
+            Default::default(),
+            hashed_state,
+            witness_mode,
+        )?;
         let mut exec_witness = ExecutionWitness { state, codes, keys, headers: Default::default() };
 
         let smallest = lowest_block_number.unwrap_or_else(|| {
@@ -367,7 +384,10 @@ where
         // Compute and check the post state root
         let hashed_state =
             HashedPostState::from_bundle_state::<KeccakKeyHasher>(output.state.state());
-        let (computed_state_root, _) = StateRoot::overlay_root_with_updates(
+        let (computed_state_root, _) = <StateRoot<
+            DatabaseTrieCursorFactory<_, LegacyKeyAdapter>,
+            DatabaseHashedCursorFactory<_>,
+        > as DatabaseStateRoot<_>>::overlay_root_with_updates(
             provider.tx_ref(),
             &hashed_state.clone_into_sorted(),
         )

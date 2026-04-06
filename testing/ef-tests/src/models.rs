@@ -446,9 +446,6 @@ impl ForkSpec {
                 .prague_activated()
                 .with_fork(EthereumHardfork::Osaka, ForkCondition::Timestamp(15_000)),
             Self::Osaka => spec_builder.osaka_activated(),
-            Self::PragueToOsakaAtTime15k => spec_builder
-                .prague_activated()
-                .with_fork(EthereumHardfork::Osaka, ForkCondition::Timestamp(15_000)),
             Self::OsakaToBpo1AtTime15k => spec_builder
                 .osaka_activated()
                 .with_fork(EthereumHardfork::Bpo1, ForkCondition::Timestamp(15_000)),

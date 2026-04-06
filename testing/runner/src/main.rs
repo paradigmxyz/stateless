@@ -12,6 +12,10 @@ use tempfile::TempDir;
 pub struct TestRunnerCommand {
     /// Path to the test suite (local directory or URL to a .tar.gz archive)
     suite_path: String,
+
+    /// Optional filter: only run test cases whose path contains this substring
+    #[arg(long)]
+    filter: Option<String>,
 }
 
 /// Resolve the suite path to a local directory.
@@ -45,5 +49,10 @@ fn resolve_suite_path(input: &str) -> (PathBuf, Option<TempDir>) {
 fn main() {
     let cmd = TestRunnerCommand::parse();
     let (suite_path, _temp_dir) = resolve_suite_path(&cmd.suite_path);
-    BlockchainTests::new(suite_path.join("blockchain_tests")).run();
+    let tests = BlockchainTests::new(suite_path.join("blockchain_tests"));
+    if let Some(filter) = cmd.filter {
+        tests.run_with_filter(&filter);
+    } else {
+        tests.run();
+    }
 }
