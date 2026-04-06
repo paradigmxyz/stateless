@@ -22,7 +22,7 @@ use reth_provider::{
     test_utils::create_test_provider_factory_with_chain_spec_and_db_args,
 };
 use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnessRecord};
-use reth_trie::{HashedPostState, KeccakKeyHasher, StateRoot};
+use reth_trie::{ExecutionWitnessMode, HashedPostState, KeccakKeyHasher, StateRoot};
 use reth_trie_db::{
     DatabaseHashedCursorFactory, DatabaseStateRoot, DatabaseTrieCursorFactory, LegacyKeyAdapter,
 };
@@ -348,8 +348,12 @@ where
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
         // Generate the stateless witness
-        let exec_witness =
-            witness_record.into_execution_witness(&state_provider, &provider, block_number)?;
+        let exec_witness = witness_record.into_execution_witness(
+            &state_provider,
+            &provider,
+            block_number,
+            witness_mode,
+        )?;
 
         program_inputs.push((block.clone(), exec_witness));
 
