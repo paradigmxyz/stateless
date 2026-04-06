@@ -1,5 +1,5 @@
 //! Command-line interface for running tests.
-use std::{collections::HashSet, fs, path::PathBuf};
+use std::{collections::BTreeSet, fs, path::PathBuf};
 
 use clap::Parser;
 use ef_tests::{Suite, cases::blockchain_test::BlockchainTests};
@@ -66,7 +66,7 @@ fn main() {
                 .map(String::from)
                 .collect()
         }
-        None => HashSet::new(),
+        None => BTreeSet::new(),
     };
 
     let (suite_path, _temp_dir) = resolve_suite_path(&cmd.suite_path);
