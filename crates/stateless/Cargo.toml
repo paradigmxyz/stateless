@@ -25,7 +25,7 @@ alloy-genesis = { workspace = true, features = ["serde-bincode-compat"] }
 # reth
 reth-ethereum-consensus.workspace = true
 reth-primitives-traits.workspace = true
-reth-ethereum-primitives = { workspace = true, features = ["serde", "serde-bincode-compat"] }
+reth-ethereum-primitives = { workspace = true, features = ["serde"] }
 reth-evm.workspace = true
 reth-trie-common.workspace = true
 reth-chainspec.workspace = true

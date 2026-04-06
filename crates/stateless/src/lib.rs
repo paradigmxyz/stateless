@@ -70,9 +70,6 @@ use reth_ethereum_primitives::Block;
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct StatelessInput {
     /// The block being executed in the stateless validation function
-    #[serde_as(
-        as = "reth_primitives_traits::serde_bincode_compat::Block<reth_ethereum_primitives::TransactionSigned, alloy_consensus::Header>"
-    )]
     pub block: Block,
     /// `ExecutionWitness` for the stateless validation function
     pub witness: ExecutionWitness,

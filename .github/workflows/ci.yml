@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  LIBZ_SYS_STATIC: 0
 
 jobs:
   lint:
