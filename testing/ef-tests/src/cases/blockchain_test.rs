@@ -30,7 +30,7 @@ use stateless::{
     ExecutionWitness, UncompressedPublicKey, validation::stateless_validation_with_trie,
 };
 use std::{
-    collections::{BTreeMap, HashSet},
+    collections::{BTreeMap, BTreeSet},
     env, fs,
     path::{Path, PathBuf},
     sync::Arc,
@@ -69,12 +69,12 @@ impl EfTestTrie {
 pub struct BlockchainTests {
     suite_path: PathBuf,
     /// Test paths to skip (relative to `suite_path`)
-    skip_tests: HashSet<String>,
+    skip_tests: BTreeSet<String>,
 }
 
 impl BlockchainTests {
     /// Create a new suite for tests with blockchain tests format.
-    pub fn new(suite_path: PathBuf, skip_tests: HashSet<String>) -> Self {
+    pub fn new(suite_path: PathBuf, skip_tests: BTreeSet<String>) -> Self {
         Self { suite_path, skip_tests }
     }
 }
