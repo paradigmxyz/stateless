@@ -15,6 +15,11 @@ pub trait Suite {
     /// The path to the test suite directory.
     fn suite_path(&self) -> &Path;
 
+    /// Returns `true` if the test at the given absolute path should be skipped.
+    fn should_skip(&self, _path: &Path) -> bool {
+        false
+    }
+
     /// Run all test cases in the suite.
     fn run(&self) {
         let suite_path = self.suite_path();
@@ -32,15 +37,11 @@ pub trait Suite {
 
         let test_cases = find_all_files_with_extension(suite_path, ".json")
             .into_iter()
+            .filter(|path| !self.should_skip(path))
             .filter_map(|test_case_path| {
-                let mut case =
-                    Self::Case::load(&test_case_path).expect("test case should load");
+                let mut case = Self::Case::load(&test_case_path).expect("test case should load");
                 case.filter_by_name(filter);
-                if case.test_names().is_empty() {
-                    None
-                } else {
-                    Some((test_case_path, case))
-                }
+                if case.test_names().is_empty() { None } else { Some((test_case_path, case)) }
             })
             .collect::<Vec<_>>();
 
@@ -70,6 +71,7 @@ pub trait Suite {
         // Find all files with the ".json" extension in the test suite directory
         let test_cases = find_all_files_with_extension(&suite_path, ".json")
             .into_iter()
+            .filter(|path| !self.should_skip(path))
             .map(|test_case_path| {
                 let case = Self::Case::load(&test_case_path).expect("test case should load");
                 (test_case_path, case)

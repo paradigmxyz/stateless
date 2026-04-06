@@ -1,5 +1,5 @@
 //! Command-line interface for running tests.
-use std::path::PathBuf;
+use std::{collections::HashSet, fs, path::PathBuf};
 
 use clap::Parser;
 use ef_tests::{Suite, cases::blockchain_test::BlockchainTests};
@@ -16,6 +16,11 @@ pub struct TestRunnerCommand {
     /// Optional filter: only run test cases whose path contains this substring
     #[arg(long)]
     filter: Option<String>,
+
+    /// Path to a file containing test file names to skip (one per line).
+    /// Lines starting with '#' and empty lines are ignored.
+    #[arg(long)]
+    skip: Option<PathBuf>,
 }
 
 /// Resolve the suite path to a local directory.
@@ -48,8 +53,24 @@ fn resolve_suite_path(input: &str) -> (PathBuf, Option<TempDir>) {
 
 fn main() {
     let cmd = TestRunnerCommand::parse();
+
+    let skip_tests = match &cmd.skip {
+        Some(skip_path) => {
+            let content = fs::read_to_string(skip_path).unwrap_or_else(|e| {
+                panic!("failed to read skip file {}: {e}", skip_path.display())
+            });
+            content
+                .lines()
+                .map(str::trim)
+                .filter(|line| !line.is_empty() && !line.starts_with('#'))
+                .map(String::from)
+                .collect()
+        }
+        None => HashSet::new(),
+    };
+
     let (suite_path, _temp_dir) = resolve_suite_path(&cmd.suite_path);
-    let tests = BlockchainTests::new(suite_path.join("blockchain_tests"));
+    let tests = BlockchainTests::new(suite_path.join("blockchain_tests"), skip_tests);
     if let Some(filter) = cmd.filter {
         tests.run_with_filter(&filter);
     } else {
