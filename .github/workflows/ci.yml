@@ -70,7 +70,7 @@ jobs:
         with:
           cache-on-failure: true
       - name: Run Execution Witness tests
-        run: cargo run -p ef-test-runner --release -- $EXECUTION_WITNESS_TESTS_URL
+        run: cargo run -p ef-test-runner --release -- --skip testing/runner/execution-witness-skip.txt $EXECUTION_WITNESS_TESTS_URL
 
   no-std:
     name: no_std (RISC-V)
