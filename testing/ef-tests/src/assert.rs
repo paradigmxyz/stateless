@@ -1,7 +1,7 @@
 //! Various assertion helpers.
 
-use alloy_primitives::Bytes;
 use crate::Error;
+use alloy_primitives::Bytes;
 use std::{collections::BTreeSet, fmt::Debug};
 
 /// A helper like `assert_eq!` that instead returns `Err(Error::Assertion)` on failure.
