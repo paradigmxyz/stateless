@@ -45,23 +45,23 @@ stateless = { path = "crates/stateless" }
 tries = { path = "crates/tries" }
 
 # reth
-reth-chainspec = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64", default-features = false }
-reth-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64", default-features = false }
-reth-db = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64" }
-reth-db-api = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64" }
-reth-db-common = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64" }
-reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64", default-features = false }
-reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64", default-features = false }
-reth-evm = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64", default-features = false }
-reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64" }
+reth-chainspec = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a", default-features = false }
+reth-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a", default-features = false }
+reth-db = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a" }
+reth-db-api = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a" }
+reth-db-common = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a" }
+reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a", default-features = false }
+reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a", default-features = false }
+reth-evm = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a", default-features = false }
+reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a" }
 reth-primitives-traits = { version = "0.1.0", default-features = false }
-reth-provider = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64" }
-reth-revm = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64", default-features = false }
-reth-tracing = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64" }
-reth-trie = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64" }
-reth-trie-common = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64", default-features = false }
-reth-trie-db = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64" }
-reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", rev = "6dac6974b4337822e2ce0dfe6d06fcc6c2b30a64", default-features = false }
+reth-provider = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a" }
+reth-revm = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a", default-features = false }
+reth-tracing = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a" }
+reth-trie = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a" }
+reth-trie-common = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a", default-features = false }
+reth-trie-db = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a" }
+reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", rev = "a05960ab07acae0d933a5a2cd69a11044719841a", default-features = false }
 
 # alloy
 alloy-consensus = { version = "1.8", default-features = false }
