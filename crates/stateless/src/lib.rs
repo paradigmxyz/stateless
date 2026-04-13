@@ -45,6 +45,8 @@ pub use recover_block::recover_block_with_public_keys;
 #[doc(inline)]
 pub use tries::StatelessTrie;
 #[doc(inline)]
+pub use validation::StatelessValidationOutput;
+#[doc(inline)]
 pub use validation::stateless_validation;
 #[doc(inline)]
 pub use validation::stateless_validation_recovered;

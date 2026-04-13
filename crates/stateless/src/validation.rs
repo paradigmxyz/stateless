@@ -11,6 +11,7 @@ use alloc::{
     vec::Vec,
 };
 use alloy_consensus::{BlockHeader, Header};
+use alloy_eips::eip7928::BlockAccessList;
 use alloy_primitives::{B256, keccak256};
 use reth_chainspec::{EthChainSpec, EthereumHardforks};
 use reth_consensus::ConsensusError;
@@ -125,6 +126,17 @@ impl From<StatelessTrieError> for StatelessValidationError {
     }
 }
 
+/// Output of successful stateless block validation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StatelessValidationOutput {
+    /// Hash of the validated block.
+    pub block_hash: B256,
+    /// Execution output produced while validating the block.
+    pub execution_output: BlockExecutionOutput<EthereumReceipt>,
+    /// Block access list produced during execution, if available.
+    pub block_access_list: Option<BlockAccessList>,
+}
+
 /// Performs stateless validation of a block using the provided witness data.
 pub fn stateless_validation<ChainSpec, E>(
     current_block: Block,
@@ -132,7 +144,7 @@ pub fn stateless_validation<ChainSpec, E>(
     witness: ExecutionWitness,
     chain_spec: Arc<ChainSpec>,
     evm_config: E,
-) -> Result<(B256, BlockExecutionOutput<EthereumReceipt>), StatelessValidationError>
+) -> Result<StatelessValidationOutput, StatelessValidationError>
 where
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
     E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
@@ -153,7 +165,7 @@ pub fn stateless_validation_with_trie<T, ChainSpec, E>(
     witness: ExecutionWitness,
     chain_spec: Arc<ChainSpec>,
     evm_config: E,
-) -> Result<(B256, BlockExecutionOutput<EthereumReceipt>), StatelessValidationError>
+) -> Result<StatelessValidationOutput, StatelessValidationError>
 where
     T: StatelessTrie,
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
@@ -175,7 +187,7 @@ pub fn stateless_validation_recovered<ChainSpec, E>(
     witness: ExecutionWitness,
     chain_spec: Arc<ChainSpec>,
     evm_config: E,
-) -> Result<(B256, BlockExecutionOutput<EthereumReceipt>), StatelessValidationError>
+) -> Result<StatelessValidationOutput, StatelessValidationError>
 where
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
     E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
@@ -194,7 +206,7 @@ pub fn stateless_validation_recovered_with_trie<T, ChainSpec, E>(
     witness: ExecutionWitness,
     chain_spec: Arc<ChainSpec>,
     evm_config: E,
-) -> Result<(B256, BlockExecutionOutput<EthereumReceipt>), StatelessValidationError>
+) -> Result<StatelessValidationOutput, StatelessValidationError>
 where
     T: StatelessTrie,
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
@@ -266,7 +278,11 @@ where
         });
     }
 
-    Ok((current_block.hash_slow(), output))
+    Ok(StatelessValidationOutput {
+        block_hash: current_block.hash_slow(),
+        execution_output: output,
+        block_access_list,
+    })
 }
 
 fn validate_block_consensus<ChainSpec>(
