@@ -52,7 +52,7 @@ impl Trie {
     /// It panics when neither inclusion nor exclusion of the key can be guaranteed.
     #[inline]
     pub fn get(&self, key: impl AsRef<[u8]>) -> Option<&[u8]> {
-        self.0.get(NibbleSlice::from(&Nibbles::unpack(key))).map(|b| b.as_ref())
+        self.0.get(NibbleSlice::from(Nibbles::unpack(key))).map(|b| b.as_ref())
     }
 
     /// Inserts a key-value pair into the trie.
@@ -67,7 +67,7 @@ impl Trie {
     ///   (i.e., the node is represented by a digest and the full node is not available).
     #[inline]
     pub fn insert(&mut self, key: impl AsRef<[u8]>, value: impl Into<Bytes>) {
-        self.0.insert(NibbleSlice::from(&Nibbles::unpack(key)), value.into());
+        self.0.insert(NibbleSlice::from(Nibbles::unpack(key)), value.into());
     }
 
     /// Removes a key-value pair from the trie.
@@ -86,7 +86,7 @@ impl Trie {
     ///   potential issue with the trie's construction.
     #[inline]
     pub fn remove(&mut self, key: impl AsRef<[u8]>) -> bool {
-        self.0.remove(NibbleSlice::from(&Nibbles::unpack(key)))
+        self.0.remove(NibbleSlice::from(Nibbles::unpack(key)))
     }
 
     /// Returns the number of full nodes in the trie.
@@ -252,7 +252,7 @@ impl CachedTrie {
     /// See [`Trie::get`] for detailed documentation.
     #[inline]
     pub fn get(&self, key: impl AsRef<[u8]>) -> Option<&[u8]> {
-        self.inner.get(NibbleSlice::from(&Nibbles::unpack(key))).map(|b| b.as_ref())
+        self.inner.get(NibbleSlice::from(Nibbles::unpack(key))).map(|b| b.as_ref())
     }
 
     /// Inserts a key-value pair into the trie.
@@ -260,7 +260,7 @@ impl CachedTrie {
     /// See [`Trie::insert`] for detailed documentation.
     #[inline]
     pub fn insert(&mut self, key: impl AsRef<[u8]>, value: impl Into<Bytes>) {
-        self.inner.insert(NibbleSlice::from(&Nibbles::unpack(key)), value.into());
+        self.inner.insert(NibbleSlice::from(Nibbles::unpack(key)), value.into());
         self.hash = None;
     }
 
@@ -269,7 +269,7 @@ impl CachedTrie {
     /// See [`Trie::remove`] for detailed documentation.
     #[inline]
     pub fn remove(&mut self, key: impl AsRef<[u8]>) -> bool {
-        if !self.inner.remove(NibbleSlice::from(&Nibbles::unpack(key))) {
+        if !self.inner.remove(NibbleSlice::from(Nibbles::unpack(key))) {
             return false;
         }
         self.hash = None;

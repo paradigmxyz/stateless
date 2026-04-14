@@ -23,6 +23,7 @@ use reth_provider::{
 };
 use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnessRecord};
 use reth_trie::{HashedPostState, KeccakKeyHasher, StateRoot};
+use reth_trie_common::ExecutionWitnessMode;
 use reth_trie_db::{
     DatabaseHashedCursorFactory, DatabaseStateRoot, DatabaseTrieCursorFactory, LegacyKeyAdapter,
 };
@@ -321,7 +322,7 @@ where
 
         let output = executor
             .execute_with_state_closure_always(&(*block).clone(), |statedb: &State<_>| {
-                witness_record.record_executed_state(statedb);
+                witness_record.record_executed_state(statedb, ExecutionWitnessMode::default());
             })
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
@@ -330,8 +331,12 @@ where
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
         // Generate the stateless witness
-        let exec_witness =
-            witness_record.into_execution_witness(&state_provider, &provider, block_number)?;
+        let exec_witness = witness_record.into_execution_witness(
+            &state_provider,
+            &provider,
+            block_number,
+            ExecutionWitnessMode::default(),
+        )?;
 
         program_inputs.push((block.clone(), exec_witness));
 

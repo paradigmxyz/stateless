@@ -70,7 +70,7 @@ impl Trie {
         I: IntoIterator<Item = T>,
         T: AsRef<[u8]>,
     {
-        self.0.resolve_orphan(NibbleSlice::from(&Nibbles::unpack(key)), proof)
+        self.0.resolve_orphan(NibbleSlice::from(Nibbles::unpack(key)), proof)
     }
 }
 
@@ -85,7 +85,7 @@ impl CachedTrie {
         I: IntoIterator<Item = T>,
         T: AsRef<[u8]>,
     {
-        self.inner.resolve_orphan(NibbleSlice::from(&Nibbles::unpack(key)), proof)
+        self.inner.resolve_orphan(NibbleSlice::from(Nibbles::unpack(key)), proof)
     }
 }
 
@@ -93,7 +93,7 @@ impl<M: Memoization + Clone> Node<M> {
     /// Attempts to resolve orphaned branch children caused by removing a key-value pair.
     pub(super) fn resolve_orphan<T: AsRef<[u8]>>(
         &mut self,
-        key: NibbleSlice<'_>,
+        key: NibbleSlice,
         proof: impl IntoIterator<Item = T>,
     ) -> Result<(), Error> {
         assert!(self.get(key).is_some(), "key not contained");
@@ -101,7 +101,7 @@ impl<M: Memoization + Clone> Node<M> {
         let Some((diverging, unmatched)) = other.diverging(key) else {
             return Ok(());
         };
-        let matched = key.strip_suffix(&unmatched).unwrap();
+        let matched = key.strip_suffix(unmatched.as_nibbles()).unwrap();
 
         match diverging {
             Node::Null => {
@@ -114,7 +114,7 @@ impl<M: Memoization + Clone> Node<M> {
                 // split the first nibble which used to belong to the Branch
                 let (idx, suffix) = unmatched.split_first().expect("empty unmatched key");
                 // this can only be an orphan, if it is currently a Digest child of a Branch
-                if !self.is_branch_with_digest(&matched.join(common), idx) {
+                if !self.is_branch_with_digest(matched.join(common), idx) {
                     return Ok(());
                 }
 
@@ -130,7 +130,7 @@ impl<M: Memoization + Clone> Node<M> {
                 // split the first nibble which used to belong to the Branch
                 let (idx, suffix) = unmatched.split_first().expect("empty unmatched key");
                 // this can only be an orphan, if it is currently a Digest child of a Branch
-                if !self.is_branch_with_digest(&matched.join(common), idx) {
+                if !self.is_branch_with_digest(matched.join(common), idx) {
                     return Ok(());
                 }
 
@@ -149,7 +149,7 @@ impl<M: Memoization + Clone> Node<M> {
                     // the path to the orphan corresponds exactly to the path of the Extension-child
                     let orphan_prefix = matched.join(prefix);
                     // maybe the trie already contains a node with this prefix
-                    if self.contains_prefix(&orphan_prefix) {
+                    if self.contains_prefix(orphan_prefix) {
                         // in this case, the removal will not fail and nothing needs to be resolved
                         return Ok(());
                     }
@@ -176,11 +176,11 @@ impl<M: Memoization + Clone> Node<M> {
     ///
     /// If the key is present in the trie, this method returns `None`. Otherwise, it returns the
     /// node where the search for the key would fail, along with the unmatched portion of the key.
-    fn diverging<'a>(&'a self, key: NibbleSlice<'a>) -> Option<(&'a Node<M>, NibbleSlice<'a>)> {
+    fn diverging(&self, key: NibbleSlice) -> Option<(&Node<M>, NibbleSlice)> {
         match self {
             Node::Null => Some((&Node::Null, key)),
 
-            Node::Leaf(prefix, ..) if prefix == key.as_slice() => None,
+            Node::Leaf(prefix, ..) if prefix == key.as_nibbles() => None,
             Node::Leaf(..) => Some((self, key)),
 
             Node::Extension(prefix, child, _) => {
@@ -199,7 +199,7 @@ impl<M: Memoization + Clone> Node<M> {
         }
     }
 
-    fn contains_prefix<'a>(&'a self, key: impl Into<NibbleSlice<'a>>) -> bool {
+    fn contains_prefix(&self, key: impl Into<NibbleSlice>) -> bool {
         match self.diverging(key.into()) {
             None => true,                                 // contains the prefix as a key
             Some((Node::Digest(_), _)) => false,          // prefix not resolved
@@ -208,7 +208,7 @@ impl<M: Memoization + Clone> Node<M> {
     }
 
     /// Returns whether the node at key is a Branch which has a Digest child at idx.
-    fn is_branch_with_digest<'a>(&'a self, key: impl Into<NibbleSlice<'a>>, idx: u8) -> bool {
+    fn is_branch_with_digest(&self, key: impl Into<NibbleSlice>, idx: u8) -> bool {
         match self.diverging(key.into()) {
             // match only if, the node found is a `Node::Branch` and the *entire* key was consumed
             Some((Node::Branch(children, ..), unmatched)) if unmatched.is_empty() => {

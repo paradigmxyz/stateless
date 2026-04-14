@@ -409,19 +409,28 @@ fn encode_list_header(payload_length: usize) -> Vec<u8> {
 
 #[inline]
 fn decode_path(buf: &mut &[u8]) -> alloy_rlp::Result<(Nibbles, bool)> {
-    let path = Nibbles::unpack(Header::decode_bytes(buf, false)?);
-    if path.len() < 2 {
+    let compact = Header::decode_bytes(buf, false)?;
+    if compact.is_empty() {
         return Err(alloy_rlp::Error::InputTooShort);
     }
-    let (is_leaf, odd_nibbles) = match path[0] {
+    let (is_leaf, odd_len) = match compact[0] >> 4 {
         0b0000 => (false, false),
         0b0001 => (false, true),
         0b0010 => (true, false),
         0b0011 => (true, true),
         _ => return Err(alloy_rlp::Error::Custom("node is not an extension or leaf")),
     };
-    let prefix = if odd_nibbles { &path[1..] } else { &path[2..] };
-    Ok((Nibbles::from_nibbles_unchecked(prefix), is_leaf))
+    // Strip the HP prefix: for odd length, the first nibble of the key is in the low nibble
+    // of the first byte; for even length, skip the first byte entirely.
+    let nibbles = if odd_len {
+        let first = compact[0] & 0x0f;
+        let mut n = Nibbles::from_nibbles_unchecked([first]);
+        n.extend(&Nibbles::unpack(&compact[1..]));
+        n
+    } else {
+        Nibbles::unpack(&compact[1..])
+    };
+    Ok((nibbles, is_leaf))
 }
 
 fn encode_list<B, T>(values: &[B]) -> Vec<u8>

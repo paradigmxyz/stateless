@@ -81,10 +81,10 @@ impl<M> Eq for Node<M> {}
 
 impl<M: Memoization> Node<M> {
     /// Retrieves the value associated with a given key.
-    pub(super) fn get(&self, key: NibbleSlice<'_>) -> Option<&Bytes> {
+    pub(super) fn get(&self, key: NibbleSlice) -> Option<&Bytes> {
         match self {
             Node::Null => None,
-            Node::Leaf(prefix, value, _) if prefix == key.as_slice() => Some(value),
+            Node::Leaf(prefix, value, _) if prefix == key.as_nibbles() => Some(value),
             Node::Leaf(..) => None,
             Node::Extension(prefix, child, _) => {
                 key.strip_prefix(prefix).and_then(|tail| child.get(tail))
@@ -102,14 +102,14 @@ impl<M: Memoization> Node<M> {
     }
 
     /// Inserts a key-value pair into the trie.
-    pub(super) fn insert(&mut self, key: NibbleSlice<'_>, value: Bytes) {
+    pub(super) fn insert(&mut self, key: NibbleSlice, value: Bytes) {
         assert!(!value.is_empty());
         match self {
             Node::Null => {
                 *self = Node::Leaf(key.into(), value, M::default());
             }
             Node::Leaf(prefix, leaf_val, cache) => {
-                let (common, key_rem, prefix_rem) = key.split_common_prefix(&*prefix);
+                let (common, key_rem, prefix_rem) = key.split_common_prefix(*prefix);
                 if common.len() == prefix.len() && common.len() == key.len() {
                     *leaf_val = value;
                     cache.clear();
@@ -143,7 +143,7 @@ impl<M: Memoization> Node<M> {
                 };
             }
             Node::Extension(prefix, child, cache) => {
-                let (common, key_rem, prefix_rem) = key.split_common_prefix(&*prefix);
+                let (common, key_rem, prefix_rem) = key.split_common_prefix(*prefix);
                 if common.len() == prefix.len() {
                     child.insert(key_rem, value);
                     cache.clear();
@@ -153,17 +153,14 @@ impl<M: Memoization> Node<M> {
                 }
 
                 let mut children = Children::default();
-                match prefix_rem.as_slice() {
-                    [nib] => children.insert(*nib, mem::take(child)),
-                    [nib, tail @ ..] => {
-                        // SAFETY: `tail` is a slice of `prefix` and thus only contains nibbles
-                        let prefix = Nibbles::from_nibbles_unchecked(tail);
-                        children.insert(
-                            *nib,
-                            Node::Extension(prefix, mem::take(child), M::default()).into(),
-                        );
-                    }
-                    _ => unreachable!(), // mid < prefix.len()
+                let (nib, tail) = prefix_rem.split_first().expect("mid < prefix.len()");
+                if tail.is_empty() {
+                    children.insert(nib, mem::take(child));
+                } else {
+                    children.insert(
+                        nib,
+                        Node::Extension(tail.into(), mem::take(child), M::default()).into(),
+                    );
                 }
                 match key_rem.split_first() {
                     Some((nib, tail)) => {
@@ -197,16 +194,16 @@ impl<M: Memoization> Node<M> {
     }
 
     /// Removes a key-value pair from the trie.
-    pub(super) fn remove(&mut self, key: NibbleSlice<'_>) -> bool {
+    pub(super) fn remove(&mut self, key: NibbleSlice) -> bool {
         match self {
             Node::Null => false,
-            Node::Leaf(prefix, ..) if prefix == key.as_slice() => {
+            Node::Leaf(prefix, ..) if prefix == key.as_nibbles() => {
                 *self = Node::Null;
                 true
             }
             Node::Leaf(..) => false,
             Node::Extension(prefix, child, cache) => {
-                if !key.strip_prefix(&*prefix).is_some_and(|tail| child.remove(tail)) {
+                if !key.strip_prefix(prefix).is_some_and(|tail| child.remove(tail)) {
                     return false;
                 }
                 cache.clear();
@@ -215,11 +212,11 @@ impl<M: Memoization> Node<M> {
                 match **child {
                     Node::Null => *self = Node::Null,
                     Node::Leaf(ref extension, ref mut value, _) => {
-                        prefix.extend_from_slice(extension);
+                        prefix.extend(extension);
                         *self = Node::Leaf(mem::take(prefix), mem::take(value), M::default())
                     }
                     Node::Extension(ref extension, ref mut child, _) => {
-                        prefix.extend_from_slice(extension);
+                        prefix.extend(extension);
                         *self = Node::Extension(mem::take(prefix), mem::take(child), M::default())
                     }
                     Node::Branch(..) => {}
@@ -244,20 +241,19 @@ impl<M: Memoization> Node<M> {
                 if let Some((nib, only_child)) = children.take_single_child() {
                     match *only_child {
                         // if the only child is a leaf, prepend the corresponding nib to it
-                        Node::Leaf(mut extension, value, _) => {
-                            // SAFETY: `take_single_child` always returns a nibble
-                            extension.as_mut_vec_unchecked().insert(0, nib);
-                            *self = Node::Leaf(extension, value, M::default());
+                        Node::Leaf(extension, value, _) => {
+                            let mut prefix = Nibbles::from_nibbles_unchecked([nib]);
+                            prefix.extend(&extension);
+                            *self = Node::Leaf(prefix, value, M::default());
                         }
                         // if the only child is an extension, prepend the corresponding nib to it
-                        Node::Extension(mut extension, child, ..) => {
-                            // SAFETY: `take_single_child` always returns a nibble
-                            extension.as_mut_vec_unchecked().insert(0, nib);
-                            *self = Node::Extension(extension, child, M::default());
+                        Node::Extension(extension, child, ..) => {
+                            let mut prefix = Nibbles::from_nibbles_unchecked([nib]);
+                            prefix.extend(&extension);
+                            *self = Node::Extension(prefix, child, M::default());
                         }
                         // if the only child is a branch, convert to an extension
                         Node::Branch(..) => {
-                            // SAFETY: `take_single_child` always returns a nibble
                             let prefix = Nibbles::from_nibbles_unchecked([nib]);
                             *self = Node::Extension(prefix, only_child, M::default());
                         }

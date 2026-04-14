@@ -76,13 +76,13 @@ impl ArchiveWith<Nibbles> for NibblesDef {
     type Resolver = VecResolver;
 
     fn resolve_with(nibbles: &Nibbles, resolver: Self::Resolver, out: Place<Self::Archived>) {
-        ArchivedVec::resolve_from_slice(nibbles, resolver, out);
+        ArchivedVec::resolve_from_slice(&nibbles.to_vec(), resolver, out);
     }
 }
 
 impl<S: Fallible + Allocator + Writer + ?Sized> SerializeWith<Nibbles, S> for NibblesDef {
     fn serialize_with(nibbles: &Nibbles, serializer: &mut S) -> Result<Self::Resolver, S::Error> {
-        ArchivedVec::serialize_from_slice(nibbles, serializer)
+        ArchivedVec::serialize_from_slice(&nibbles.to_vec(), serializer)
     }
 }
 
@@ -93,7 +93,7 @@ where
 {
     fn deserialize_with(f: &ArchivedVec<u8>, deserializer: &mut D) -> Result<Nibbles, D::Error> {
         let vec = <ArchivedVec<u8> as Deserialize<Vec<u8>, D>>::deserialize(f, deserializer)?;
-        Ok(Nibbles::from_vec_unchecked(vec))
+        Ok(Nibbles::from_nibbles_unchecked(vec))
     }
 }
 

@@ -44,31 +44,31 @@ stateless = { path = "crates/stateless" }
 tries = { path = "crates/tries" }
 
 # reth
-reth-chainspec = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-db = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-db-api = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-db-common = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-evm = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-primitives-traits = { version = "0.1.0", default-features = false }
-reth-provider = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-revm = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-tracing = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-trie = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-trie-common = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
-reth-trie-db = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f" }
-reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", rev = "adc960162f", default-features = false }
+reth-chainspec = { git = "https://github.com/paradigmxyz/reth", rev = "a511362", default-features = false }
+reth-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "a511362", default-features = false }
+reth-db = { git = "https://github.com/paradigmxyz/reth", rev = "a511362" }
+reth-db-api = { git = "https://github.com/paradigmxyz/reth", rev = "a511362" }
+reth-db-common = { git = "https://github.com/paradigmxyz/reth", rev = "a511362" }
+reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "a511362", default-features = false }
+reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", rev = "a511362", default-features = false }
+reth-evm = { git = "https://github.com/paradigmxyz/reth", rev = "a511362", default-features = false }
+reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", rev = "a511362" }
+reth-primitives-traits = { version = "0.2.0", default-features = false }
+reth-provider = { git = "https://github.com/paradigmxyz/reth", rev = "a511362" }
+reth-revm = { git = "https://github.com/paradigmxyz/reth", rev = "a511362", default-features = false }
+reth-tracing = { git = "https://github.com/paradigmxyz/reth", rev = "a511362" }
+reth-trie = { git = "https://github.com/paradigmxyz/reth", rev = "a511362" }
+reth-trie-common = { git = "https://github.com/paradigmxyz/reth", rev = "a511362", default-features = false }
+reth-trie-db = { git = "https://github.com/paradigmxyz/reth", rev = "a511362" }
+reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", rev = "a511362", default-features = false }
 
 # alloy
-alloy-consensus = { version = "1.8", default-features = false }
-alloy-eips = { version = "1.8", default-features = false }
-alloy-genesis = { version = "1.8", default-features = false }
-alloy-primitives = { version = "1.5.6", default-features = false, features = ["map-foldhash"] }
+alloy-consensus = { version = "2.0.0", default-features = false }
+alloy-eips = { version = "2.0.0", default-features = false }
+alloy-genesis = { version = "2.0.0", default-features = false }
+alloy-primitives = { version = "1.5.6", default-features = false, features = ["map-foldhash", "map-indexmap"] }
 alloy-rlp = { version = "0.3", default-features = false }
-alloy-rpc-types-debug = { version = "1.8", default-features = false }
+alloy-rpc-types-debug = { version = "2.0.0", default-features = false }
 alloy-trie = { version = "0.9", default-features = false }
 
 # revm

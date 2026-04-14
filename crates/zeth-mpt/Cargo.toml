@@ -9,7 +9,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-alloy-trie = { version = "0.8.0", default-features = false, features = ["ethereum"] }
+alloy-trie = { version = "0.9", default-features = false, features = ["ethereum"] }
 alloy-rlp.workspace = true
 alloy-primitives.workspace = true
 
