@@ -271,6 +271,9 @@ where
     Ok(StatelessValidationOutput {
         block_hash: current_block.hash_slow(),
         execution_output: output,
+        // TODO: populate once reth mainline wires revm's BAL builder (track
+        // https://github.com/paradigmxyz/reth/pull/22881). Requires
+        // State::builder().with_bal_builder() + bump_bal_index() + take_built_alloy_bal().
         block_access_list: None,
     })
 }
