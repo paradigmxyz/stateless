@@ -4,10 +4,9 @@ use crate::{
     Case, Error, Suite,
     models::{BlockchainTest, ForkSpec},
 };
-use alloy_consensus::BlockHeader;
 use alloy_rlp::{Decodable, Encodable};
 use rayon::iter::{IndexedParallelIterator, ParallelIterator};
-use reth_chainspec::{ChainSpec, EthereumHardforks};
+use reth_chainspec::ChainSpec;
 use reth_consensus::{Consensus, HeaderValidator};
 use reth_db_common::init::{insert_genesis_hashes, insert_genesis_history, insert_genesis_state};
 use reth_ethereum_consensus::{EthBeaconConsensus, validate_block_post_execution};
@@ -34,7 +33,7 @@ use stateless::{
     ExecutionWitness, UncompressedPublicKey, validation::stateless_validation_with_trie,
 };
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     env, fs,
     path::{Path, PathBuf},
     sync::Arc,
@@ -72,12 +71,14 @@ impl EfTestTrie {
 #[derive(Debug)]
 pub struct BlockchainTests {
     suite_path: PathBuf,
+    /// Test paths to skip (relative to `suite_path`)
+    skip_tests: BTreeSet<String>,
 }
 
 impl BlockchainTests {
     /// Create a new suite for tests with blockchain tests format.
-    pub const fn new(suite_path: PathBuf) -> Self {
-        Self { suite_path }
+    pub fn new(suite_path: PathBuf, skip_tests: BTreeSet<String>) -> Self {
+        Self { suite_path, skip_tests }
     }
 }
 
@@ -86,6 +87,17 @@ impl Suite for BlockchainTests {
 
     fn suite_path(&self) -> &Path {
         &self.suite_path
+    }
+
+    fn should_skip(&self, path: &Path) -> bool {
+        if self.skip_tests.is_empty() {
+            return false;
+        }
+        // Match against the path relative to the suite root directory.
+        path.strip_prefix(&self.suite_path)
+            .ok()
+            .and_then(|rel| rel.to_str())
+            .is_some_and(|rel| self.skip_tests.contains(rel))
     }
 }
 
@@ -205,6 +217,14 @@ impl Case for BlockchainTestCase {
         })
     }
 
+    fn test_names(&self) -> Vec<&str> {
+        self.tests.keys().map(|s| s.as_str()).collect()
+    }
+
+    fn filter_by_name(&mut self, filter: &str) {
+        self.tests.retain(|name, _| name.contains(filter));
+    }
+
     /// Runs the test cases for the Ethereum Forks test suite.
     ///
     /// # Errors
@@ -221,7 +241,11 @@ impl Case for BlockchainTestCase {
             .filter(|(_, case)| !Self::excluded_fork(case.network))
             .par_bridge_buffered()
             .with_min_len(64)
-            .try_for_each(|(name, case)| Self::run_single_case(&name, &case).map(|_| ()))
+            .try_for_each(|(name, case)| {
+                Self::run_single_case(&name, &case).map(|_| ()).map_err(|err| {
+                    Error::TestCaseFailed { name: name.to_owned(), err: Box::new(err) }
+                })
+            })
     }
 }
 
@@ -325,8 +349,6 @@ where
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
         let block_access_list = executor.take_bal();
-        let allow_bal_check =
-            chain_spec.is_amsterdam_active_at_timestamp(block.header().timestamp());
 
         let mut state = executor.into_state();
         witness_record.record_executed_state(&state);
@@ -340,7 +362,6 @@ where
             &output.requests,
             None,
             &block_access_list,
-            allow_bal_check,
             Some(output.gas_used),
         )
         .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
@@ -366,6 +387,14 @@ where
             .collect();
 
         program_inputs.push((block.clone(), exec_witness));
+
+        // Compare the generated witness against the fixture's expected witness (if present)
+        if let Some(expected_witness) = &case.blocks[block_index].execution_witness {
+            let (_, generated_witness) = program_inputs.last().unwrap();
+            expected_witness
+                .assert_matches(generated_witness)
+                .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
+        }
 
         // Compute and check the post state root
         let hashed_state =

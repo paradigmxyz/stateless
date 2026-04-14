@@ -15,6 +15,11 @@ pub trait Suite {
     /// The path to the test suite directory.
     fn suite_path(&self) -> &Path;
 
+    /// Returns `true` if the test at the given absolute path should be skipped.
+    fn should_skip(&self, _path: &Path) -> bool {
+        false
+    }
+
     /// Run all test cases in the suite.
     fn run(&self) {
         let suite_path = self.suite_path();
@@ -24,6 +29,31 @@ pub trait Suite {
                 self.run_only(entry.file_name().to_string_lossy().as_ref());
             }
         }
+    }
+
+    /// Run only test cases whose name contains the given filter substring.
+    fn run_with_filter(&self, filter: &str) {
+        let suite_path = self.suite_path();
+
+        let test_cases = find_all_files_with_extension(suite_path, ".json")
+            .into_iter()
+            .filter(|path| !self.should_skip(path))
+            .filter_map(|test_case_path| {
+                let mut case = Self::Case::load(&test_case_path).expect("test case should load");
+                case.filter_by_name(filter);
+                if case.test_names().is_empty() { None } else { Some((test_case_path, case)) }
+            })
+            .collect::<Vec<_>>();
+
+        if test_cases.is_empty() {
+            eprintln!("No test cases matched filter: {filter}");
+            return;
+        }
+
+        let total: usize = test_cases.iter().map(|(_, c)| c.test_names().len()).sum();
+        eprintln!("Running {total} test(s) matching '{filter}'");
+        let results = Cases { test_cases }.run();
+        assert_tests_pass("filtered", suite_path, &results);
     }
 
     /// Load and run each contained test case for the provided sub-folder.
@@ -41,6 +71,7 @@ pub trait Suite {
         // Find all files with the ".json" extension in the test suite directory
         let test_cases = find_all_files_with_extension(&suite_path, ".json")
             .into_iter()
+            .filter(|path| !self.should_skip(path))
             .map(|test_case_path| {
                 let case = Self::Case::load(&test_case_path).expect("test case should load");
                 (test_case_path, case)

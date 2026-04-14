@@ -239,8 +239,6 @@ where
         .map_err(|e| StatelessValidationError::StatelessExecutionFailed(e.to_string()))?;
 
     let block_access_list = executor.take_bal();
-    let allow_bal_check =
-        chain_spec.is_amsterdam_active_at_timestamp(current_block.header().timestamp());
 
     let mut state = executor.into_state();
     let output = BlockExecutionOutput { state: state.take_bundle(), result };
@@ -252,7 +250,6 @@ where
         &output.requests,
         None,
         &block_access_list,
-        allow_bal_check,
         Some(output.gas_used),
     )
     .map_err(StatelessValidationError::ConsensusValidationFailed)?;

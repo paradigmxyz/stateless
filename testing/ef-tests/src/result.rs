@@ -66,6 +66,15 @@ pub enum Error {
     /// A consensus error occurred.
     #[error("an error occurred during consensus checks: {0}")]
     ConsensusError(#[from] reth_consensus::ConsensusError),
+    /// A named test case within a fixture file failed.
+    #[error("test case `{name}`: {err}")]
+    TestCaseFailed {
+        /// The name of the individual test case within the fixture file.
+        name: String,
+        /// The underlying error.
+        #[source]
+        err: Box<Error>,
+    },
 }
 
 impl Error {

@@ -13,7 +13,7 @@ macro_rules! general_state_test {
                 .join("ethereum-tests")
                 .join("BlockchainTests");
 
-            BlockchainTests::new(suite_path)
+            BlockchainTests::new(suite_path, Default::default())
                 .run_only(&format!("GeneralStateTests/{}", stringify!($dir)));
         }
     };
@@ -93,7 +93,7 @@ macro_rules! blockchain_test {
                 .join("ethereum-tests")
                 .join("BlockchainTests");
 
-            BlockchainTests::new(suite_path).run_only(stringify!($dir));
+            BlockchainTests::new(suite_path, Default::default()).run_only(stringify!($dir));
         }
     };
 }
@@ -112,7 +112,7 @@ fn eest_fixtures() {
         return;
     }
 
-    BlockchainTests::new(suite_path).run();
+    BlockchainTests::new(suite_path, Default::default()).run();
 }
 
 #[test]
@@ -125,7 +125,7 @@ fn bal_fixtures() {
         return;
     }
 
-    BlockchainTests::new(suite_path).run();
+    BlockchainTests::new(suite_path, Default::default()).run();
 }
 
 #[test]
@@ -138,5 +138,5 @@ fn zkevm_fixtures() {
         return;
     }
 
-    BlockchainTests::new(suite_path).run();
+    BlockchainTests::new(suite_path, Default::default()).run();
 }

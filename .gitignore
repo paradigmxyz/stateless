@@ -5,3 +5,4 @@ testing/ef-tests/ethereum-tests
 testing/ef-tests/execution-spec-tests
 testing/ef-tests/zkevm-tests
 testing/ef-tests/bal-tests
+testing/ef-tests/execution-witness-tests

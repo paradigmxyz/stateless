@@ -1,6 +1,9 @@
 //! Shared models for <https://github.com/ethereum/tests>
 
-use crate::{Error, assert::assert_equal};
+use crate::{
+    Error,
+    assert::{assert_equal, assert_equal_bytes_vecs},
+};
 use alloy_consensus::Header as RethHeader;
 use alloy_eips::eip4895::Withdrawals;
 use alloy_genesis::GenesisAccount;
@@ -9,6 +12,7 @@ use reth_chainspec::{ChainSpec, ChainSpecBuilder, EthereumHardfork, ForkConditio
 use reth_db_api::{cursor::DbDupCursorRO, tables, transaction::DbTx};
 use reth_primitives_traits::SealedHeader;
 use serde::Deserialize;
+use stateless::ExecutionWitness;
 use std::{
     collections::BTreeMap,
     ops::Deref,
@@ -142,6 +146,46 @@ pub struct Block {
     pub transaction_sequence: Option<Vec<TransactionSequence>>,
     /// Withdrawals
     pub withdrawals: Option<Withdrawals>,
+    /// Execution witness for stateless validation.
+    pub execution_witness: Option<FixtureExecutionWitness>,
+}
+
+/// Execution witness from test fixtures.
+///
+/// Uses serde aliases to accept both alloy's field names (`state`/`codes`/`headers`)
+/// and the fixture's field names (`nodes`/`bytecodes`/`ancestors`).
+#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Default)]
+pub struct FixtureExecutionWitness {
+    /// Trie nodes / state witness.
+    #[serde(alias = "nodes", default)]
+    pub state: Vec<Bytes>,
+    /// Contract bytecodes.
+    #[serde(alias = "bytecodes", default)]
+    pub codes: Vec<Bytes>,
+    /// Ancestor block headers.
+    #[serde(alias = "ancestors", default)]
+    pub headers: Vec<Bytes>,
+}
+
+impl FixtureExecutionWitness {
+    /// Asserts that the generated [`ExecutionWitness`] matches this fixture witness.
+    ///
+    /// Compares `state`, `codes`, and `headers` fields individually (sorted).
+    /// The `keys` field from the generated witness is ignored since fixtures don't include it.
+    pub fn assert_matches(&self, generated: &ExecutionWitness) -> Result<(), Error> {
+        assert_equal_bytes_vecs(&self.state, &generated.state, "execution witness state (nodes)")?;
+        assert_equal_bytes_vecs(
+            &self.codes,
+            &generated.codes,
+            "execution witness codes (bytecodes)",
+        )?;
+        assert_equal_bytes_vecs(
+            &self.headers,
+            &generated.headers,
+            "execution witness headers (ancestors)",
+        )?;
+        Ok(())
+    }
 }
 
 /// Transaction sequence in block
