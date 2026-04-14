@@ -62,7 +62,7 @@ jobs:
       RUST_LOG: info
       RUST_BACKTRACE: 1
       EF_TEST_TRIE: default
-      EXECUTION_WITNESS_TESTS_URL: https://github.com/jsign/artifacts/releases/download/execution_witness_v0.0.1/execution_witness_tests_409fae8.tar.gz
+      EXECUTION_WITNESS_TESTS_URL: https://github.com/ethereum/execution-spec-tests/releases/download/zkevm@v0.3.3/fixtures_zkevm.tar.gz
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

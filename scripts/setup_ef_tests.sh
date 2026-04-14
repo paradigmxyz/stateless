@@ -3,9 +3,8 @@ set -euo pipefail
 
 ETHEREUM_TESTS_REF="81862e4848585a438d64f911a19b3825f0f4cd95"
 EEST_TESTS_TAG="v4.5.0"
-ZKEVM_TESTS_TAG="zkevm@v0.3.2"
+ZKEVM_TESTS_TAG="zkevm@v0.3.3"
 BAL_TESTS_TAG="bal@v5.6.1"
-EXECUTION_WITNESS_TESTS_URL="https://github.com/jsign/artifacts/releases/download/execution_witness_v0.0.1/execution_witness_tests_409fae8.tar.gz"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EF_TESTS_DIR="$SCRIPT_DIR/../testing/ef-tests"
@@ -48,15 +47,6 @@ if [ ! -d "$EF_TESTS_DIR/bal-tests" ] || [ -z "$(ls -A "$EF_TESTS_DIR/bal-tests"
     curl -L "$URL" | tar -xz --strip-components=1 -C "$EF_TESTS_DIR/bal-tests"
 else
     echo "bal-tests already exists, skipping download."
-fi
-
-# Download EEST execution witness fixtures if not already present
-if [ ! -d "$EF_TESTS_DIR/execution-witness-tests" ] || [ -z "$(ls -A "$EF_TESTS_DIR/execution-witness-tests" 2>/dev/null)" ]; then
-    echo "Downloading EEST execution witness fixtures..."
-    mkdir -p "$EF_TESTS_DIR/execution-witness-tests"
-    curl -L "$EXECUTION_WITNESS_TESTS_URL" | tar -xz --strip-components=1 -C "$EF_TESTS_DIR/execution-witness-tests"
-else
-    echo "execution-witness-tests already exists, skipping download."
 fi
 
 echo "EF test fixtures are ready."
