@@ -19,7 +19,6 @@ tries.workspace = true
 alloy-primitives.workspace = true
 alloy-rlp.workspace = true
 alloy-consensus.workspace = true
-alloy-eips.workspace = true
 alloy-rpc-types-debug.workspace = true
 alloy-genesis = { workspace = true, features = ["serde-bincode-compat"] }
 

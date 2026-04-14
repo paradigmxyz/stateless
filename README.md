@@ -29,17 +29,13 @@ The primary entry point is `stateless_validation`:
 ```rust
 use stateless::{stateless_validation, ExecutionWitness};
 
-let validation = stateless_validation(
+let (block_hash, output) = stateless_validation(
     block,
     public_keys,
     witness,
     chain_spec,
     evm_config,
 )?;
-
-let block_hash = validation.block_hash;
-let output = validation.execution_output;
-let block_access_list = validation.block_access_list;
 ```
 
 ## `no_std`
