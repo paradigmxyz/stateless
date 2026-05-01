@@ -9,6 +9,7 @@ use reth_chainspec::{ChainSpec, ChainSpecBuilder, EthereumHardfork, ForkConditio
 use reth_db_api::{cursor::DbDupCursorRO, tables, transaction::DbTx};
 use reth_primitives_traits::SealedHeader;
 use serde::Deserialize;
+use stateless::ExecutionWitness;
 use std::{
     collections::BTreeMap,
     ops::Deref,
@@ -26,6 +27,8 @@ pub struct BlockchainTest {
     pub genesis_rlp: Option<Bytes>,
     /// Block data.
     pub blocks: Vec<Block>,
+    /// Execution witnesses for each block.
+    pub execution_witnesses: Option<Vec<ExecutionWitness>>,
     /// The expected post state.
     pub post_state: Option<BTreeMap<Address, Account>>,
     /// The test pre-state.
@@ -265,6 +268,8 @@ impl Account {
 /// Fork specification.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Hash, Ord, Clone, Copy, Deserialize)]
 pub enum ForkSpec {
+    /// Amsterdam
+    Amsterdam,
     /// Frontier
     Frontier,
     /// Frontier to Homestead
@@ -354,6 +359,7 @@ impl ForkSpec {
         let spec_builder = ChainSpecBuilder::mainnet().reset();
 
         match self {
+            Self::Amsterdam => spec_builder.amsterdam_activated(),
             Self::Frontier => spec_builder.frontier_activated(),
             Self::FrontierToHomesteadAt5 => spec_builder
                 .frontier_activated()

@@ -289,6 +289,9 @@ where
     // Decode blocks
     let blocks = decode_blocks(&case.blocks)?;
 
+    // Get witnesses
+    let witnesses = case.execution_witnesses.clone();
+
     let executor_provider = EthEvmConfig::ethereum(chain_spec.clone());
     let mut parent = genesis_block;
     let mut program_inputs = Vec::new();
@@ -330,13 +333,20 @@ where
         validate_block_post_execution(block, &chain_spec, &output.result, None)
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
-        // Generate the stateless witness
-        let exec_witness = witness_record.into_execution_witness(
-            &state_provider,
-            &provider,
-            block_number,
-            ExecutionWitnessMode::default(),
-        )?;
+        // In case execution witnesses are not there, generate them
+        let exec_witness = match &witnesses {
+            Some(exec_witnesses) => exec_witnesses[block_index].clone(),
+            None => {
+                // Generate the stateless witness
+                let exec_witness = witness_record.into_execution_witness(
+                    &state_provider,
+                    &provider,
+                    block_number,
+                    ExecutionWitnessMode::default(),
+                )?;
+                exec_witness
+            }
+        };
 
         program_inputs.push((block.clone(), exec_witness));
 
