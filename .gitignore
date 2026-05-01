@@ -1,5 +1,6 @@
 /target
 
+testing/ef-specs/
 # EF test fixtures (downloaded by scripts/setup_ef_tests.sh)
 testing/ef-tests/ethereum-tests
 testing/ef-tests/execution-spec-tests
