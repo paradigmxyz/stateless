@@ -8,8 +8,7 @@ use alloy_primitives::{Address, B64, B256, Bloom, Bytes, U256, keccak256};
 use reth_chainspec::{ChainSpec, ChainSpecBuilder, EthereumHardfork, ForkCondition};
 use reth_db_api::{cursor::DbDupCursorRO, tables, transaction::DbTx};
 use reth_primitives_traits::SealedHeader;
-use serde::Deserialize;
-use stateless::ExecutionWitness;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
     ops::Deref,
@@ -27,8 +26,6 @@ pub struct BlockchainTest {
     pub genesis_rlp: Option<Bytes>,
     /// Block data.
     pub blocks: Vec<Block>,
-    /// Execution witnesses for each block.
-    pub execution_witnesses: Option<Vec<ExecutionWitness>>,
     /// The expected post state.
     pub post_state: Option<BTreeMap<Address, Account>>,
     /// The test pre-state.
@@ -145,6 +142,8 @@ pub struct Block {
     pub transaction_sequence: Option<Vec<TransactionSequence>>,
     /// Withdrawals
     pub withdrawals: Option<Withdrawals>,
+    /// Execution witness for the block.
+    pub execution_witness: ExecutionWitness,
 }
 
 /// Transaction sequence in block
@@ -155,6 +154,34 @@ pub struct TransactionSequence {
     exception: String,
     raw_bytes: Bytes,
     valid: String,
+}
+
+/// Represents the execution witness of a block. Contains lists of required preimages and
+/// headers used during execution and verification.
+/// Wrapper around the stateless execution witness.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ExecutionWitness {
+    /// List of all hashed trie nodes preimages that were required during the execution of
+    /// the block, including during state root recomputation.
+    pub state: Vec<Bytes>,
+    /// List of all contract codes (created / accessed) preimages that were required during
+    /// the execution of the block, including during state root recomputation.
+    pub codes: Vec<Bytes>,
+    /// Optional since official spec does not include keys in the witness.
+    pub keys: Option<Vec<Bytes>>,
+    /// RLP-encoded block headers required for proving correctness of stateless execution.
+    pub headers: Vec<Bytes>,
+}
+
+impl Into<stateless::ExecutionWitness> for ExecutionWitness {
+    fn into(self) -> stateless::ExecutionWitness {
+        stateless::ExecutionWitness {
+            state: self.state,
+            codes: self.codes,
+            keys: Vec::new(),
+            headers: self.headers,
+        }
+    }
 }
 
 /// Ethereum blockchain test data state.
