@@ -24,6 +24,10 @@ fi
 # This is critical for EF tests as they create many temporary database providers.
 ulimit -n 10240
 
+# Ensure fixtures are set up before running tests
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "$SCRIPT_DIR/setup_ef_tests.sh"
+
 echo "-------------------------------------------------------------------------------"
 echo "Running EF tests with EF_TEST_TRIE=$TRIE_IMPL"
 echo "Resource Limit: ulimit -n 10240"

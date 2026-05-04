@@ -173,13 +173,13 @@ pub struct ExecutionWitness {
     pub headers: Vec<Bytes>,
 }
 
-impl Into<stateless::ExecutionWitness> for ExecutionWitness {
-    fn into(self) -> stateless::ExecutionWitness {
+impl From<ExecutionWitness> for stateless::ExecutionWitness {
+    fn from(witness: ExecutionWitness) -> Self {
         stateless::ExecutionWitness {
-            state: self.state,
-            codes: self.codes,
+            state: witness.state,
+            codes: witness.codes,
             keys: Vec::new(),
-            headers: self.headers,
+            headers: witness.headers,
         }
     }
 }
