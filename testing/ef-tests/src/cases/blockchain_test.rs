@@ -332,7 +332,18 @@ where
 
         // In case execution witnesses are not there, generate them
         let exec_witness: stateless::ExecutionWitness =
-            case.blocks[block_index].execution_witness.clone().into();
+            match &case.blocks[block_index].execution_witness {
+                Some(exec_witness) => exec_witness.clone().into(),
+                None => {
+                    // Generate the stateless witness
+                    witness_record.into_execution_witness(
+                        &state_provider,
+                        &provider,
+                        block_number,
+                        ExecutionWitnessMode::default(),
+                    )?
+                }
+            };
 
         program_inputs.push((block.clone(), exec_witness));
 

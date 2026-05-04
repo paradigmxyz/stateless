@@ -143,7 +143,7 @@ pub struct Block {
     /// Withdrawals
     pub withdrawals: Option<Withdrawals>,
     /// Execution witness for the block.
-    pub execution_witness: ExecutionWitness,
+    pub execution_witness: Option<ExecutionWitness>,
 }
 
 /// Transaction sequence in block
