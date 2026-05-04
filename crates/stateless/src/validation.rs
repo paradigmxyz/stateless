@@ -41,9 +41,33 @@ pub enum StatelessValidationError {
         limit: usize,
     },
 
-    /// Error when the ancestor headers do not form a contiguous chain.
-    #[error("invalid ancestor chain")]
-    InvalidAncestorChain,
+    /// Error when an ancestor header hash does not match its child's parent hash.
+    #[error(
+        "invalid ancestor chain: child block {child_number} expects parent hash {expected_parent_hash}, but ancestor block {parent_number} has hash {actual_parent_hash}"
+    )]
+    InvalidAncestorParentHash {
+        /// The child block number whose parent hash was checked.
+        child_number: u64,
+        /// The ancestor block number provided as the parent.
+        parent_number: u64,
+        /// The parent hash committed to by the child header.
+        expected_parent_hash: B256,
+        /// The hash of the provided ancestor header.
+        actual_parent_hash: B256,
+    },
+
+    /// Error when ancestor header numbers are not contiguous.
+    #[error(
+        "invalid ancestor chain: ancestor block {parent_number} is not the parent of child block {child_number}; expected parent block {expected_parent_number}"
+    )]
+    InvalidAncestorNumber {
+        /// The child block number whose parent number was checked.
+        child_number: u64,
+        /// The expected parent block number.
+        expected_parent_number: u64,
+        /// The ancestor block number provided as the parent.
+        parent_number: u64,
+    },
 
     /// Error when revealing the witness data failed.
     #[error("failed to reveal witness data for pre-state root {pre_state_root}")]
@@ -303,11 +327,20 @@ fn compute_ancestor_hashes(
         ancestor_hashes.insert(parent_header.number, parent_hash);
 
         if parent_hash != parent_header.hash() {
-            return Err(StatelessValidationError::InvalidAncestorChain);
+            return Err(StatelessValidationError::InvalidAncestorParentHash {
+                child_number: child_header.number,
+                parent_number: parent_header.number,
+                expected_parent_hash: parent_hash,
+                actual_parent_hash: parent_header.hash(),
+            });
         }
 
         if parent_header.number + 1 != child_header.number {
-            return Err(StatelessValidationError::InvalidAncestorChain);
+            return Err(StatelessValidationError::InvalidAncestorNumber {
+                child_number: child_header.number,
+                expected_parent_number: child_header.number.saturating_sub(1),
+                parent_number: parent_header.number,
+            });
         }
 
         child_header = parent_header
