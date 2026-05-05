@@ -47,6 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: astral-sh/setup-uv@v3
       - uses: taiki-e/install-action@nextest
       - uses: Swatinem/rust-cache@v2
         with:
