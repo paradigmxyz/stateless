@@ -19,7 +19,7 @@ default|zeth) ;;
 esac
 
 # Setup test fixtures
-"$SCRIPT_DIR/setup_ef_tests.sh"
+"$SCRIPT_DIR/setup_ef_tests.sh" --force
 
 # MacOS specific setup to avoid 'too many files open' and 'stack overflow' errors
 # ulimit -n 65536
