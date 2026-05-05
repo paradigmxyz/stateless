@@ -40,14 +40,17 @@ if [ ! -d "$EF_SPECS_DIR" ]; then
     echo "Cloning execution-specs repository..."
     git clone https://github.com/ethereum/execution-specs "$EF_SPECS_DIR"
     cd "$EF_SPECS_DIR"
+    git fetch origin # Ensure we have all remote branches
     git checkout projects/zkevm-bal-devnet-3
     cd "$SCRIPT_DIR/.."
 else
     echo "execution-specs already exists, skipping clone."
     cd "$EF_SPECS_DIR"
+    git fetch origin # Update the local index with remote branches
     git checkout projects/zkevm-bal-devnet-3
     cd "$SCRIPT_DIR/.."
 fi
+
 
 # 3. Fill fixtures using the official specification tool
 echo "Generating execution witnesses using uv run fill..."
