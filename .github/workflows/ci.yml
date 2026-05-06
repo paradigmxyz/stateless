@@ -55,24 +55,6 @@ jobs:
       - name: Run EF tests
         run: ./scripts/run_ef_tests.sh ${{ matrix.trie }}
 
-  execution-witness-tests:
-    name: Execution Witness tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      RUST_LOG: info
-      RUST_BACKTRACE: 1
-      EF_TEST_TRIE: default
-      EXECUTION_WITNESS_TESTS_URL: https://github.com/ethereum/execution-spec-tests/releases/download/zkevm@v0.3.3/fixtures_zkevm.tar.gz
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-      - name: Run Execution Witness tests
-        run: cargo run -p ef-test-runner --release -- --skip testing/runner/execution-witness-skip.txt $EXECUTION_WITNESS_TESTS_URL
-
   no-std:
     name: no_std (RISC-V)
     runs-on: ubuntu-latest

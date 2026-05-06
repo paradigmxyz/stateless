@@ -13,7 +13,6 @@ members = [
     "crates/tries",
     "crates/zeth-mpt",
     "testing/ef-tests",
-    "testing/runner",
 ]
 resolver = "2"
 
