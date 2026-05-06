@@ -26,7 +26,6 @@ fn eest_fixtures() {
     reth_tracing::init_test_tracing();
     let suite_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("execution-spec-tests")
-        .join("blockchain_tests")
         .join("for_amsterdam");
 
     if !suite_path.exists() {
