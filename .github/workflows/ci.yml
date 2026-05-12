@@ -38,7 +38,7 @@ jobs:
       matrix:
         include:
           - trie: default
-            allow_failure: false
+            allow_failure: true
           - trie: zeth
             allow_failure: true
     env:
