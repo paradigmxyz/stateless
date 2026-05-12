@@ -62,9 +62,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: riscv32imac-unknown-none-elf
+          # Switch to 64-bit RV64IM target (no C extension) for zkVM compatibility
+          targets: riscv64im-unknown-none-elf
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-      - name: Build stateless for riscv32imac
+      - name: Build stateless for riscv64im
         run: ./scripts/check_no_std.sh

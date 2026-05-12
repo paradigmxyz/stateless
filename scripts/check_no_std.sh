@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-target=riscv32imac-unknown-none-elf
+target=riscv64im-unknown-none-elf
 
 cmd=(cargo +stable build --no-default-features --target "$target" -p stateless)
 
