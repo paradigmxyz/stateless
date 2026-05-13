@@ -95,3 +95,7 @@ serde_with = { version = "3.16", default-features = false, features = [
 ] }
 thiserror = { version = "2.0", default-features = false }
 walkdir = "2.5"
+
+[patch.crates-io]
+# Force every crate (including transitive ones) to use radium 0.7.1
+radium = { git = "https://github.com/ferrilab/radium", rev = "723bed5a" }

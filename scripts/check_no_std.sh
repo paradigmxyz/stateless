@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-target=riscv64im-unknown-none-elf
+target=support/targets/riscv64im-a-target.json
 
-cmd=(cargo +stable build --no-default-features --target "$target" -p stateless)
+cmd=(cargo +nightly build --no-default-features -Zjson-target-spec -Zbuild-std=core,alloc --target "$target" -p stateless)
 
 echo "Running: ${cmd[*]}"
 "${cmd[@]}"
