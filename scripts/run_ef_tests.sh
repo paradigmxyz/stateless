@@ -19,7 +19,7 @@ default|zeth) ;;
 esac
 
 # Setup test fixtures
-"$SCRIPT_DIR/setup_ef_tests.sh"
+"$SCRIPT_DIR/setup_ef_tests.sh" --force
 
 # Run EF tests
 EF_TEST_TRIE="$TRIE_IMPL" cargo nextest run --no-fail-fast -p ef-tests --release --features "asm-keccak ef-tests"
