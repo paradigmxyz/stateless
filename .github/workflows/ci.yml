@@ -55,16 +55,16 @@ jobs:
         run: ./scripts/run_ef_tests.sh ${{ matrix.trie }}
 
   no-std:
-    name: no_std (RISC-V)
+    name: no_std (RISC-V rv64im)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          targets: riscv32imac-unknown-none-elf
+          components: rust-src
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-      - name: Build stateless for riscv32imac
+      - name: Build stateless for riscv64im
         run: ./scripts/check_no_std.sh

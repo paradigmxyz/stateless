@@ -44,7 +44,10 @@ let block_access_list = validation.block_access_list;
 
 ## `no_std`
 
-The `stateless` crate is `#![no_std]` compatible and builds for RISC-V targets (`riscv32imac-unknown-none-elf`), making it suitable for use in zkVM environments.
+The `stateless` crate is `#![no_std]` compatible and builds for the 64-bit RISC-V target (`riscv64im-unknown-none-elf`), making it suitable for use in zkVM environments. Because upstream dependencies currently require atomics, it must be built using the custom target specification provided in `targets/riscv64im-unknown-none-elf.json`.
+
+> **Note:** The build temporarily relies on the LLVM `lower-atomic` pass
+> to lower atomic instructions into non-atomic equivalents.
 
 ## Running EF tests
 
