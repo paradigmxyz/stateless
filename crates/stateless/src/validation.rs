@@ -274,7 +274,7 @@ where
         .execute(&current_block)
         .map_err(|e| StatelessValidationError::StatelessExecutionFailed(e.to_string()))?;
 
-    validate_block_post_execution(&current_block, &chain_spec, &output.result, None)
+    validate_block_post_execution(&current_block, &chain_spec, &output.result, None, None)
         .map_err(StatelessValidationError::ConsensusValidationFailed)?;
 
     let hashed_state = HashedPostState::from_bundle_state::<KeccakKeyHasher>(&output.state.state);
