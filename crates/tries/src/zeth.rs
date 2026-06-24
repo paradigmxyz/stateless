@@ -48,15 +48,15 @@ impl<T: alloy_rlp::Decodable + alloy_rlp::Encodable> RlpTrie<T> {
     }
 
     pub fn get(&self, key: impl AsRef<[u8]>) -> alloy_rlp::Result<Option<T>> {
-        self.inner.get(key).map(alloy_rlp::decode_exact).transpose()
+        self.inner.try_get(key)?.map(alloy_rlp::decode_exact).transpose()
     }
 
     pub fn insert(&mut self, key: impl AsRef<[u8]>, value: T) {
         self.inner.insert(key, alloy_rlp::encode(value));
     }
 
-    pub fn remove(&mut self, key: impl AsRef<[u8]>) -> bool {
-        self.inner.remove(key)
+    pub fn remove(&mut self, key: impl AsRef<[u8]>) -> alloy_rlp::Result<bool> {
+        self.inner.try_remove(key)
     }
 
     pub fn hash(&mut self) -> B256 {
@@ -79,9 +79,10 @@ pub struct SparseState {
 
 impl SparseState {
     /// Removes an account from the state.
-    fn remove_account(&mut self, hashed_address: &B256) {
-        self.state.remove(hashed_address);
+    fn remove_account(&mut self, hashed_address: &B256) -> alloy_rlp::Result<()> {
+        self.state.remove(hashed_address)?;
         self.storages.get_mut().remove(hashed_address);
+        Ok(())
     }
 
     /// Clears the storage of an account.
@@ -182,12 +183,16 @@ impl StatelessTrie for SparseState {
 
             // apply storage changes before computing the storage root
             let storage_root = match state.storages.get(&hashed_address) {
-                None => self.storage_trie_mut(hashed_address).unwrap().hash(),
+                None => self
+                    .storage_trie_mut(hashed_address)
+                    .map_err(|_| StatelessTrieError::StatelessStateRootCalculationFailed)?
+                    .hash(),
                 Some(storage) => {
                     let storage_trie = if storage.wiped {
                         self.clear_storage(hashed_address)
                     } else {
-                        self.storage_trie_mut(hashed_address).unwrap()
+                        self.storage_trie_mut(hashed_address)
+                            .map_err(|_| StatelessTrieError::StatelessStateRootCalculationFailed)?
                     };
 
                     // apply all state modifications
@@ -199,7 +204,9 @@ impl StatelessTrie for SparseState {
                     // removals must happen last, otherwise unresolved orphans might still exist
                     for (hashed_key, value) in &storage.storage {
                         if value.is_zero() {
-                            storage_trie.remove(hashed_key);
+                            storage_trie.remove(hashed_key).map_err(|_| {
+                                StatelessTrieError::StatelessStateRootCalculationFailed
+                            })?;
                         }
                     }
 
@@ -216,7 +223,10 @@ impl StatelessTrie for SparseState {
             };
             self.state.insert(hashed_address, account);
         }
-        removed_accounts.iter().for_each(|hashed_address| self.remove_account(hashed_address));
+        for hashed_address in &removed_accounts {
+            self.remove_account(hashed_address)
+                .map_err(|_| StatelessTrieError::StatelessStateRootCalculationFailed)?;
+        }
 
         Ok(self.state.hash())
     }

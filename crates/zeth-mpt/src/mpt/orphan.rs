@@ -96,7 +96,7 @@ impl<M: Memoization + Clone> Node<M> {
         key: NibbleSlice,
         proof: impl IntoIterator<Item = T>,
     ) -> Result<(), Error> {
-        assert!(self.get(key).is_some(), "key not contained");
+        assert!(self.get(key)?.is_some(), "key not contained");
         let other = Node::from_rlp(proof)?;
         let Some((diverging, unmatched)) = other.diverging(key) else {
             return Ok(());
