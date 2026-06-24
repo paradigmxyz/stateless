@@ -8,11 +8,7 @@ use itertools::Itertools;
 use reth_trie_common::{
     BranchNodeMasks, DecodedMultiProofV2, HashedPostState, Nibbles, ProofTrieNodeV2,
 };
-use reth_trie_sparse::{
-    RevealableSparseTrie, SparseStateTrie,
-    errors::SparseStateTrieResult,
-    provider::{DefaultTrieNodeProvider, DefaultTrieNodeProviderFactory},
-};
+use reth_trie_sparse::{RevealableSparseTrie, SparseStateTrie, errors::SparseStateTrieResult};
 use revm_bytecode::Bytecode;
 
 /// `StatelessSparseTrie` structure for usage during stateless validation
@@ -142,7 +138,6 @@ fn verify_execution_witness(
     witness: &ExecutionWitness,
     pre_state_root: B256,
 ) -> Result<(SparseStateTrie, B256IndexMap<Bytecode>), StatelessTrieError> {
-    let provider_factory = DefaultTrieNodeProviderFactory;
     let mut trie = SparseStateTrie::new();
     let mut bytecode = B256IndexMap::default();
 
@@ -166,9 +161,8 @@ fn verify_execution_witness(
         .map_err(|_e| StatelessTrieError::WitnessRevealFailed { pre_state_root })?;
 
     // Calculate the root
-    let computed_root = trie
-        .root(&provider_factory)
-        .map_err(|_e| StatelessTrieError::StatelessPreStateRootCalculationFailed)?;
+    let computed_root =
+        trie.root().map_err(|_e| StatelessTrieError::StatelessPreStateRootCalculationFailed)?;
 
     if computed_root == pre_state_root {
         Ok((trie, bytecode))
@@ -290,11 +284,6 @@ fn calculate_state_root(
     // borrowing issues.
     let mut storage_results = Vec::with_capacity(state.storages.len());
 
-    // In `verify_execution_witness` a `DefaultTrieNodeProviderFactory` is used, so we use the same
-    // again in here.
-    let provider_factory = DefaultTrieNodeProviderFactory;
-    let storage_provider = DefaultTrieNodeProvider;
-
     for (address, storage) in state.storages.into_iter().sorted_unstable_by_key(|(addr, _)| *addr) {
         // Take the existing storage trie (or create an empty, "revealed" one)
         let mut storage_trie =
@@ -310,13 +299,9 @@ fn calculate_state_root(
         {
             let nibbles = Nibbles::unpack(hashed_slot);
             if value.is_zero() {
-                storage_trie.remove_leaf(&nibbles, &storage_provider)?;
+                storage_trie.remove_leaf(&nibbles)?;
             } else {
-                storage_trie.update_leaf(
-                    nibbles,
-                    alloy_rlp::encode_fixed_size(&value).to_vec(),
-                    &storage_provider,
-                )?;
+                storage_trie.update_leaf(nibbles, alloy_rlp::encode_fixed_size(&value).to_vec())?;
             }
         }
 
@@ -334,9 +319,9 @@ fn calculate_state_root(
     for (hashed_address, account) in
         state.accounts.into_iter().sorted_unstable_by_key(|(addr, _)| *addr)
     {
-        trie.update_account_stateless(hashed_address, account, &provider_factory)?;
+        trie.update_account_stateless(hashed_address, account)?;
     }
 
     // Return new state root
-    trie.root(&provider_factory)
+    trie.root()
 }
