@@ -11,7 +11,9 @@ use alloc::{
     vec::Vec,
 };
 use alloy_consensus::{BlockHeader, Header};
-use alloy_eips::eip7928::BlockAccessList;
+use alloy_eips::eip7928::{
+    BlockAccessList, ITEM_COST, compute_block_access_list_hash, total_bal_items,
+};
 use alloy_primitives::{B256, keccak256};
 use reth_chainspec::{EthChainSpec, EthereumHardforks};
 use reth_consensus::ConsensusError;
@@ -83,6 +85,15 @@ pub enum StatelessValidationError {
     /// Error during consensus validation of the block.
     #[error("consensus validation failed: {0}")]
     ConsensusValidationFailed(#[from] ConsensusError),
+
+    /// Error when the block access list exceeds the per-block item gas limit (EIP-7928).
+    #[error("block access list exceeds gas limit, {items} items exceeds limit of {limit}")]
+    BlockAccessListGasLimitExceeded {
+        /// The number of block access list items produced during execution.
+        items: u64,
+        /// The maximum number of items allowed, the block gas limit divided by the per item cost.
+        limit: u64,
+    },
 
     /// Error during stateless state root calculation.
     #[error("stateless state root calculation failed")]
@@ -269,13 +280,35 @@ where
 
     let db = WitnessDatabase::new(&trie, bytecode, ancestor_hashes);
 
-    let executor = evm_config.executor(db);
-    let output = executor
-        .execute(&current_block)
+    let mut executor = evm_config.executor(db);
+    let result = executor
+        .execute_one(&current_block)
         .map_err(|e| StatelessValidationError::StatelessExecutionFailed(e.to_string()))?;
 
-    validate_block_post_execution(&current_block, &chain_spec, &output.result, None, None)
-        .map_err(StatelessValidationError::ConsensusValidationFailed)?;
+    let block_access_list = executor.take_bal();
+
+    // Validate the block access list gas limit constraint.
+    if let Some(bal) = block_access_list.as_ref() {
+        let items = total_bal_items(bal.as_slice());
+        let limit = current_block.sealed_header().gas_limit() / ITEM_COST as u64;
+        if items > limit {
+            return Err(StatelessValidationError::BlockAccessListGasLimitExceeded { items, limit });
+        }
+    }
+
+    let block_access_list_hash = block_access_list.as_deref().map(compute_block_access_list_hash);
+
+    let mut state = executor.into_state();
+    let output = BlockExecutionOutput { state: state.take_bundle(), result };
+
+    validate_block_post_execution(
+        &current_block,
+        &chain_spec,
+        &output.result,
+        None,
+        block_access_list_hash,
+    )
+    .map_err(StatelessValidationError::ConsensusValidationFailed)?;
 
     let hashed_state = HashedPostState::from_bundle_state::<KeccakKeyHasher>(&output.state.state);
     let state_root = trie.calculate_state_root(hashed_state)?;
@@ -289,10 +322,7 @@ where
     Ok(StatelessValidationOutput {
         block_hash: current_block.hash_slow(),
         execution_output: output,
-        // TODO: populate once reth mainline wires revm's BAL builder (track
-        // https://github.com/paradigmxyz/reth/pull/22881). Requires
-        // State::builder().with_bal_builder() + bump_bal_index() + take_built_alloy_bal().
-        block_access_list: None,
+        block_access_list,
     })
 }
 
