@@ -247,7 +247,7 @@ where
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
     E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
 {
-    let mut ancestor_headers: Vec<_> = witness
+    let ancestor_headers: Vec<_> = witness
         .headers
         .iter()
         .map(|bytes| {
@@ -257,7 +257,6 @@ where
                 .map_err(|_| StatelessValidationError::HeaderDeserializationFailed)
         })
         .collect::<Result<_, _>>()?;
-    ancestor_headers.sort_by_key(|header| header.number());
 
     let count = ancestor_headers.len();
     if count > BLOCKHASH_ANCESTOR_LIMIT {
