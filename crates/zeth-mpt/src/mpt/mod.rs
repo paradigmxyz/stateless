@@ -52,7 +52,7 @@ impl Trie {
     /// It panics when neither inclusion nor exclusion of the key can be guaranteed.
     #[inline]
     pub fn get(&self, key: impl AsRef<[u8]>) -> Option<&[u8]> {
-        self.0.get(NibbleSlice::from(Nibbles::unpack(key))).map(|b| b.as_ref())
+        self.0.get(NibbleSlice::from(Nibbles::unpack(key))).unwrap().map(|b| b.as_ref())
     }
 
     /// Inserts a key-value pair into the trie.
@@ -86,7 +86,7 @@ impl Trie {
     ///   potential issue with the trie's construction.
     #[inline]
     pub fn remove(&mut self, key: impl AsRef<[u8]>) -> bool {
-        self.0.remove(NibbleSlice::from(Nibbles::unpack(key)))
+        self.0.remove(NibbleSlice::from(Nibbles::unpack(key))).unwrap()
     }
 
     /// Returns the number of full nodes in the trie.
@@ -252,7 +252,16 @@ impl CachedTrie {
     /// See [`Trie::get`] for detailed documentation.
     #[inline]
     pub fn get(&self, key: impl AsRef<[u8]>) -> Option<&[u8]> {
-        self.inner.get(NibbleSlice::from(Nibbles::unpack(key))).map(|b| b.as_ref())
+        self.try_get(key).unwrap()
+    }
+
+    /// Retrieves the value associated with a key, returning an error when a required node is
+    /// unresolved (omitted from the witness).
+    ///
+    /// See [`Trie::get`] for detailed documentation.
+    #[inline]
+    pub fn try_get(&self, key: impl AsRef<[u8]>) -> alloy_rlp::Result<Option<&[u8]>> {
+        Ok(self.inner.get(NibbleSlice::from(Nibbles::unpack(key)))?.map(|b| b.as_ref()))
     }
 
     /// Inserts a key-value pair into the trie.
@@ -269,11 +278,20 @@ impl CachedTrie {
     /// See [`Trie::remove`] for detailed documentation.
     #[inline]
     pub fn remove(&mut self, key: impl AsRef<[u8]>) -> bool {
-        if !self.inner.remove(NibbleSlice::from(Nibbles::unpack(key))) {
-            return false;
+        self.try_remove(key).unwrap()
+    }
+
+    /// Removes a key-value pair, returning an error when a node required to complete the removal is
+    /// unresolved (omitted from the witness).
+    ///
+    /// See [`Trie::remove`] for detailed documentation.
+    #[inline]
+    pub fn try_remove(&mut self, key: impl AsRef<[u8]>) -> alloy_rlp::Result<bool> {
+        if !self.inner.remove(NibbleSlice::from(Nibbles::unpack(key)))? {
+            return Ok(false);
         }
         self.hash = None;
-        true
+        Ok(true)
     }
 
     /// Returns the number of full nodes in the trie.

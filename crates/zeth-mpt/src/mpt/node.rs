@@ -81,24 +81,29 @@ impl<M> Eq for Node<M> {}
 
 impl<M: Memoization> Node<M> {
     /// Retrieves the value associated with a given key.
-    pub(super) fn get(&self, key: NibbleSlice) -> Option<&Bytes> {
-        match self {
+    pub(super) fn get(&self, key: NibbleSlice) -> alloy_rlp::Result<Option<&Bytes>> {
+        Ok(match self {
             Node::Null => None,
             Node::Leaf(prefix, value, _) if prefix == key.as_nibbles() => Some(value),
             Node::Leaf(..) => None,
-            Node::Extension(prefix, child, _) => {
-                key.strip_prefix(prefix).and_then(|tail| child.get(tail))
-            }
+            Node::Extension(prefix, child, _) => match key.strip_prefix(prefix) {
+                Some(tail) => return child.get(tail),
+                None => None,
+            },
             Node::Branch(children, _) => match key.split_first() {
                 Some((nib, tail)) => {
                     // SAFETY: `key` is a `NibbleSlice` and thus only contains values < 0xf
                     let child = unsafe { children.get_unchecked(nib) };
-                    child.and_then(|node| node.get(tail))
+                    match child {
+                        Some(node) => return node.get(tail),
+                        None => None,
+                    }
                 }
                 None => None, // branch nodes don't have values in our MPT version
             },
-            Node::Digest(_) => panic!("MPT: Unresolved node access"),
-        }
+            // The witness omitted this node
+            Node::Digest(_) => return Err(alloy_rlp::Error::Custom("MPT: unresolved node access")),
+        })
     }
 
     /// Inserts a key-value pair into the trie.
@@ -194,8 +199,11 @@ impl<M: Memoization> Node<M> {
     }
 
     /// Removes a key-value pair from the trie.
-    pub(super) fn remove(&mut self, key: NibbleSlice) -> bool {
-        match self {
+    ///
+    /// Returns an error when a node required to complete the removal was omitted from the witness
+    /// (represented as a digest) rather than panicking, so the validator can reject the block.
+    pub(super) fn remove(&mut self, key: NibbleSlice) -> alloy_rlp::Result<bool> {
+        Ok(match self {
             Node::Null => false,
             Node::Leaf(prefix, ..) if prefix == key.as_nibbles() => {
                 *self = Node::Null;
@@ -203,8 +211,12 @@ impl<M: Memoization> Node<M> {
             }
             Node::Leaf(..) => false,
             Node::Extension(prefix, child, cache) => {
-                if !key.strip_prefix(prefix).is_some_and(|tail| child.remove(tail)) {
-                    return false;
+                let removed = match key.strip_prefix(prefix) {
+                    Some(tail) => child.remove(tail)?,
+                    None => false,
+                };
+                if !removed {
+                    return Ok(false);
                 }
                 cache.clear();
 
@@ -220,7 +232,7 @@ impl<M: Memoization> Node<M> {
                         *self = Node::Extension(mem::take(prefix), mem::take(child), M::default())
                     }
                     Node::Branch(..) => {}
-                    Node::Digest(_) => unreachable!(), // child.remove() would have panicked
+                    Node::Digest(_) => unreachable!(), // child.remove() would have errored
                 }
                 true
             }
@@ -228,13 +240,13 @@ impl<M: Memoization> Node<M> {
                 match key.split_first() {
                     Some((nib, tail)) => match children.entry(nib) {
                         Entry::Occupied(mut entry) => {
-                            if !entry.get_mut().remove(tail) {
-                                return false;
+                            if !entry.get_mut().remove(tail)? {
+                                return Ok(false);
                             }
                         }
-                        Entry::Vacant(_) => return false,
+                        Entry::Vacant(_) => return Ok(false),
                     },
-                    None => return false, // branch nodes don't have values in our MPT version
+                    None => return Ok(false), // branch nodes don't have values in our MPT version
                 };
                 cache.clear();
 
@@ -257,14 +269,16 @@ impl<M: Memoization> Node<M> {
                             let prefix = Nibbles::from_nibbles_unchecked([nib]);
                             *self = Node::Extension(prefix, only_child, M::default());
                         }
-                        Node::Digest(_) => panic!("MPT: Unresolved node access"),
+                        Node::Digest(_) => {
+                            return Err(alloy_rlp::Error::Custom("MPT: unresolved node access"))
+                        }
                         Node::Null => unreachable!(), // children does not contain any Node::Null
                     }
                 }
                 true
             }
-            Node::Digest(_) => panic!("MPT: Unresolved node access"),
-        }
+            Node::Digest(_) => return Err(alloy_rlp::Error::Custom("MPT: unresolved node access")),
+        })
     }
 
     /// Returns the number of full nodes in the trie.
