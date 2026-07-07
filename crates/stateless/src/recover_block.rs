@@ -1,7 +1,7 @@
 use crate::validation::StatelessValidationError;
 use alloc::vec::Vec;
 use alloy_consensus::BlockHeader;
-use alloy_primitives::Address;
+use alloy_primitives::{Address, B256, keccak256};
 use core::ops::Deref;
 use reth_chainspec::EthereumHardforks;
 use reth_ethereum_primitives::{Block, TransactionSigned};
@@ -72,7 +72,34 @@ fn verify_and_compute_sender(
     if is_homestead && !sig_is_normalized {
         return Err(StatelessValidationError::HomesteadSignatureNotNormalized);
     }
-    let sig_hash = tx.signature_hash();
-    alloy_consensus::crypto::secp256k1::verify_and_compute_signer_unchecked(&vk.0, sig, sig_hash)
-        .map_err(|_| StatelessValidationError::SignerRecovery)
+    verify_and_compute_signer_from_public_key(vk, sig, tx.signature_hash())
+}
+
+fn verify_and_compute_signer_from_public_key(
+    vk: &UncompressedPublicKey,
+    sig: &alloy_primitives::Signature,
+    sig_hash: B256,
+) -> Result<Address, StatelessValidationError> {
+    use k256::ecdsa::{Signature, VerifyingKey, signature::hazmat::PrehashVerifier};
+
+    let verifying_key = VerifyingKey::from_sec1_bytes(&vk.0)
+        .map_err(|_| StatelessValidationError::SignerRecovery)?;
+
+    let mut sig_bytes = [0u8; 64];
+    sig_bytes[..32].copy_from_slice(&sig.r().to_be_bytes::<32>());
+    sig_bytes[32..].copy_from_slice(&sig.s().to_be_bytes::<32>());
+
+    let mut signature =
+        Signature::from_slice(&sig_bytes).map_err(|_| StatelessValidationError::SignerRecovery)?;
+
+    if let Some(normalized) = signature.normalize_s() {
+        signature = normalized;
+    }
+
+    verifying_key
+        .verify_prehash(sig_hash.as_ref(), &signature)
+        .map_err(|_| StatelessValidationError::SignerRecovery)?;
+
+    let hash = keccak256(&vk.0[1..]);
+    Ok(Address::from_slice(&hash[12..]))
 }

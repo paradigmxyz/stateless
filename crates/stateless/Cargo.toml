@@ -38,6 +38,7 @@ revm-database-interface.workspace = true
 revm-state.workspace = true
 
 # misc
+k256.workspace = true
 thiserror.workspace = true
 serde.workspace = true
 serde_with.workspace = true
