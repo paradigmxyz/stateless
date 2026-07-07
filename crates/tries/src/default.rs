@@ -4,6 +4,7 @@ use alloy_primitives::{Address, B256, U256, keccak256, map::B256IndexMap};
 use alloy_rlp::Decodable;
 use alloy_rpc_types_debug::ExecutionWitness;
 use alloy_trie::{EMPTY_ROOT_HASH, TrieAccount, nodes::TrieNode};
+use core::cell::RefCell;
 use itertools::Itertools;
 use reth_trie_common::{
     BranchNodeMasks, DecodedMultiProofV2, HashedPostState, Nibbles, ProofTrieNodeV2,
@@ -15,6 +16,7 @@ use revm_bytecode::Bytecode;
 #[derive(Debug)]
 pub struct StatelessSparseTrie {
     inner: SparseStateTrie,
+    account_cache: RefCell<B256IndexMap<Option<TrieAccount>>>,
 }
 
 impl StatelessSparseTrie {
@@ -27,7 +29,7 @@ impl StatelessSparseTrie {
         pre_state_root: B256,
     ) -> Result<(Self, B256IndexMap<Bytecode>), StatelessTrieError> {
         verify_execution_witness(witness, pre_state_root)
-            .map(|(inner, bytecode)| (Self { inner }, bytecode))
+            .map(|(inner, bytecode)| (Self { inner, account_cache: RefCell::default() }, bytecode))
     }
 
     /// Returns the `TrieAccount` that corresponds to the `Address`
@@ -36,19 +38,26 @@ impl StatelessSparseTrie {
     /// that the account is missing from the Trie _and_ the witness was complete.
     pub fn account(&self, address: Address) -> Result<Option<TrieAccount>, WitnessDbError> {
         let hashed_address = keccak256(address);
+        self.account_by_hash(hashed_address)
+    }
 
-        if let Some(bytes) = self.inner.get_account_value(&hashed_address) {
-            let account = TrieAccount::decode(&mut bytes.as_slice())?;
-            return Ok(Some(account));
+    fn account_by_hash(&self, hashed_address: B256) -> Result<Option<TrieAccount>, WitnessDbError> {
+        if let Some(account) = self.account_cache.borrow().get(&hashed_address).cloned() {
+            return Ok(account);
         }
 
-        if !self.inner.is_account_revealed(hashed_address) {
+        let account = if let Some(bytes) = self.inner.get_account_value(&hashed_address) {
+            Some(TrieAccount::decode(&mut bytes.as_slice())?)
+        } else if !self.inner.is_account_revealed(hashed_address) {
             return Err(WitnessDbError::TrieWitness(format!(
                 "incomplete account witness for {hashed_address:?}"
             )));
-        }
+        } else {
+            None
+        };
 
-        Ok(None)
+        self.account_cache.borrow_mut().insert(hashed_address, account);
+        Ok(account)
     }
 
     /// Returns the storage slot value that corresponds to the given (address, slot) tuple.
@@ -65,10 +74,9 @@ impl StatelessSparseTrie {
 
         // Storage slot value is not present in the trie, validate that the witness is complete.
         // If the account exists in the trie...
-        if let Some(bytes) = self.inner.get_account_value(&hashed_address) {
+        if let Some(account) = self.account_by_hash(hashed_address)? {
             // ...check that its storage is either empty or the storage trie was sufficiently
             // revealed...
-            let account = TrieAccount::decode(&mut bytes.as_slice())?;
             if account.storage_root != EMPTY_ROOT_HASH
                 && !self.inner.check_valid_storage_witness(hashed_address, hashed_slot)
             {
@@ -92,6 +100,7 @@ impl StatelessSparseTrie {
         &mut self,
         state: HashedPostState,
     ) -> Result<B256, StatelessTrieError> {
+        self.account_cache.get_mut().clear();
         calculate_state_root(&mut self.inner, state)
             .map_err(|_e| StatelessTrieError::StatelessStateRootCalculationFailed)
     }
