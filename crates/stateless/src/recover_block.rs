@@ -80,26 +80,31 @@ fn verify_and_compute_signer_from_public_key(
     sig: &alloy_primitives::Signature,
     sig_hash: B256,
 ) -> Result<Address, StatelessValidationError> {
-    use k256::ecdsa::{Signature, VerifyingKey, signature::hazmat::PrehashVerifier};
+    use k256::ecdsa::{Signature, VerifyingKey};
 
-    let verifying_key = VerifyingKey::from_sec1_bytes(&vk.0)
-        .map_err(|_| StatelessValidationError::SignerRecovery)?;
+    let sig = sig.normalized_s();
 
     let mut sig_bytes = [0u8; 64];
     sig_bytes[..32].copy_from_slice(&sig.r().to_be_bytes::<32>());
     sig_bytes[32..].copy_from_slice(&sig.s().to_be_bytes::<32>());
 
-    let mut signature =
+    let signature =
         Signature::from_slice(&sig_bytes).map_err(|_| StatelessValidationError::SignerRecovery)?;
 
-    if let Some(normalized) = signature.normalize_s() {
-        signature = normalized;
+    let recovered_key =
+        VerifyingKey::recover_from_prehash(sig_hash.as_ref(), &signature, sig.recid())
+            .map_err(|_| StatelessValidationError::SignerRecovery)?;
+
+    let supplied_hash = keccak256(&vk.0[1..]);
+    let supplied = Address::from_slice(&supplied_hash[12..]);
+
+    let recovered = recovered_key.to_encoded_point(false);
+    let recovered_hash = keccak256(&recovered.as_bytes()[1..]);
+    let recovered = Address::from_slice(&recovered_hash[12..]);
+
+    if recovered != supplied {
+        return Err(StatelessValidationError::SignerRecovery);
     }
 
-    verifying_key
-        .verify_prehash(sig_hash.as_ref(), &signature)
-        .map_err(|_| StatelessValidationError::SignerRecovery)?;
-
-    let hash = keccak256(&vk.0[1..]);
-    Ok(Address::from_slice(&hash[12..]))
+    Ok(supplied)
 }
