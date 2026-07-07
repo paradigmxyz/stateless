@@ -143,31 +143,26 @@ impl StatelessTrie for SparseState {
     /// Returns the `TrieAccount` that corresponds to the `Address`.
     fn account(&self, address: Address) -> Result<Option<TrieAccount>, WitnessDbError> {
         let hashed_address = keccak256(address);
-        match self.state.get(hashed_address)? {
-            None => Ok(None),
-            Some(account) => {
-                // each time an account is accessed, check whether its storage trie already exists
-                // otherwise construct it from the witness data and the account's storage root
-                match self.storages.borrow_mut().entry(hashed_address) {
-                    Entry::Vacant(entry) => {
-                        entry.insert(RlpTrie::from_prehashed(
-                            account.storage_root,
-                            &self.rlp_by_digest,
-                        )?);
-                    }
-                    Entry::Occupied(_) => {}
-                }
-
-                Ok(Some(account))
-            }
-        }
+        Ok(self.state.get(hashed_address)?)
     }
 
     /// Returns the storage slot value that corresponds to the given (address, slot) tuple.
     fn storage(&self, address: Address, slot: U256) -> Result<U256, WitnessDbError> {
-        let storages = self.storages.borrow();
-        // storage() is always be called after account(), so the storage trie must already exist
-        let storage_trie = storages.get(&keccak256(address)).unwrap();
+        let hashed_address = keccak256(address);
+        let mut storages = self.storages.borrow_mut();
+        let storage_trie = match storages.entry(hashed_address) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => {
+                let storage_root =
+                    self.state.get(hashed_address)?.map_or(EMPTY_ROOT_HASH, |a| a.storage_root);
+                if storage_root == EMPTY_ROOT_HASH {
+                    return Ok(U256::ZERO);
+                }
+
+                entry.insert(RlpTrie::from_prehashed(storage_root, &self.rlp_by_digest)?)
+            }
+        };
+
         Ok(storage_trie.get(keccak256(B256::from(slot)))?.unwrap_or(U256::ZERO))
     }
 
@@ -184,9 +179,10 @@ impl StatelessTrie for SparseState {
             // apply storage changes before computing the storage root
             let storage_root = match state.storages.get(&hashed_address) {
                 None => self
-                    .storage_trie_mut(hashed_address)
+                    .state
+                    .get(hashed_address)
                     .map_err(|_| StatelessTrieError::StatelessStateRootCalculationFailed)?
-                    .hash(),
+                    .map_or(EMPTY_ROOT_HASH, |account| account.storage_root),
                 Some(storage) => {
                     let storage_trie = if storage.wiped {
                         self.clear_storage(hashed_address)
