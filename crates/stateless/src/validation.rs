@@ -319,7 +319,7 @@ where
     }
 
     Ok(StatelessValidationOutput {
-        block_hash: current_block.hash_slow(),
+        block_hash: current_block.hash(),
         execution_output: output,
         block_access_list,
     })
