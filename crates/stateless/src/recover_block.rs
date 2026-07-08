@@ -1,6 +1,6 @@
 use crate::validation::StatelessValidationError;
 use alloc::vec::Vec;
-use alloy_consensus::BlockHeader;
+use alloy_consensus::{BlockHeader, crypto::secp256k1::recover_signer};
 use alloy_primitives::Address;
 use core::ops::Deref;
 use reth_chainspec::EthereumHardforks;
@@ -67,6 +67,5 @@ fn recover_sender(
         return Err(StatelessValidationError::HomesteadSignatureNotNormalized);
     }
 
-    sig.recover_address_from_prehash(&tx.signature_hash())
-        .map_err(|_| StatelessValidationError::SignerRecovery)
+    recover_signer(sig, tx.signature_hash()).map_err(|_| StatelessValidationError::SignerRecovery)
 }
