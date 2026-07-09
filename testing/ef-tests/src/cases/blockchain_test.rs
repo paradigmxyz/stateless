@@ -401,24 +401,43 @@ where
     }
 
     // Now validate using the stateless client if everything else passes
-    for (recovered_block, execution_witness) in &program_inputs {
-        let block = recovered_block.clone().into_block();
-
-        // Recover the actual public keys from the transaction signatures
-        let public_keys = recover_signers(block.body().transactions())
-            .expect("Failed to recover public keys from transaction signatures");
-
-        stateless_validation_with_trie::<T, _, _>(
-            block,
-            public_keys,
-            execution_witness.clone(),
+    for (block_index, (recovered_block, execution_witness)) in program_inputs.iter().enumerate() {
+        validate_stateless_program_input::<T>(
+            (block_index + 1) as u64,
+            recovered_block,
+            execution_witness,
+            &program_inputs[..=block_index],
             chain_spec.clone(),
-            EthEvmConfig::new(chain_spec.clone()),
-        )
-        .expect("stateless validation failed");
+        )?;
     }
 
     Ok(program_inputs)
+}
+
+fn validate_stateless_program_input<T>(
+    block_number: u64,
+    recovered_block: &RecoveredBlock<Block>,
+    execution_witness: &ExecutionWitness,
+    partial_program_inputs: &[(RecoveredBlock<Block>, ExecutionWitness)],
+    chain_spec: Arc<ChainSpec>,
+) -> Result<(), Error>
+where
+    T: StatelessTrie,
+{
+    let block = recovered_block.clone().into_block();
+    let public_keys = recover_signers(block.body().transactions())
+        .map_err(|err| Error::block_failed(block_number, partial_program_inputs.to_vec(), err))?;
+
+    stateless_validation_with_trie::<T, _, _>(
+        block,
+        public_keys,
+        execution_witness.clone(),
+        chain_spec.clone(),
+        EthEvmConfig::new(chain_spec),
+    )
+    .map_err(|err| Error::block_failed(block_number, partial_program_inputs.to_vec(), err))?;
+
+    Ok(())
 }
 
 fn decode_blocks(
@@ -466,7 +485,7 @@ fn pre_execution_checks(
 }
 
 /// Recover public keys from transaction signatures.
-fn recover_signers<'a, I>(txs: I) -> Result<Vec<UncompressedPublicKey>, Box<dyn std::error::Error>>
+fn recover_signers<'a, I>(txs: I) -> Result<Vec<UncompressedPublicKey>, Error>
 where
     I: IntoIterator<Item = &'a TransactionSigned>,
 {
@@ -480,7 +499,9 @@ where
                         keys.to_encoded_point(false).as_bytes().try_into().unwrap(),
                     )
                 })
-                .map_err(|e| format!("failed to recover signature for tx #{i}: {e}").into())
+                .map_err(|e| {
+                    Error::Assertion(format!("failed to recover signature for tx #{i}: {e}"))
+                })
         })
         .collect::<Result<Vec<UncompressedPublicKey>, _>>()
 }
@@ -556,4 +577,35 @@ fn execution_witness_with_parent(parent: &RecoveredBlock<Block>) -> ExecutionWit
     let mut serialized_header = Vec::new();
     parent.header().encode(&mut serialized_header);
     ExecutionWitness { headers: vec![serialized_header.into()], ..Default::default() }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::ForkSpec;
+
+    #[test]
+    fn stateless_validation_failure_is_reported_with_block_context() {
+        let block = Block::default();
+        let recovered_block = RecoveredBlock::new(block.clone(), Vec::new(), block.hash_slow());
+        let witness = ExecutionWitness::default();
+        let program_inputs = vec![(recovered_block.clone(), witness.clone())];
+
+        let err = validate_stateless_program_input::<StatelessSparseTrie>(
+            1,
+            &recovered_block,
+            &witness,
+            &program_inputs,
+            ForkSpec::Prague.to_chain_spec(),
+        )
+        .expect_err("empty witness should fail stateless validation");
+
+        let Error::BlockProcessingFailed { block_number, partial_program_inputs, err } = err else {
+            panic!("expected block processing failure, got {err:?}");
+        };
+
+        assert_eq!(block_number, 1);
+        assert_eq!(partial_program_inputs.len(), 1);
+        assert_eq!(err.to_string(), "missing required ancestor headers");
+    }
 }
