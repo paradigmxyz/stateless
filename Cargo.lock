@@ -6291,7 +6291,6 @@ dependencies = [
  "itertools 0.14.0",
  "reth-trie-common",
  "reth-trie-sparse",
- "revm-bytecode",
  "revm-database-interface",
  "thiserror",
  "zeth-mpt",
