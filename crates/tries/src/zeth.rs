@@ -24,7 +24,6 @@ use alloy_primitives::{
 use alloy_rpc_types_debug::ExecutionWitness;
 use alloy_trie::{EMPTY_ROOT_HASH, TrieAccount};
 use reth_trie_common::HashedPostState;
-use revm_bytecode::Bytecode;
 use zeth_mpt::CachedTrie;
 
 /// Zero-overhead helper for tries that only contain RLP encoded data.
@@ -116,23 +115,19 @@ impl SparseState {
 impl StatelessTrie for SparseState {
     /// Initialize the stateless trie using the `ExecutionWitness`.
     fn new(
-        witness: &ExecutionWitness,
+        witness: ExecutionWitness,
         pre_state_root: B256,
-    ) -> Result<(Self, B256IndexMap<Bytecode>), StatelessTrieError> {
+    ) -> Result<(Self, B256IndexMap<Bytes>), StatelessTrieError> {
         // fist, hash all the RLP nodes once
         let rlp_by_digest: B256IndexMap<_> =
-            witness.state.iter().map(|rlp| (keccak256(rlp), rlp.clone())).collect();
+            witness.state.into_iter().map(|rlp| (keccak256(&rlp), rlp)).collect();
 
         // construct the state trie from the witness data and the given state root
         let state = RlpTrie::from_prehashed(pre_state_root, &rlp_by_digest)
             .map_err(|_| StatelessTrieError::WitnessRevealFailed { pre_state_root })?;
 
         // hash all the supplied bytecode
-        let bytecode = witness
-            .codes
-            .iter()
-            .map(|code| (keccak256(code), Bytecode::new_raw(code.clone())))
-            .collect();
+        let bytecode = witness.codes.into_iter().map(|code| (keccak256(&code), code)).collect();
 
         Ok((
             Self { state, storages: RefCell::new(B256IndexMap::default()), rlp_by_digest },

@@ -1,6 +1,6 @@
 use crate::{StatelessTrie, StatelessTrieError, WitnessDbError};
 use alloc::{collections::VecDeque, format, vec::Vec};
-use alloy_primitives::{Address, B256, U256, keccak256, map::B256IndexMap};
+use alloy_primitives::{Address, B256, Bytes, U256, keccak256, map::B256IndexMap};
 use alloy_rlp::Decodable;
 use alloy_rpc_types_debug::ExecutionWitness;
 use alloy_trie::{EMPTY_ROOT_HASH, TrieAccount, nodes::TrieNode};
@@ -9,7 +9,6 @@ use reth_trie_common::{
     BranchNodeMasks, DecodedMultiProofV2, HashedPostState, Nibbles, ProofTrieNodeV2,
 };
 use reth_trie_sparse::{RevealableSparseTrie, SparseStateTrie, errors::SparseStateTrieResult};
-use revm_bytecode::Bytecode;
 
 /// `StatelessSparseTrie` structure for usage during stateless validation
 #[derive(Debug)]
@@ -23,9 +22,9 @@ impl StatelessSparseTrie {
     /// Note: Currently this method does not check that the `ExecutionWitness`
     /// is complete for all of the preimage keys.
     pub fn new(
-        witness: &ExecutionWitness,
+        witness: ExecutionWitness,
         pre_state_root: B256,
-    ) -> Result<(Self, B256IndexMap<Bytecode>), StatelessTrieError> {
+    ) -> Result<(Self, B256IndexMap<Bytes>), StatelessTrieError> {
         verify_execution_witness(witness, pre_state_root)
             .map(|(inner, bytecode)| (Self { inner }, bytecode))
     }
@@ -99,9 +98,9 @@ impl StatelessSparseTrie {
 
 impl StatelessTrie for StatelessSparseTrie {
     fn new(
-        witness: &ExecutionWitness,
+        witness: ExecutionWitness,
         pre_state_root: B256,
-    ) -> Result<(Self, B256IndexMap<Bytecode>), StatelessTrieError> {
+    ) -> Result<(Self, B256IndexMap<Bytes>), StatelessTrieError> {
         Self::new(witness, pre_state_root)
     }
 
@@ -135,21 +134,21 @@ impl StatelessTrie for StatelessSparseTrie {
 /// If the roots do not match, it returns an error indicating the witness is invalid
 /// for the given `pre_state_root` (see [`StatelessTrieError::PreStateRootMismatch`]).
 fn verify_execution_witness(
-    witness: &ExecutionWitness,
+    witness: ExecutionWitness,
     pre_state_root: B256,
-) -> Result<(SparseStateTrie, B256IndexMap<Bytecode>), StatelessTrieError> {
+) -> Result<(SparseStateTrie, B256IndexMap<Bytes>), StatelessTrieError> {
     let mut trie = SparseStateTrie::new();
     let mut bytecode = B256IndexMap::default();
 
     // Build a hash-indexed map of witness nodes.
     let mut nodes_by_hash = B256IndexMap::default();
-    for rlp_encoded in &witness.state {
-        let hash = keccak256(rlp_encoded);
-        nodes_by_hash.insert(hash, rlp_encoded.clone());
+    for rlp_encoded in witness.state {
+        let hash = keccak256(&rlp_encoded);
+        nodes_by_hash.insert(hash, rlp_encoded);
     }
-    for rlp_encoded in &witness.codes {
-        let hash = keccak256(rlp_encoded);
-        bytecode.insert(hash, Bytecode::new_raw(rlp_encoded.clone()));
+    for rlp_encoded in witness.codes {
+        let hash = keccak256(&rlp_encoded);
+        bytecode.insert(hash, rlp_encoded);
     }
 
     // Build a DecodedMultiProofV2 by walking the witness from the root.
@@ -293,7 +292,7 @@ fn calculate_state_root(
             storage_trie.wipe()?;
         }
 
-        // Apply slot‑level changes
+        // Apply slot-level changes
         for (hashed_slot, value) in
             storage.storage.into_iter().sorted_unstable_by_key(|(slot, _)| *slot)
         {

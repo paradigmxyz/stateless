@@ -275,7 +275,7 @@ where
 
     validate_block_consensus(chain_spec.clone(), &current_block, parent)?;
 
-    let (mut trie, bytecode) = T::new(&witness, parent.state_root)?;
+    let (mut trie, bytecode) = T::new(witness, parent.state_root)?;
 
     let db = WitnessDatabase::new(&trie, bytecode, ancestor_hashes);
 
