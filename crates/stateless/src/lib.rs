@@ -58,6 +58,9 @@ pub use validation::stateless_validation_with_trie;
 /// Implementation of stateless validation
 pub mod validation;
 pub(crate) mod witness_db;
+#[cfg(feature = "zkvm-interface")]
+#[cfg_attr(docsrs, doc(cfg(feature = "zkvm-interface")))]
+pub mod zkvm_interface;
 
 #[doc(inline)]
 pub use alloy_rpc_types_debug::ExecutionWitness;

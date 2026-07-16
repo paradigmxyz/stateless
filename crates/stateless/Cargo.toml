@@ -33,11 +33,22 @@ reth-chainspec.workspace = true
 reth-consensus.workspace = true
 
 # revm
+revm = { workspace = true, optional = true }
 revm-bytecode.workspace = true
 revm-database-interface.workspace = true
 revm-state.workspace = true
+
+# zkVM standard
+zkvm-interface = { workspace = true, optional = true }
 
 # misc
 thiserror.workspace = true
 serde.workspace = true
 serde_with.workspace = true
+
+[features]
+zkvm-interface = [
+    "alloy-consensus/crypto-backend",
+    "dep:revm",
+    "dep:zkvm-interface",
+]
