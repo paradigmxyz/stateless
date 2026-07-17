@@ -16,9 +16,9 @@ alloy-primitives.workspace = true
 alloy-rlp.workspace = true
 alloy-rpc-types-debug.workspace = true
 alloy-trie.workspace = true
-itertools.workspace = true
+# itertools.workspace = true
 reth-trie-common.workspace = true
-reth-trie-sparse.workspace = true
+# reth-trie-sparse.workspace = true
 revm-database-interface.workspace = true
 thiserror.workspace = true
 zeth-mpt = { path = "../zeth-mpt" }
