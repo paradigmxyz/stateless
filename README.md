@@ -1,11 +1,18 @@
 # stateless
 
-[![CI status](https://github.com/paradigmxyz/stateless/workflows/CI/badge.svg)][gh-ci]
+[![CI status](https://github.com/eez-association/stateless/actions/workflows/ci.yml/badge.svg)][gh-ci]
 [![Telegram Chat][tg-badge]][tg-url]
 
 **Stateless Ethereum block validation using execution witnesses.**
 
-[gh-ci]: https://github.com/paradigmxyz/stateless/actions/workflows/ci.yml
+This EEZ fork is based on `paradigmxyz/stateless` commit
+`3d2fc174df31f5b0d5d4d831dc7e1607ea541531`. Its EEZ-specific extension
+returns the validated pre-state root, the recomputed and header-matched
+post-state root, and optional sparse transaction-state checkpoints from the
+same execution. Checkpoint selection, quotas, and exact returned-index checks
+remain caller responsibilities.
+
+[gh-ci]: https://github.com/eez-association/stateless/actions/workflows/ci.yml
 [tg-badge]: https://img.shields.io/endpoint?color=neon&logo=telegram&label=chat&url=https%3A%2F%2Ftg.sumanjay.workers.dev%2Fparadigm%5Freth
 [tg-url]: https://t.me/paradigm_reth
 
@@ -38,9 +45,37 @@ let validation = stateless_validation(
 )?;
 
 let block_hash = validation.block_hash;
+let pre_state_root = validation.pre_state_root;
+let post_state_root = validation.post_state_root;
 let output = validation.execution_output;
 let block_access_list = validation.block_access_list;
 ```
+
+Callers that need execution-boundary state roots can use the opt-in recovered
+block API:
+
+```rust
+use stateless::stateless_validation_recovered_with_state_checkpoints;
+
+let output = stateless_validation_recovered_with_state_checkpoints(
+    recovered_block,
+    witness,
+    chain_spec,
+    evm_config,
+    &[0, 3],
+)?;
+
+let checkpoints = output.checkpoints.transaction_state_checkpoints;
+```
+
+Each checkpoint retains its transaction index and the cumulative state root
+after that transaction, before post-block changes. Consequently, the last
+requested transaction root need not equal the validated block's final root.
+Indices must be strictly increasing and in bounds. The checkpoint API rebuilds
+a trie only for each requested boundary and is intentionally separate from the
+cheaper validation-only API. Callers processing untrusted input must also cap
+the number of requested checkpoints; selecting indices avoids unnecessary work
+but does not itself impose an application-specific resource limit.
 
 ## `no_std`
 

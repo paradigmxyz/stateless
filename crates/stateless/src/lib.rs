@@ -45,13 +45,23 @@ pub use recover_block::recover_block_with_public_keys;
 #[doc(inline)]
 pub use tries::StatelessTrie;
 #[doc(inline)]
+pub use validation::BlockStateCheckpoints;
+#[doc(inline)]
 pub use validation::StatelessValidationOutput;
+#[doc(inline)]
+pub use validation::StatelessValidationWithStateCheckpointsOutput;
+#[doc(inline)]
+pub use validation::TransactionStateCheckpoint;
 #[doc(inline)]
 pub use validation::stateless_validation;
 #[doc(inline)]
 pub use validation::stateless_validation_recovered;
 #[doc(inline)]
+pub use validation::stateless_validation_recovered_with_state_checkpoints;
+#[doc(inline)]
 pub use validation::stateless_validation_recovered_with_trie;
+#[doc(inline)]
+pub use validation::stateless_validation_recovered_with_trie_and_state_checkpoints;
 #[doc(inline)]
 pub use validation::stateless_validation_with_trie;
 
