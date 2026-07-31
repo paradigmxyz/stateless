@@ -304,10 +304,7 @@ impl CryptoProvider for ZkVMInterfaceCrypto {
         sig: &[u8; 64],
         msg: &[u8; 32],
     ) -> Result<Address, RecoveryError> {
-        let pubkey = {
-            let bytes: &[u8; 64] = pubkey[1..].try_into().unwrap();
-            zkvm_secp256k1_pubkey { data: *bytes }
-        };
+        let pubkey = zkvm_secp256k1_pubkey { data: *uncompressed_pubkey_coordinates(pubkey)? };
         let msg = zkvm_secp256k1_hash { data: *msg };
         let sig = zkvm_secp256k1_signature { data: *sig };
         let mut verified = false;
@@ -319,6 +316,14 @@ impl CryptoProvider for ZkVMInterfaceCrypto {
         let hash = keccak256(&pubkey.data);
         Ok(Address::from_slice(&hash[12..]))
     }
+}
+
+#[inline]
+fn uncompressed_pubkey_coordinates(pubkey: &[u8; 65]) -> Result<&[u8; 64], RecoveryError> {
+    if pubkey[0] != 0x04 {
+        return Err(RecoveryError::new());
+    }
+    Ok(pubkey[1..].try_into().expect("public key coordinates have a fixed length"))
 }
 
 #[inline]
@@ -353,4 +358,18 @@ fn pack_bls12_381_g2(p: &G2Point) -> zkvm_bls12_381_g2_point {
     data[96..144].copy_from_slice(&p.2);
     data[144..].copy_from_slice(&p.3);
     zkvm_bls12_381_g2_point { data }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::uncompressed_pubkey_coordinates;
+
+    #[test]
+    fn validates_uncompressed_public_key_prefix() {
+        let mut public_key = [0u8; 65];
+        assert!(uncompressed_pubkey_coordinates(&public_key).is_err());
+
+        public_key[0] = 0x04;
+        assert!(uncompressed_pubkey_coordinates(&public_key).is_ok());
+    }
 }
