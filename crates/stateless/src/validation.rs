@@ -26,7 +26,12 @@ use reth_evm::{
 };
 use reth_primitives_traits::{RecoveredBlock, SealedHeader};
 use reth_trie_common::{HashedPostState, KeccakKeyHasher};
-use tries::{StatelessTrie, StatelessTrieError, zeth::SparseState};
+use tries::{StatelessTrie, StatelessTrieError};
+
+#[cfg(feature = "reth-trie")]
+use tries::default::StatelessSparseTrie as DefaultStatelessTrie;
+#[cfg(not(feature = "reth-trie"))]
+use tries::zeth::SparseState as DefaultStatelessTrie;
 
 /// BLOCKHASH ancestor lookup window limit per EVM (number of most recent blocks accessible).
 const BLOCKHASH_ANCESTOR_LIMIT: usize = 256;
@@ -184,7 +189,7 @@ where
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
     E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
 {
-    stateless_validation_with_trie::<SparseState, ChainSpec, E>(
+    stateless_validation_with_trie::<DefaultStatelessTrie, ChainSpec, E>(
         current_block,
         public_keys,
         witness,
@@ -227,7 +232,7 @@ where
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
     E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
 {
-    stateless_validation_recovered_with_trie::<SparseState, ChainSpec, E>(
+    stateless_validation_recovered_with_trie::<DefaultStatelessTrie, ChainSpec, E>(
         recovered_block,
         witness,
         chain_spec,

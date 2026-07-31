@@ -16,9 +16,17 @@ alloy-primitives.workspace = true
 alloy-rlp.workspace = true
 alloy-rpc-types-debug.workspace = true
 alloy-trie.workspace = true
-# itertools.workspace = true
+itertools = { workspace = true, optional = true }
 reth-trie-common.workspace = true
-# reth-trie-sparse.workspace = true
+reth-trie-sparse = { workspace = true, optional = true }
 revm-database-interface.workspace = true
 thiserror.workspace = true
 zeth-mpt = { path = "../zeth-mpt" }
+
+[features]
+default = ["std"]
+std = [
+    "dep:itertools",
+    "dep:reth-trie-sparse",
+    "reth-trie-sparse/std",
+]

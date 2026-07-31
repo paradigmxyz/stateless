@@ -28,7 +28,7 @@ reth-evm-ethereum.workspace = true
 reth-payload-validator.workspace = true
 reth-primitives-traits.workspace = true
 stateless.workspace = true
-tries.workspace = true
+tries = { workspace = true, default-features = false }
 
 # openvm
 openvm-sha2 = { workspace = true, optional = true }
