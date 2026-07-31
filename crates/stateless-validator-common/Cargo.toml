@@ -1,0 +1,25 @@
+[package]
+name = "stateless-validator-common"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+const-hex = { workspace = true, features = ["alloc"] }
+paste.workspace = true
+thiserror.workspace = true
+
+# ssz
+libssz.workspace = true
+libssz-derive.workspace = true
+libssz-merkle.workspace = true
+libssz-types.workspace = true
+
+[features]
+# guest
+default = ["std"]
+std = []
