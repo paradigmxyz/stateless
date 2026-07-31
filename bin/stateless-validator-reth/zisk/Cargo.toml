@@ -1,0 +1,61 @@
+[workspace]
+
+[package]
+name = "stateless-validator-reth-zisk"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# enable features
+alloy-primitives = { version = "1.6.0", default-features = false, features = [
+    "map-foldhash",
+    "native-keccak",
+] }
+
+# ere
+# NOTE: Using `default-features = false, features = ["inputcpy"]` mainly to disable the other
+#       feature enabled by default `user-hints`, which this binary doesn't use but introduces lots
+#       of dependencies.
+ere-platform-zisk = { git = "https://github.com/eth-act/ere", tag = "v0.14.0", default-features = false, features = [
+    "inputcpy",
+] }
+
+# local
+stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", default-features = false, features = [
+    "zisk",
+] }
+
+[features]
+cycle-scope = ["ere-platform-zisk/cycle-scope"]
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(zisk_hints)',
+    'cfg(zisk_hints_debug)',
+    'cfg(target_vendor, values("zisk"))',
+] }
+
+# FIXME: Remove the patch once glamsterdam-devnet-7 lands upstream.
+# Taken from https://github.com/paradigmxyz/reth/blob/9acd64229e4667d94690c2976e6f8f547ba49d7c/Cargo.toml
+[patch.crates-io]
+revm = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-bytecode = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-context = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-context-interface = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-database = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-database-interface = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-handler = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-inspector = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-interpreter = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-precompile = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-primitives = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+revm-state = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
+alloy-evm = { git = "https://github.com/alloy-rs/evm", rev = "721c59b9e4f640c9e646c0516e5be7142c956a26" }
+reth-codecs = { git = "https://github.com/paradigmxyz/reth-core", rev = "1030ec2e47bfd01956e2239ad3399bf3b5121cbe" }
+reth-codecs-derive = { git = "https://github.com/paradigmxyz/reth-core", rev = "1030ec2e47bfd01956e2239ad3399bf3b5121cbe" }
+reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth-core", rev = "1030ec2e47bfd01956e2239ad3399bf3b5121cbe" }
+reth-zstd-compressors = { git = "https://github.com/paradigmxyz/reth-core", rev = "1030ec2e47bfd01956e2239ad3399bf3b5121cbe" }
