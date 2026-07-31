@@ -68,3 +68,19 @@ jobs:
           cache-on-failure: true
       - name: Build stateless for riscv64im
         run: ./scripts/check_no_std.sh
+
+  stateless-validator:
+    name: Reth stateless validator fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      RUST_LOG: info
+      RUST_BACKTRACE: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - name: Run execution-spec fixtures
+        run: cargo test -p stateless-validator-tests --test host_execution

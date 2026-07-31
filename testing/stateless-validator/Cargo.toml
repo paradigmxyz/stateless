@@ -1,0 +1,36 @@
+[package]
+name = "stateless-validator-tests"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+const-hex.workspace = true
+flate2.workspace = true
+rayon.workspace = true
+reqwest.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+sha2.workspace = true
+tar.workspace = true
+tempfile.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+walkdir.workspace = true
+zstd.workspace = true
+
+# alloy
+alloy-primitives = { workspace = true, features = ["serde"] }
+
+# ere
+ere-platform-core.workspace = true
+
+# local
+stateless-validator-common = { workspace = true, features = ["std"] }
+stateless-validator-reth = { workspace = true, features = ["host"] }

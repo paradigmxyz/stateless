@@ -15,6 +15,7 @@ members = [
     "crates/tries",
     "crates/zeth-mpt",
     "testing/ef-tests",
+    "testing/stateless-validator",
 ]
 resolver = "2"
 
@@ -56,7 +57,7 @@ reth-db-common = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b
 reth-ethereum-consensus = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b", default-features = false }
 reth-ethereum-primitives = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b", default-features = false }
 reth-evm = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b", default-features = false }
-reth-evm-ethereum = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b" }
+reth-evm-ethereum = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b", default-features = false }
 reth-primitives-traits = { version = "0.5.2", default-features = false }
 reth-payload-validator = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b", default-features = false }
 reth-provider = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b" }
@@ -102,14 +103,20 @@ libssz-merkle = { version = "0.2.2", default-features = false, features = [
 libssz-types = { version = "0.2.2", default-features = false, features = ["alloc"] }
 
 # misc
+anyhow = "1.0"
 arrayvec = { version = "0.7", default-features = false }
 bincode = "1.3"
 const-hex = { version = "1.19", default-features = false, features = ["alloc"] }
+flate2 = "1.1"
 itertools = { version = "0.14", default-features = false, features = [
     "use_alloc",
 ] }
 paste = "1.0"
 rayon = "1.8"
+reqwest = { version = "0.12", default-features = false, features = [
+    "blocking",
+    "rustls-tls",
+] }
 rkyv = "0.8"
 serde = { version = "1.0", default-features = false, features = [
     "derive",
@@ -119,5 +126,11 @@ serde_json = "1.0"
 serde_with = { version = "3.16", default-features = false, features = [
     "alloc",
 ] }
+sha2 = "0.10"
+tar = "0.4"
+tempfile = "3.20"
 thiserror = { version = "2.0", default-features = false }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 walkdir = "2.5"
+zstd = "0.13"

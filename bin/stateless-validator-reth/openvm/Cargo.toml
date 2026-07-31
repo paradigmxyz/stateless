@@ -42,7 +42,9 @@ ere-platform-openvm = { git = "https://github.com/eth-act/ere", tag = "v0.14.0",
 ] }
 
 # local
-stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", features = ["openvm"] }
+stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", default-features = false, features = [
+    "openvm",
+] }
 
 [patch."https://github.com/openvm-org/openvm.git"]
 # The extra slash keeps this override distinct from the source being patched.
