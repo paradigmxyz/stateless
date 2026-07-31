@@ -13,3 +13,12 @@ fn main() {
         .expect("failed to install OpenVM revm crypto provider");
     entrypoint::<OpenVMPlatform>();
 }
+
+// OpenVM guests execute on one thread, so critical sections need no runtime synchronization.
+#[unsafe(no_mangle)]
+fn _critical_section_1_0_acquire() -> u64 {
+    0
+}
+
+#[unsafe(no_mangle)]
+fn _critical_section_1_0_release(_: u64) {}
