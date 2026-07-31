@@ -1857,6 +1857,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
+name = "ere-platform-core"
+version = "0.14.0"
+source = "git+https://github.com/eth-act/ere?tag=v0.14.0#2ef473c4a6ba5aefb29dc6718b9deeef5119b8bb"
+
+[[package]]
 name = "errno"
 version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3368,6 +3373,51 @@ dependencies = [
 ]
 
 [[package]]
+name = "openvm-custom-insn"
+version = "0.1.0"
+source = "git+https://github.com/openvm-org/openvm.git?tag=v2.0.0#15a7ab6baed03d75050dbef2bbad4b4e98fb8dba"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "openvm-platform"
+version = "2.0.0"
+source = "git+https://github.com/openvm-org/openvm.git?tag=v2.0.0#15a7ab6baed03d75050dbef2bbad4b4e98fb8dba"
+dependencies = [
+ "openvm-custom-insn",
+ "openvm-rv32im-guest",
+]
+
+[[package]]
+name = "openvm-rv32im-guest"
+version = "2.0.0"
+source = "git+https://github.com/openvm-org/openvm.git?tag=v2.0.0#15a7ab6baed03d75050dbef2bbad4b4e98fb8dba"
+dependencies = [
+ "openvm-custom-insn",
+ "strum_macros 0.26.4",
+]
+
+[[package]]
+name = "openvm-sha2"
+version = "2.0.0"
+source = "git+https://github.com/openvm-org/openvm.git?tag=v2.0.0#15a7ab6baed03d75050dbef2bbad4b4e98fb8dba"
+dependencies = [
+ "openvm-sha2-guest",
+ "sha2",
+]
+
+[[package]]
+name = "openvm-sha2-guest"
+version = "2.0.0"
+source = "git+https://github.com/openvm-org/openvm.git?tag=v2.0.0#15a7ab6baed03d75050dbef2bbad4b4e98fb8dba"
+dependencies = [
+ "openvm-platform",
+]
+
+[[package]]
 name = "p256"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4634,6 +4684,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "reth-payload-validator"
+version = "2.4.0"
+source = "git+https://github.com/han0110/reth?rev=c5dff62a8804b207659f5d1f30f13e66c3a66d4b#c5dff62a8804b207659f5d1f30f13e66c3a66d4b"
+dependencies = [
+ "alloy-consensus",
+ "alloy-rpc-types-engine",
+ "reth-primitives-traits",
+]
+
+[[package]]
 name = "reth-primitives-traits"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5863,6 +5923,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "stateless-validator-reth"
+version = "0.1.0"
+dependencies = [
+ "alloy-consensus",
+ "alloy-eips",
+ "alloy-genesis",
+ "alloy-primitives",
+ "alloy-rpc-types-engine",
+ "ere-platform-core",
+ "openvm-sha2",
+ "reth-chainspec",
+ "reth-ethereum-primitives",
+ "reth-evm-ethereum",
+ "reth-payload-validator",
+ "reth-primitives-traits",
+ "revm",
+ "stateless",
+ "stateless-validator-common",
+ "thiserror",
+ "tries",
+ "zkvm-interface",
+]
+
+[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5880,7 +5964,20 @@ version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af23d6f6c1a224baef9d3f61e287d2761385a5b88fdab4eb4c6f11aeb54c4bcf"
 dependencies = [
- "strum_macros",
+ "strum_macros 0.27.2",
+]
+
+[[package]]
+name = "strum_macros"
+version = "0.26.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c6bee85a5a24955dc440386795aa378cd9cf82acd5f764469152d2270e581be"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "rustversion",
+ "syn 2.0.117",
 ]
 
 [[package]]

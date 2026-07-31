@@ -11,6 +11,7 @@ exclude = [".github/"]
 members = [
     "crates/stateless",
     "crates/stateless-validator-common",
+    "crates/stateless-validator-reth",
     "crates/tries",
     "crates/zeth-mpt",
     "testing/ef-tests",
@@ -43,6 +44,7 @@ strip = "symbols"
 # internal
 stateless = { path = "crates/stateless" }
 stateless-validator-common = { path = "crates/stateless-validator-common", default-features = false }
+stateless-validator-reth = { path = "crates/stateless-validator-reth", default-features = false }
 tries = { path = "crates/tries" }
 
 # reth
@@ -56,6 +58,7 @@ reth-ethereum-primitives = { git = "https://github.com/han0110/reth", rev = "c5d
 reth-evm = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b", default-features = false }
 reth-evm-ethereum = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b" }
 reth-primitives-traits = { version = "0.5.2", default-features = false }
+reth-payload-validator = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b", default-features = false }
 reth-provider = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b" }
 reth-revm = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b", default-features = false }
 reth-tracing = { git = "https://github.com/han0110/reth", rev = "c5dff62a8804b207659f5d1f30f13e66c3a66d4b" }
@@ -71,6 +74,7 @@ alloy-genesis = { version = "2.1.1", default-features = false }
 alloy-primitives = { version = "1.6.0", default-features = false, features = ["map-foldhash", "map-indexmap"] }
 alloy-rlp = { version = "0.3.13", default-features = false }
 alloy-rpc-types-debug = { version = "2.1.1", default-features = false }
+alloy-rpc-types-engine = { version = "2.1.1", default-features = false }
 alloy-trie = { version = "0.9.4", default-features = false }
 
 # revm
@@ -81,6 +85,12 @@ revm-state = { version = "41.0.0", default-features = false }
 
 # zkVM standard
 zkvm-interface = { git = "https://github.com/eth-act/zkvm-standards", rev = "282cd356c3a0498416bb0619f9c8a347ce9933fb" }
+
+# OpenVM
+openvm-sha2 = { git = "https://github.com/openvm-org/openvm.git", tag = "v2.0.0" }
+
+# Ere
+ere-platform-core = { git = "https://github.com/eth-act/ere", tag = "v0.14.0" }
 
 # ssz
 libssz = { version = "0.2.2", default-features = false, features = ["alloc"] }
