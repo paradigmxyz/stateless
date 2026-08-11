@@ -13,7 +13,7 @@ alloy-primitives = { version = "1.6.1", default-features = false, features = [
 ] }
 
 # ere
-ere-platform-sp1 = { git = "https://github.com/eth-act/ere", tag = "v0.15.0" }
+ere-platform-sp1 = { git = "https://github.com/eth-act/ere", rev = "552595938b48884d87cfada24f29d39223695c1e" }
 
 # local
 stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", default-features = false, features = [

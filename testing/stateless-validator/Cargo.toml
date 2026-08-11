@@ -29,8 +29,9 @@ zstd.workspace = true
 alloy-primitives = { workspace = true, features = ["serde"] }
 
 # ere
-ere-dockerized.workspace = true
 ere-platform-core.workspace = true
+ere-server-client.workspace = true
+ere-util-tokio.workspace = true
 
 # local
 stateless-validator-common = { workspace = true, features = ["std"] }

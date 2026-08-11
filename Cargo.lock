@@ -1412,38 +1412,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "camino"
-version = "1.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb1307f12aa967b5a58416e87b3653360e0fd614a016b6e970db08fecbb1b80d"
-dependencies = [
- "serde_core",
-]
-
-[[package]]
-name = "cargo-platform"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e35af189006b9c0f00a064685c727031e3ed2d8020f7ba284d78cc2671bd36ea"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "cargo_metadata"
-version = "0.19.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd5eb614ed4c27c5d706420e4320fbe3216ab31fa1c33cd8246ac36dae4479ba"
-dependencies = [
- "camino",
- "cargo-platform",
- "semver 1.0.28",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
 name = "cc"
 version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2104,59 +2072,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
-name = "ere-catalog"
-version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
-dependencies = [
- "ere-util-build",
- "serde",
- "strum",
-]
-
-[[package]]
 name = "ere-codec"
 version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
-
-[[package]]
-name = "ere-compiler-core"
-version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "ere-dockerized"
-version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
-dependencies = [
- "anyhow",
- "ere-catalog",
- "ere-compiler-core",
- "ere-prover-core",
- "ere-server-client",
- "ere-util-tokio",
- "tempfile",
- "thiserror",
- "tokio",
- "tracing",
-]
+source = "git+https://github.com/eth-act/ere?rev=552595938b48884d87cfada24f29d39223695c1e#552595938b48884d87cfada24f29d39223695c1e"
 
 [[package]]
 name = "ere-platform-core"
 version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
+source = "git+https://github.com/eth-act/ere?rev=552595938b48884d87cfada24f29d39223695c1e#552595938b48884d87cfada24f29d39223695c1e"
 
 [[package]]
 name = "ere-prover-core"
 version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
+source = "git+https://github.com/eth-act/ere?rev=552595938b48884d87cfada24f29d39223695c1e#552595938b48884d87cfada24f29d39223695c1e"
 dependencies = [
  "anyhow",
  "auto_impl",
  "bincode 2.0.1",
- "clap",
  "ere-codec",
  "ere-verifier-core",
  "indexmap 2.14.0",
@@ -2168,7 +2100,7 @@ dependencies = [
 [[package]]
 name = "ere-server-api"
 version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
+source = "git+https://github.com/eth-act/ere?rev=552595938b48884d87cfada24f29d39223695c1e#552595938b48884d87cfada24f29d39223695c1e"
 dependencies = [
  "prost",
  "serde",
@@ -2178,7 +2110,7 @@ dependencies = [
 [[package]]
 name = "ere-server-client"
 version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
+source = "git+https://github.com/eth-act/ere?rev=552595938b48884d87cfada24f29d39223695c1e#552595938b48884d87cfada24f29d39223695c1e"
 dependencies = [
  "bincode 2.0.1",
  "ere-prover-core",
@@ -2188,17 +2120,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "ere-util-build"
-version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
-dependencies = [
- "cargo_metadata",
-]
-
-[[package]]
 name = "ere-util-tokio"
 version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
+source = "git+https://github.com/eth-act/ere?rev=552595938b48884d87cfada24f29d39223695c1e#552595938b48884d87cfada24f29d39223695c1e"
 dependencies = [
  "tokio",
 ]
@@ -2206,7 +2130,7 @@ dependencies = [
 [[package]]
 name = "ere-verifier-core"
 version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.15.0#552595938b48884d87cfada24f29d39223695c1e"
+source = "git+https://github.com/eth-act/ere?rev=552595938b48884d87cfada24f29d39223695c1e#552595938b48884d87cfada24f29d39223695c1e"
 dependencies = [
  "auto_impl",
  "ere-codec",
@@ -6154,10 +6078,6 @@ name = "semver"
 version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd"
-dependencies = [
- "serde",
- "serde_core",
-]
 
 [[package]]
 name = "semver-parser"
@@ -6342,16 +6262,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
-name = "signal-hook-registry"
-version = "1.4.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b"
-dependencies = [
- "errno",
- "libc",
-]
-
-[[package]]
 name = "signature"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6511,8 +6421,9 @@ dependencies = [
  "alloy-primitives",
  "anyhow",
  "const-hex",
- "ere-dockerized",
  "ere-platform-core",
+ "ere-server-client",
+ "ere-util-tokio",
  "flate2",
  "rayon",
  "reqwest 0.12.28",
@@ -6800,7 +6711,6 @@ dependencies = [
  "libc",
  "mio",
  "pin-project-lite",
- "signal-hook-registry",
  "socket2",
  "tokio-macros",
  "windows-sys 0.61.2",
