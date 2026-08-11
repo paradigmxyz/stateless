@@ -23,6 +23,7 @@ resolver = "2"
 missing_debug_implementations = "warn"
 missing_docs = "warn"
 rust_2018_idioms = { level = "deny", priority = -1 }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_vendor, values("zisk"))'] }
 unreachable_pub = "warn"
 unused_must_use = "deny"
 

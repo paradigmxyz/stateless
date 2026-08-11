@@ -5,19 +5,22 @@ use core::mem::transmute;
 
 use alloy_consensus::crypto::{CryptoProvider, RecoveryError, install_default_provider};
 use alloy_primitives::Address;
+#[cfg(target_vendor = "zisk")]
+use revm::precompile::DefaultCrypto;
 use revm::precompile::{
     Crypto, PrecompileHalt,
     bls12_381::{G1Point, G1PointScalar, G2Point, G2PointScalar},
 };
+#[cfg(not(target_vendor = "zisk"))]
+use zkvm_interface::zkvm_bls12_381_fp;
 use zkvm_interface::{
-    zkvm_blake2f_message, zkvm_blake2f_offset, zkvm_blake2f_state, zkvm_bls12_381_fp,
-    zkvm_bls12_381_fp2, zkvm_bls12_381_g1_msm_pair, zkvm_bls12_381_g1_point,
-    zkvm_bls12_381_g2_msm_pair, zkvm_bls12_381_g2_point, zkvm_bls12_381_pairing_pair,
-    zkvm_bls12_381_scalar, zkvm_bn254_g1_point, zkvm_bn254_g2_point, zkvm_bn254_pairing_pair,
-    zkvm_bn254_scalar, zkvm_keccak256_hash, zkvm_kzg_commitment, zkvm_kzg_field_element,
-    zkvm_kzg_proof, zkvm_ripemd160_hash, zkvm_secp256k1_hash, zkvm_secp256k1_pubkey,
-    zkvm_secp256k1_signature, zkvm_secp256r1_hash, zkvm_secp256r1_pubkey, zkvm_secp256r1_signature,
-    zkvm_sha256_hash,
+    zkvm_blake2f_message, zkvm_blake2f_offset, zkvm_blake2f_state, zkvm_bls12_381_fp2,
+    zkvm_bls12_381_g1_msm_pair, zkvm_bls12_381_g1_point, zkvm_bls12_381_g2_msm_pair,
+    zkvm_bls12_381_g2_point, zkvm_bls12_381_pairing_pair, zkvm_bls12_381_scalar,
+    zkvm_bn254_g1_point, zkvm_bn254_g2_point, zkvm_bn254_pairing_pair, zkvm_bn254_scalar,
+    zkvm_keccak256_hash, zkvm_kzg_commitment, zkvm_kzg_field_element, zkvm_kzg_proof,
+    zkvm_ripemd160_hash, zkvm_secp256k1_hash, zkvm_secp256k1_pubkey, zkvm_secp256k1_signature,
+    zkvm_secp256r1_hash, zkvm_secp256r1_pubkey, zkvm_secp256r1_signature, zkvm_sha256_hash,
 };
 
 /// Installs [`ZkVMInterfaceCrypto`] as [`revm::precompile::Crypto`] backend and as
@@ -167,6 +170,13 @@ impl Crypto for ZkVMInterfaceCrypto {
         &self,
         pairs: &mut dyn Iterator<Item = Result<G1PointScalar, PrecompileHalt>>,
     ) -> Result<[u8; 96], PrecompileHalt> {
+        #[cfg(target_vendor = "zisk")]
+        let pairs = {
+            let pairs = pairs.collect::<Result<Vec<_>, _>>()?;
+            validate_zisk_bls12_g1_subgroups(pairs.iter().map(|(point, _)| *point))?;
+            pairs.into_iter().map(Ok)
+        };
+
         let pairs: Vec<zkvm_bls12_381_g1_msm_pair> = pairs
             .map(|pair| {
                 let (point, scalar) = pair?;
@@ -216,6 +226,9 @@ impl Crypto for ZkVMInterfaceCrypto {
         &self,
         pairs: &[(G1Point, G2Point)],
     ) -> Result<bool, PrecompileHalt> {
+        #[cfg(target_vendor = "zisk")]
+        validate_zisk_bls12_g1_subgroups(pairs.iter().map(|(point, _)| *point))?;
+
         let pairs: Vec<zkvm_bls12_381_pairing_pair> = pairs
             .iter()
             .map(|(g1, g2)| zkvm_bls12_381_pairing_pair {
@@ -234,9 +247,17 @@ impl Crypto for ZkVMInterfaceCrypto {
 
     #[inline]
     fn bls12_381_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileHalt> {
+        // The ZisK hint panics on valid EIP-2537 isogeny-kernel inputs.
+        #[cfg(target_vendor = "zisk")]
+        return DefaultCrypto.bls12_381_fp_to_g1(fp);
+
+        #[cfg(not(target_vendor = "zisk"))]
         let fp = zkvm_bls12_381_fp { data: *fp };
+        #[cfg(not(target_vendor = "zisk"))]
         let mut result = zkvm_bls12_381_g1_point { data: [0; 96] };
+        #[cfg(not(target_vendor = "zisk"))]
         let ret = unsafe { zkvm_interface::zkvm_bls12_map_fp_to_g1(&fp, &mut result) };
+        #[cfg(not(target_vendor = "zisk"))]
         (ret == 0)
             .then_some(result.data)
             .ok_or_else(|| PrecompileHalt::other("bls12_381_fp_to_g1 failed"))
@@ -340,6 +361,18 @@ fn keccak256(data: &[u8]) -> [u8; 32] {
     let ret = unsafe { zkvm_interface::zkvm_keccak256(data.as_ptr(), data.len(), &mut output) };
     assert_eq!(ret, 0, "keccak256 failed");
     output.data
+}
+
+#[cfg(target_vendor = "zisk")]
+fn validate_zisk_bls12_g1_subgroups(
+    points: impl Iterator<Item = G1Point>,
+) -> Result<(), PrecompileHalt> {
+    // ZisK's G1 MSM and pairing hints panic instead of rejecting non-subgroup points.
+    let mut points = points.collect::<Vec<_>>();
+    points.sort_unstable();
+    points.dedup();
+    let mut pairs = points.into_iter().map(|point| Ok((point, [0; 32])));
+    DefaultCrypto.bls12_381_g1_msm(&mut pairs).map(|_| ())
 }
 
 #[inline]
