@@ -9,9 +9,11 @@ use reth_trie_common::{
     BranchNodeMasks, DecodedMultiProofV2, HashedPostState, Nibbles, ProofTrieNodeV2,
 };
 use reth_trie_sparse::{
-    LeafUpdate, RevealableSparseTrie, SparseStateTrie,
+    LeafUpdate, RevealableSparseTrie, SparseStateTrie, TrieNodeEpoch,
     errors::{SparseStateTrieErrorKind, SparseStateTrieResult, SparseTrieErrorKind},
 };
+
+const POST_STATE_EPOCH: TrieNodeEpoch = TrieNodeEpoch::new(1);
 
 /// `StatelessSparseTrie` structure for usage during stateless validation
 #[derive(Debug)]
@@ -163,8 +165,9 @@ fn verify_execution_witness(
         .map_err(|_e| StatelessTrieError::WitnessRevealFailed { pre_state_root })?;
 
     // Calculate the root
-    let computed_root =
-        trie.root().map_err(|_e| StatelessTrieError::StatelessPreStateRootCalculationFailed)?;
+    let computed_root = trie
+        .root(TrieNodeEpoch::UNMODIFIED)
+        .map_err(|_e| StatelessTrieError::StatelessPreStateRootCalculationFailed)?;
 
     if computed_root == pre_state_root {
         Ok((trie, bytecode))
@@ -321,7 +324,7 @@ fn calculate_state_root(
         }
 
         // Finalise the storage‑trie root before pushing the result
-        storage_trie.root();
+        storage_trie.root(POST_STATE_EPOCH);
         storage_results.push((address, storage_trie));
     }
 
@@ -336,7 +339,7 @@ fn calculate_state_root(
         let value = if let Some(account) = account {
             let storage_root =
                 if let Some(storage_trie) = trie.storage_tries_mut().get_mut(&hashed_address) {
-                    storage_trie.root().ok_or(SparseTrieErrorKind::Blind)?
+                    storage_trie.root(POST_STATE_EPOCH).ok_or(SparseTrieErrorKind::Blind)?
                 } else if let Some(value) = trie.get_account_value(&hashed_address) {
                     TrieAccount::decode(&mut &value[..])?.storage_root
                 } else {
@@ -357,5 +360,5 @@ fn calculate_state_root(
     }
 
     // Return new state root
-    trie.root()
+    trie.root(POST_STATE_EPOCH)
 }

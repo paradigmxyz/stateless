@@ -5,7 +5,7 @@ unchanged and writes the corresponding `statelessOutputBytes`. It is released
 for OpenVM, SP1, and ZisK under these names:
 
 ```text
-stateless-validator-reth-openvm-v2.0.0.elf
+stateless-validator-reth-openvm-v2.1.0-preview.elf
 stateless-validator-reth-sp1-v6.3.1.elf
 stateless-validator-reth-zisk-v1.0.0-alpha.elf
 ```
@@ -16,7 +16,7 @@ Sigstore provenance bundle.
 
 ## Build
 
-The build scripts use digest-pinned ERE v0.14.0 compiler and server images:
+The build scripts use digest-pinned ERE v0.15.0 compiler and server images:
 
 ```bash
 scripts/guests/build.sh openvm output

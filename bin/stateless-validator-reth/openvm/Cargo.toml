@@ -7,87 +7,22 @@ edition = "2024"
 
 [dependencies]
 # enable features
-alloy-consensus = { version = "2.1.1", default-features = false, features = [
-    "crypto-backend",
-] }
-alloy-primitives = { version = "1.6.0", default-features = false, features = [
+alloy-primitives = { version = "1.6.1", default-features = false, features = [
     "map-hashbrown",
     "native-keccak",
 ] }
 
-# revm
-revm = { version = "41.0.0", default-features = false }
-
-# openvm
-openvm = { git = "https://github.com/openvm-org/openvm.git", tag = "v2.0.0", features = [
-    "std",
-] }
-openvm-algebra-guest = { git = "https://github.com/openvm-org/openvm.git", tag = "v2.0.0" }
-openvm-ecc-guest = { git = "https://github.com/openvm-org/openvm.git", tag = "v2.0.0" }
-openvm-sha2 = { git = "https://github.com/openvm-org/openvm.git", tag = "v2.0.0" }
-openvm-pairing = { git = "https://github.com/openvm-org/openvm.git", tag = "v2.0.0", features = [
-    "bn254",
-    "bls12_381",
-] }
-openvm-k256 = { git = "https://github.com/openvm-org/openvm.git", tag = "v2.0.0", package = "k256" }
-openvm-p256 = { git = "https://github.com/openvm-org/openvm.git", tag = "v2.0.0", package = "p256" }
-openvm-keccak256 = { git = "https://github.com/openvm-org/openvm.git", tag = "v2.0.0" }
-openvm-curve-utils = { git = "https://github.com/axiom-crypto/openvm-eth", rev = "aa8bbe17e624d317f14ea925df7c256c0b205134" }
-openvm-kzg = { git = "https://github.com/axiom-crypto/openvm-eth", rev = "aa8bbe17e624d317f14ea925df7c256c0b205134" }
-aurora-engine-modexp = { version = "1.2.0", default-features = false }
-
 # ere
-ere-platform-openvm = { git = "https://github.com/eth-act/ere", tag = "v0.14.0", features = [
+ere-platform-openvm = { git = "https://github.com/eth-act/ere", tag = "v0.15.0", features = [
     "std",
+    "zkvm-accelerator",
 ] }
 
 # local
-stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", default-features = false, features = [
+stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", features = [
     "openvm",
 ] }
-
-[patch."https://github.com/openvm-org/openvm.git"]
-# The extra slash keeps this override distinct from the source being patched.
-openvm = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-algebra-complex-macros = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-algebra-guest = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-algebra-moduli-macros = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-custom-insn = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-ecc-guest = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-ecc-sw-macros = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-k256 = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0", package = "k256" }
-openvm-keccak256 = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-keccak256-guest = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-macros-common = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-p256 = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0", package = "p256" }
-openvm-pairing = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-pairing-guest = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-platform = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-rv32im-guest = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-sha2 = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
-openvm-sha2-guest = { git = "https://github.com/openvm-org//openvm.git", tag = "v2.0.0" }
 
 [profile.release]
 codegen-units = 1
 lto = "fat"
-
-# FIXME: Remove the patch once glamsterdam-devnet-7 lands upstream.
-# Taken from https://github.com/paradigmxyz/reth/blob/9acd64229e4667d94690c2976e6f8f547ba49d7c/Cargo.toml
-[patch.crates-io]
-revm = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-bytecode = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-context = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-context-interface = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-database = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-database-interface = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-handler = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-inspector = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-interpreter = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-precompile = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-primitives = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-revm-state = { git = "https://github.com/bluealloy/revm", rev = "335a35ddb370b667bff248109524a4efc589213f" }
-alloy-evm = { git = "https://github.com/alloy-rs/evm", rev = "721c59b9e4f640c9e646c0516e5be7142c956a26" }
-reth-codecs = { git = "https://github.com/paradigmxyz/reth-core", rev = "1030ec2e47bfd01956e2239ad3399bf3b5121cbe" }
-reth-codecs-derive = { git = "https://github.com/paradigmxyz/reth-core", rev = "1030ec2e47bfd01956e2239ad3399bf3b5121cbe" }
-reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth-core", rev = "1030ec2e47bfd01956e2239ad3399bf3b5121cbe" }
-reth-zstd-compressors = { git = "https://github.com/paradigmxyz/reth-core", rev = "1030ec2e47bfd01956e2239ad3399bf3b5121cbe" }

@@ -29,7 +29,9 @@ docker run --rm \
     --compiler-kind rust-customized \
     --guest-dir "/stateless/bin/stateless-validator-reth/$ZKVM" \
     --output-dir /output \
-    --elf-name "$ARTIFACT_NAME.elf"
+    --elf-name "$ARTIFACT_NAME.elf" \
+    -- \
+    --ignore-rust-version
 
 if [[ "$(sha256_file "$LOCKFILE")" != "$LOCKFILE_SHA256" ]]; then
     echo "$LOCKFILE changed during compilation" >&2

@@ -58,7 +58,7 @@ jq -n \
     --arg repository "${GITHUB_REPOSITORY:-paradigmxyz/stateless}" \
     --arg source_commit "${GITHUB_SHA:-$(git -C "$REPO_ROOT" rev-parse HEAD)}" \
     --arg release_tag "${GITHUB_REF_NAME:-}" \
-    --arg ere_version "v0.14.0" \
+    --arg ere_version "v0.15.0" \
     --arg input_contract "execution-specs statelessInputBytes/statelessOutputBytes" \
     --argjson guests "$GUESTS" \
     --argjson files "$FILES" \
