@@ -22,7 +22,9 @@ use reth_provider::{
     test_utils::create_test_provider_factory_with_chain_spec_and_db_args,
 };
 use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnessRecord};
-use reth_trie::{HashedPostState, KeccakKeyHasher, StateRoot};
+use reth_trie::{
+    HashedPostState, KeccakKeyHasher, StateRoot, hashed_cursor::zero_destroyed_account_storage,
+};
 use reth_trie_common::ExecutionWitnessMode;
 use reth_trie_db::{
     DatabaseHashedCursorFactory, DatabaseStateRoot, DatabaseTrieCursorFactory, LegacyKeyAdapter,
@@ -341,8 +343,14 @@ where
         program_inputs.push((block.clone(), exec_witness));
 
         // Compute and check the post state root
-        let hashed_state =
+        let mut hashed_state =
             HashedPostState::from_bundle_state::<KeccakKeyHasher>(output.state.state());
+        zero_destroyed_account_storage(
+            &DatabaseHashedCursorFactory::new(provider.tx_ref()),
+            output.state.state(),
+            &mut hashed_state,
+        )
+        .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
         let (computed_state_root, _) = <StateRoot<
             DatabaseTrieCursorFactory<_, LegacyKeyAdapter>,
             DatabaseHashedCursorFactory<_>,
