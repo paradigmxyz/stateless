@@ -21,7 +21,6 @@ LOCKFILE="$REPO_ROOT/bin/stateless-validator-reth/$ZKVM/Cargo.lock"
 LOCKFILE_SHA256="$(sha256_file "$LOCKFILE")"
 
 docker run --rm \
-    -e OPENVM_RUST_TOOLCHAIN=nightly-2026-01-18 \
     -e RUST_LOG=info \
     --mount "type=bind,src=$REPO_ROOT,dst=/stateless" \
     --mount "type=bind,src=$OUTPUT_DIR,dst=/output" \
