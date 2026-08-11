@@ -44,6 +44,9 @@ jobs:
       - name: Verify locked dependencies
         run: git diff --exit-code -- "bin/stateless-validator-reth/${{ matrix.zkvm }}/Cargo.lock"
 
+      - name: Execute built guest
+        run: scripts/guests/smoke-test.sh "${{ matrix.zkvm }}" output
+
       - name: Upload guest artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -52,18 +55,12 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  release:
-    name: Publish signed guest release
-    if: startsWith(github.ref, 'refs/tags/v')
+  package:
+    name: Assemble guest release
     needs:
       - build
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
     steps:
       - name: Checkout source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -81,6 +78,36 @@ jobs:
           scripts/guests/create-release-manifest.sh release
           cd release
           sha256sum -- *.elf *.vk RELEASE-MANIFEST.json > SHA256SUMS
+
+      - name: Upload release bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: reth-guest-release
+          path: release/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish signed guest release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Download guest artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: reth-guest-release
+          path: release
 
       - name: Attest release artifacts
         id: attest

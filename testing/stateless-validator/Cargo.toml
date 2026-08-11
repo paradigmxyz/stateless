@@ -29,6 +29,7 @@ zstd.workspace = true
 alloy-primitives = { workspace = true, features = ["serde"] }
 
 # ere
+ere-dockerized.workspace = true
 ere-platform-core.workspace = true
 
 # local

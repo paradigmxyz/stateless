@@ -85,7 +85,8 @@ pub fn run_host_execution(
     failures
 }
 
-fn matches_output(got_bytes: Vec<u8>, expected_bytes: Vec<u8>) -> anyhow::Result<()> {
+/// Validates guest output against the canonical expected bytes, allowing zkVM word padding.
+pub fn matches_output(got_bytes: Vec<u8>, expected_bytes: Vec<u8>) -> anyhow::Result<()> {
     let Some(got_bytes) =
         got_bytes.split_at_checked(expected_bytes.len()).and_then(|(got_bytes, trailing)| {
             trailing.iter().all(|byte| *byte == 0).then_some(got_bytes)
