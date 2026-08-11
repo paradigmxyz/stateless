@@ -29,9 +29,9 @@ lockfiles. A build fails if its lockfile changes or if the compiler does not
 produce a non-empty ELF and verification key.
 
 Pull requests and pushes to `main` build all three artifacts without write
-permissions. Pushing a `v*` tag runs the same matrix, creates checksums and a
-release manifest, signs the result with GitHub artifact attestations, and
-creates a GitHub release after every build succeeds.
+permissions. Pushing a `reth-guest-v*` tag runs the same matrix, creates
+checksums and a release manifest, signs the result with GitHub artifact
+attestations, and creates a GitHub release after every build succeeds.
 
 ## Verify
 
