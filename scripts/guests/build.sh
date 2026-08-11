@@ -30,6 +30,7 @@ docker run --rm \
     --output-dir /output \
     --elf-name "$ARTIFACT_NAME.elf" \
     -- \
+    --locked \
     --ignore-rust-version
 
 if [[ "$(sha256_file "$LOCKFILE")" != "$LOCKFILE_SHA256" ]]; then
