@@ -19,18 +19,19 @@ OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
 
 LOCKFILE="$REPO_ROOT/bin/stateless-validator-reth/$ZKVM/Cargo.lock"
 LOCKFILE_SHA256="$(sha256_file "$LOCKFILE")"
+CONTAINER_GUEST_DIR="/stateless/bin/stateless-validator-reth/$ZKVM"
 
 docker run --rm \
     -e RUST_LOG=info \
     --mount "type=bind,src=$REPO_ROOT,dst=/stateless" \
+    --mount "type=bind,src=$LOCKFILE,dst=$CONTAINER_GUEST_DIR/Cargo.lock,readonly" \
     --mount "type=bind,src=$OUTPUT_DIR,dst=/output" \
     "$COMPILER_IMAGE" \
     --compiler-kind rust-customized \
-    --guest-dir "/stateless/bin/stateless-validator-reth/$ZKVM" \
+    --guest-dir "$CONTAINER_GUEST_DIR" \
     --output-dir /output \
     --elf-name "$ARTIFACT_NAME.elf" \
     -- \
-    --locked \
     --ignore-rust-version
 
 if [[ "$(sha256_file "$LOCKFILE")" != "$LOCKFILE_SHA256" ]]; then
