@@ -14,6 +14,7 @@ fi
 
 guest_config "$1"
 OUTPUT_DIR="${2:-$REPO_ROOT/output}"
+OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
 ELF="$OUTPUT_DIR/$ARTIFACT_NAME.elf"
 VK="$OUTPUT_DIR/$ARTIFACT_NAME.vk"
 FIXTURE="$REPO_ROOT/testing/stateless-validator/fixtures/guest-smoke.json"
