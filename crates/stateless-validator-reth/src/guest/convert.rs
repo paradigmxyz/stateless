@@ -71,17 +71,14 @@ fn to_reth_chain_config(
     fork: ProtocolFork,
     config: &ChainConfig,
 ) -> Result<alloy_genesis::ChainConfig, Error> {
+    let activation = &config.active_fork.activation;
+    if activation.block_number().is_none() && activation.timestamp().is_none() {
+        return Err(CommonError::InvalidForkActivation.into());
+    }
     let (activation_block_number, activation_timestamp) = if fork >= ProtocolFork::Shanghai {
-        let timestamp =
-            config.active_fork.activation.timestamp().ok_or(CommonError::InvalidForkActivation)?;
-        (0, timestamp)
+        (0, activation.timestamp().unwrap_or_default())
     } else {
-        let block_number = config
-            .active_fork
-            .activation
-            .block_number()
-            .ok_or(CommonError::InvalidForkActivation)?;
-        (block_number, 0)
+        (activation.block_number().unwrap_or_default(), 0)
     };
     let block_at = |target| match fork.cmp(&target) {
         Ordering::Greater => Some(0),
@@ -415,4 +412,41 @@ fn to_reth_witness(witness: ExecutionWitness) -> stateless::ExecutionWitness {
 /// Converts a canonical SSZ byte list collection into alloy byte vectors.
 fn to_bytes_vec<const M: usize, const N: usize>(items: SszList<SszList<u8, M>, N>) -> Vec<Bytes> {
     items.into_iter().map(|item| Bytes::from(item.into_inner())).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use stateless_validator_common::guest::input::{ForkActivation, ForkConfig};
+
+    fn chain_config(block_number: Option<u64>, timestamp: Option<u64>) -> ChainConfig {
+        ChainConfig {
+            chain_id: 1,
+            active_fork: ForkConfig::new(ForkActivation::new(block_number, timestamp)),
+        }
+    }
+
+    #[test]
+    fn accepts_block_only_activation_for_timestamp_fork() {
+        let config =
+            to_reth_chain_config(ProtocolFork::Amsterdam, &chain_config(Some(1), None)).unwrap();
+
+        assert_eq!(config.amsterdam_time, Some(0));
+    }
+
+    #[test]
+    fn accepts_timestamp_only_activation_for_block_fork() {
+        let config =
+            to_reth_chain_config(ProtocolFork::London, &chain_config(None, Some(1))).unwrap();
+
+        assert_eq!(config.london_block, Some(0));
+    }
+
+    #[test]
+    fn rejects_missing_activation() {
+        assert!(matches!(
+            to_reth_chain_config(ProtocolFork::Amsterdam, &chain_config(None, None)),
+            Err(Error::Common(CommonError::InvalidForkActivation))
+        ));
+    }
 }
