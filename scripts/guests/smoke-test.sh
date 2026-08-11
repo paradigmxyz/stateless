@@ -22,6 +22,7 @@ SERVER_TAG="$IMAGE_REGISTRY/ere-server-$ZKVM:0.15.0"
 
 # DockerizedzkVM resolves an ERE release tag. Point that local tag at the digest-pinned image used
 # for key generation so the smoke test cannot execute against different runtime bytes.
+docker pull "$SERVER_IMAGE"
 docker image inspect "$SERVER_IMAGE" >/dev/null
 docker tag "$SERVER_IMAGE" "$SERVER_TAG"
 
