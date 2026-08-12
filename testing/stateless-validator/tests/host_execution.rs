@@ -6,7 +6,6 @@ use stateless_validator_tests::{
 };
 
 const EXPECTED_FAILURES: &[&str] = &[
-    "tests/amsterdam/eip8025_optional_proofs/test_witness_bytecodes_contract_creation.py::test_witness_codes_create_same_hash_then_read[fork_Amsterdam-blockchain_test]#block0",
     "tests/paris/eip7610_create_collision/test_initcollision.py::test_init_collision_create_opcode[fork_Amsterdam-blockchain_test_from_state_test-opcode_CREATE-non-empty-balance-correct-initcode]#block0",
     "tests/paris/eip7610_create_collision/test_initcollision.py::test_init_collision_create_opcode[fork_Amsterdam-blockchain_test_from_state_test-opcode_CREATE2-non-empty-balance-correct-initcode]#block0",
     "tests/paris/eip7610_create_collision/test_initcollision.py::test_init_collision_create_tx[fork_Amsterdam-tx_type_0-blockchain_test_from_state_test-non-empty-balance-correct-initcode]#block0",
