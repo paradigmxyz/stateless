@@ -162,7 +162,7 @@ mod tests {
 
         fn account(&self, _address: Address) -> Result<Option<TrieAccount>, WitnessDbError> {
             self.account_lookups.set(self.account_lookups.get() + 1);
-            Ok(self.account.clone())
+            Ok(self.account)
         }
 
         fn storage(&self, _address: Address, _slot: U256) -> Result<U256, WitnessDbError> {
