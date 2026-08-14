@@ -22,7 +22,6 @@ alloy-consensus.workspace = true
 alloy-eips.workspace = true
 alloy-rpc-types-debug.workspace = true
 alloy-genesis = { workspace = true, features = ["serde-bincode-compat"] }
-alloy-trie.workspace = true
 
 # reth
 reth-ethereum-consensus.workspace = true
