@@ -280,10 +280,7 @@ dependencies = [
  "alloy-eips",
  "alloy-primitives",
  "alloy-rlp",
- "alloy-serde",
  "derive_more",
- "rand 0.8.7",
- "serde",
  "strum",
 ]
 
@@ -3324,7 +3321,6 @@ dependencies = [
 name = "stateless-validator-common"
 version = "0.1.0"
 dependencies = [
- "const-hex",
  "libssz",
  "libssz-derive",
  "libssz-merkle",
@@ -3348,7 +3344,6 @@ dependencies = [
  "reth-evm-ethereum",
  "reth-payload-validator",
  "reth-primitives-traits",
- "revm",
  "stateless",
  "stateless-validator-common",
  "thiserror",
