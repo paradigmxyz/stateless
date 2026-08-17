@@ -22,7 +22,7 @@ ere-platform-zisk = { git = "https://github.com/eth-act/ere", rev = "552595938b4
 
 # local
 stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", default-features = false, features = [
-    "zisk",
+    "zkvm-interface",
 ] }
 
 # Temporary until the revm release containing bluealloy/revm#3855 is published.
@@ -39,9 +39,6 @@ revm-interpreter = { git = "https://github.com/bluealloy/revm", rev = "8382708f0
 revm-precompile = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
 revm-primitives = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
 revm-state = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
-
-[features]
-cycle-scope = ["ere-platform-zisk/cycle-scope"]
 
 [profile.release]
 codegen-units = 1

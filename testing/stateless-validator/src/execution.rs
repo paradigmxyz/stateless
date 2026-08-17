@@ -1,39 +1,12 @@
 //! Host-side execution of stateless validator fixtures.
 
-use std::{
-    fmt::{self, Display},
-    io::{self, Write},
-    sync::Once,
-};
+use std::fmt::{self, Display};
 
 use anyhow::{anyhow, bail};
-use ere_platform_core::Platform;
 use rayon::prelude::*;
 use stateless_validator_common::{SszDecode, guest::StatelessValidationResult};
-use tracing_subscriber::EnvFilter;
 
 use crate::fixture::StatelessValidatorFixture;
-
-/// A platform for running guest logic directly on the host.
-#[derive(Debug)]
-pub struct HostPlatform;
-
-impl Platform for HostPlatform {
-    #[allow(unreachable_code)]
-    fn read_input() -> impl std::ops::Deref<Target = [u8]> {
-        unreachable!("host tests call run_stateless_guest directly");
-        &[] as &[u8]
-    }
-
-    fn write_output(_: &[u8]) {
-        unreachable!("host tests call run_stateless_guest directly");
-    }
-
-    fn print(message: &str) {
-        print!("{message}");
-        let _ = io::stdout().flush();
-    }
-}
 
 /// A fixture whose output differed from the execution-spec result.
 #[derive(Debug, Clone)]
@@ -63,17 +36,12 @@ impl Display for ExecutionFailures<'_> {
 pub fn run_host_execution(
     fixtures: impl IntoIterator<Item = StatelessValidatorFixture>,
 ) -> Vec<ExecutionFailure> {
-    static INIT_TRACING: Once = Once::new();
-    INIT_TRACING.call_once(|| {
-        let _ = tracing_subscriber::fmt().with_env_filter(EnvFilter::from_default_env()).try_init();
-    });
-
     let mut failures = fixtures
         .into_iter()
         .collect::<Vec<_>>()
         .into_par_iter()
         .filter_map(|fixture| {
-            let output = stateless_validator_reth::guest::run_stateless_guest::<HostPlatform>(
+            let output = stateless_validator_reth::guest::run_stateless_guest(
                 &fixture.stateless_input_bytes,
             );
             matches_output(output, fixture.stateless_output_bytes)

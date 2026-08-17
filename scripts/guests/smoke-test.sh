@@ -22,9 +22,6 @@ PORT=4174
 CONTAINER_NAME="reth-guest-smoke-$ZKVM"
 ENDPOINT="http://127.0.0.1:$PORT/"
 
-docker pull "$SERVER_IMAGE"
-docker image inspect "$SERVER_IMAGE" >/dev/null
-
 cargo build --locked \
     --package stateless-validator-tests \
     --bin guest-smoke

@@ -42,6 +42,9 @@ pub const MAX_OPTIONAL_FORK_ACTIVATION_VALUES: usize = 1;
 pub const MAX_PUBLIC_KEYS: usize = 1 << 15;
 pub const PUBLIC_KEY_BYTES: usize = 65;
 
+/// Transaction public keys in payload order.
+pub type PublicKeys = SszList<[u8; PUBLIC_KEY_BYTES], MAX_PUBLIC_KEYS>;
+
 /// Execution witness data for stateless validation.
 #[derive(Debug, Clone, Default, PartialEq, Eq, SszEncode, SszDecode)]
 pub struct ExecutionWitness {
@@ -58,19 +61,6 @@ pub struct ExecutionWitness {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(u64)]
 pub enum ProtocolFork {
-    Frontier = 0x01,
-    Homestead = 0x02,
-    DAOFork = 0x03,
-    TangerineWhistle = 0x04,
-    SpuriousDragon = 0x05,
-    Byzantium = 0x06,
-    StPetersburg = 0x07,
-    Istanbul = 0x08,
-    MuirGlacier = 0x09,
-    Berlin = 0x0A,
-    London = 0x0B,
-    ArrowGlacier = 0x0C,
-    GrayGlacier = 0x0D,
     Paris = 0x0E,
     Shanghai = 0x0F,
     Cancun = 0x10,
@@ -85,19 +75,6 @@ impl ProtocolFork {
     /// Converts an SSZ enum value into a [`ProtocolFork`].
     pub fn from_u64(value: u64) -> Option<Self> {
         Some(match value {
-            0x01 => Self::Frontier,
-            0x02 => Self::Homestead,
-            0x03 => Self::DAOFork,
-            0x04 => Self::TangerineWhistle,
-            0x05 => Self::SpuriousDragon,
-            0x06 => Self::Byzantium,
-            0x07 => Self::StPetersburg,
-            0x08 => Self::Istanbul,
-            0x09 => Self::MuirGlacier,
-            0x0A => Self::Berlin,
-            0x0B => Self::London,
-            0x0C => Self::ArrowGlacier,
-            0x0D => Self::GrayGlacier,
             0x0E => Self::Paris,
             0x0F => Self::Shanghai,
             0x10 => Self::Cancun,
@@ -127,15 +104,6 @@ pub struct ForkActivation {
 }
 
 impl ForkActivation {
-    /// Constructs a [`ForkActivation`] from optional activation values.
-    pub fn new(block_number: Option<u64>, timestamp: Option<u64>) -> Self {
-        let singleton = |value: Option<u64>| {
-            SszList::try_from(value.into_iter().collect::<Vec<_>>())
-                .expect("a list of at most one element is always within bounds")
-        };
-        Self { block_number: singleton(block_number), timestamp: singleton(timestamp) }
-    }
-
     /// Returns the activation block number when present.
     pub fn block_number(&self) -> Option<u64> {
         self.block_number.first().copied()
@@ -181,13 +149,6 @@ pub struct ForkConfig {
     pub activation: ForkActivation,
 }
 
-impl ForkConfig {
-    /// Constructs a [`ForkConfig`].
-    pub fn new(activation: ForkActivation) -> Self {
-        Self { activation }
-    }
-}
-
 /// Chain configuration needed for stateless validation.
 #[derive(Debug, Clone, Default, PartialEq, Eq, SszEncode, SszDecode)]
 pub struct ChainConfig {
@@ -222,7 +183,7 @@ impl ChainConfig {
 ///
 /// A fork-agnostic SSZ container. The active fork is in the 2-byte schema identifier rather than
 /// the SSZ body, and decoding validates the recovered payload request against that fork.
-#[derive(Debug, Clone, PartialEq, Eq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, Eq, SszEncode)]
 pub struct StatelessInput {
     /// Consensus-layer payload request to validate statelessly. See [`NewPayloadRequest`] for
     /// structure and links to consensus-specs.
@@ -233,7 +194,7 @@ pub struct StatelessInput {
     /// Chain configuration values needed during stateless validation.
     pub chain_config: ChainConfig,
     /// 65-byte uncompressed transaction public keys, in payload order.
-    pub public_keys: SszList<[u8; PUBLIC_KEY_BYTES], MAX_PUBLIC_KEYS>,
+    pub public_keys: PublicKeys,
 }
 
 impl StatelessInput {
@@ -271,7 +232,6 @@ impl StatelessInput {
             Cancun => StatelessInputDeneb::from_ssz_bytes(body)?.into(),
             Prague | Osaka | BPO1 | BPO2 => StatelessInputElectraFulu::from_ssz_bytes(body)?.into(),
             Amsterdam => StatelessInputGloas::from_ssz_bytes(body)?.into(),
-            _ => return Err(Error::UnsupportedProtocolFork(fork)),
         };
         Ok((fork, input))
     }
@@ -286,7 +246,7 @@ macro_rules! declare_stateless_input_variants {
                     new_payload_request: new_payload_request::[<NewPayloadRequest $variant>],
                     witness: ExecutionWitness,
                     chain_config: ChainConfig,
-                    public_keys: SszList<[u8; PUBLIC_KEY_BYTES], MAX_PUBLIC_KEYS>,
+                    public_keys: PublicKeys,
                 }
 
                 impl From<[<StatelessInput $variant>]> for StatelessInput {

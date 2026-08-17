@@ -7,7 +7,7 @@ use thiserror::Error;
 /// Errors for the stateless input guest. Each variant tags the point at which
 /// conversion or validation fails rather than carrying diagnostic detail.
 #[derive(Debug, Error)]
-pub enum Error {
+pub(crate) enum Error {
     /// Shared guest validation failed.
     #[error(transparent)]
     Common(#[from] stateless_validator_common::guest::Error),

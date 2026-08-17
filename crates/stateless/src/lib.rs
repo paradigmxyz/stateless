@@ -47,8 +47,10 @@ pub use tries::StatelessTrie;
 #[doc(inline)]
 pub use validation::StatelessValidationOutput;
 #[doc(inline)]
+#[cfg(feature = "reth-trie")]
 pub use validation::stateless_validation;
 #[doc(inline)]
+#[cfg(feature = "reth-trie")]
 pub use validation::stateless_validation_recovered;
 #[doc(inline)]
 pub use validation::stateless_validation_recovered_with_trie;

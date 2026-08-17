@@ -29,9 +29,7 @@ use reth_trie_common::{HashedStorage, KeccakKeyHasher, KeyHasher};
 use tries::{StatelessTrie, StatelessTrieError};
 
 #[cfg(feature = "reth-trie")]
-use tries::default::StatelessSparseTrie as DefaultStatelessTrie;
-#[cfg(not(feature = "reth-trie"))]
-use tries::zeth::SparseState as DefaultStatelessTrie;
+use tries::default::StatelessSparseTrie;
 
 /// BLOCKHASH ancestor lookup window limit per EVM (number of most recent blocks accessible).
 const BLOCKHASH_ANCESTOR_LIMIT: usize = 256;
@@ -178,6 +176,7 @@ pub struct StatelessValidationOutput {
 }
 
 /// Performs stateless validation of a block using the provided witness data.
+#[cfg(feature = "reth-trie")]
 pub fn stateless_validation<ChainSpec, E>(
     current_block: Block,
     public_keys: Vec<UncompressedPublicKey>,
@@ -189,7 +188,7 @@ where
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
     E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
 {
-    stateless_validation_with_trie::<DefaultStatelessTrie, ChainSpec, E>(
+    stateless_validation_with_trie::<StatelessSparseTrie, ChainSpec, E>(
         current_block,
         public_keys,
         witness,
@@ -222,6 +221,7 @@ where
 }
 
 /// Performs stateless validation of an already-recovered block.
+#[cfg(feature = "reth-trie")]
 pub fn stateless_validation_recovered<ChainSpec, E>(
     recovered_block: RecoveredBlock<Block>,
     witness: ExecutionWitness,
@@ -232,7 +232,7 @@ where
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
     E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
 {
-    stateless_validation_recovered_with_trie::<DefaultStatelessTrie, ChainSpec, E>(
+    stateless_validation_recovered_with_trie::<StatelessSparseTrie, ChainSpec, E>(
         recovered_block,
         witness,
         chain_spec,

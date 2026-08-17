@@ -13,7 +13,7 @@
 
 use alloc::vec::Vec;
 
-use libssz::{DecodeError, SszDecode, SszEncode};
+use libssz::SszEncode;
 use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
 use libssz_merkle::{HashTreeRoot, Sha256Hasher};
 use libssz_types::SszList;
@@ -278,39 +278,6 @@ impl NewPayloadRequest {
             Self::Gloas(request) => request.execution_payload.timestamp,
         }
     }
-
-    /// Returns the gas used by the execution payload.
-    pub fn gas_used(&self) -> u64 {
-        match self {
-            Self::Bellatrix(request) => request.execution_payload.gas_used,
-            Self::Capella(request) => request.execution_payload.gas_used,
-            Self::Deneb(request) => request.execution_payload.gas_used,
-            Self::ElectraFulu(request) => request.execution_payload.gas_used,
-            Self::Gloas(request) => request.execution_payload.gas_used,
-        }
-    }
-
-    /// Returns the block hash of the execution payload.
-    pub fn block_hash(&self) -> Hash32 {
-        match self {
-            Self::Bellatrix(request) => request.execution_payload.block_hash,
-            Self::Capella(request) => request.execution_payload.block_hash,
-            Self::Deneb(request) => request.execution_payload.block_hash,
-            Self::ElectraFulu(request) => request.execution_payload.block_hash,
-            Self::Gloas(request) => request.execution_payload.block_hash,
-        }
-    }
-
-    /// Returns the transactions of the execution payload.
-    pub fn transactions(&self) -> &Transactions {
-        match self {
-            Self::Bellatrix(request) => &request.execution_payload.transactions,
-            Self::Capella(request) => &request.execution_payload.transactions,
-            Self::Deneb(request) => &request.execution_payload.transactions,
-            Self::ElectraFulu(request) => &request.execution_payload.transactions,
-            Self::Gloas(request) => &request.execution_payload.transactions,
-        }
-    }
 }
 
 impl HashTreeRoot for NewPayloadRequest {
@@ -355,32 +322,9 @@ impl SszEncode for NewPayloadRequest {
     }
 }
 
-impl SszDecode for NewPayloadRequest {
-    fn is_fixed_size() -> bool {
-        false
-    }
-
-    fn fixed_size() -> usize {
-        0
-    }
-
-    /// Decodes by attempting each container shape from the newest fork to the
-    /// oldest and returning the first success.
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        NewPayloadRequestGloas::from_ssz_bytes(bytes)
-            .map(Self::Gloas)
-            .or_else(|_| NewPayloadRequestElectraFulu::from_ssz_bytes(bytes).map(Self::ElectraFulu))
-            .or_else(|_| NewPayloadRequestDeneb::from_ssz_bytes(bytes).map(Self::Deneb))
-            .or_else(|_| NewPayloadRequestCapella::from_ssz_bytes(bytes).map(Self::Capella))
-            .or_else(|_| NewPayloadRequestBellatrix::from_ssz_bytes(bytes).map(Self::Bellatrix))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use alloc::vec;
-
-    use libssz_merkle::Sha2Hasher;
 
     use crate::guest::input::{
         ChainConfig, ExecutionWitness, ProtocolFork, StatelessInput, new_payload_request::*,
@@ -590,15 +534,6 @@ mod tests {
     }
 
     #[test]
-    fn from_ssz_bytes_decodes_every_variant() {
-        for request in [bellatrix(), capella(), deneb(), electra_fulu(), gloas()] {
-            let decoded = NewPayloadRequest::from_ssz_bytes(&request.to_ssz()).unwrap();
-            assert_eq!(decoded, request);
-            assert_eq!(decoded.hash_tree_root(&Sha2Hasher), request.hash_tree_root(&Sha2Hasher));
-        }
-    }
-
-    #[test]
     fn matches_fork_partitions_every_variant_and_fork() {
         const ELECTRA_FULU_FORKS: &[ProtocolFork] =
             &[ProtocolFork::Prague, ProtocolFork::Osaka, ProtocolFork::BPO1, ProtocolFork::BPO2];
@@ -609,7 +544,7 @@ mod tests {
             (electra_fulu(), ELECTRA_FULU_FORKS),
             (gloas(), [ProtocolFork::Amsterdam].as_slice()),
         ] {
-            for fork in 1..=ProtocolFork::Amsterdam.as_u64() {
+            for fork in ProtocolFork::Paris.as_u64()..=ProtocolFork::Amsterdam.as_u64() {
                 let fork = ProtocolFork::from_u64(fork).unwrap();
                 let input = stateless_input(request.clone());
                 let result =

@@ -36,7 +36,7 @@ pub fn install_crypto() {
 
 /// revm and Alloy crypto provider backed by the standard zkVM interface.
 #[derive(Debug, Default)]
-pub struct ZkVMInterfaceCrypto;
+struct ZkVMInterfaceCrypto;
 
 impl Crypto for ZkVMInterfaceCrypto {
     #[inline]
@@ -348,7 +348,8 @@ fn uncompressed_pubkey_coordinates(pubkey: &[u8; 65]) -> Result<&[u8; 64], Recov
 }
 
 #[inline]
-fn sha256(data: &[u8]) -> [u8; 32] {
+/// Computes a SHA-256 digest using the standard zkVM interface.
+pub fn sha256(data: &[u8]) -> [u8; 32] {
     let mut output = zkvm_sha256_hash { data: [0; 32] };
     let ret = unsafe { zkvm_interface::zkvm_sha256(data.as_ptr(), data.len(), &mut output) };
     assert_eq!(ret, 0, "sha256 failed");

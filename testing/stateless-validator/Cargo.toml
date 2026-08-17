@@ -20,19 +20,15 @@ serde_json.workspace = true
 sha2.workspace = true
 tar.workspace = true
 tempfile.workspace = true
-tracing.workspace = true
-tracing-subscriber.workspace = true
 walkdir.workspace = true
-zstd.workspace = true
 
 # alloy
 alloy-primitives = { workspace = true, features = ["serde"] }
 
 # ere
-ere-platform-core.workspace = true
 ere-server-client.workspace = true
 ere-util-tokio.workspace = true
 
 # local
 stateless-validator-common = { workspace = true, features = ["std"] }
-stateless-validator-reth = { workspace = true, features = ["host"] }
+stateless-validator-reth.workspace = true

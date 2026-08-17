@@ -14,12 +14,9 @@ thiserror.workspace = true
 # alloy
 alloy-consensus.workspace = true
 alloy-eips.workspace = true
-alloy-genesis = { workspace = true, features = ["serde-bincode-compat"] }
-alloy-primitives = { workspace = true, features = ["map-foldhash", "map-indexmap"] }
-alloy-rpc-types-engine = { workspace = true, features = ["serde"] }
-
-# revm
-revm.workspace = true
+alloy-genesis.workspace = true
+alloy-primitives.workspace = true
+alloy-rpc-types-engine.workspace = true
 
 # reth
 reth-chainspec.workspace = true
@@ -39,20 +36,13 @@ ere-platform-core.workspace = true
 # local
 stateless-validator-common.workspace = true
 
-[dev-dependencies]
-
 [features]
 # guest
 default = ["std"]
 std = ["stateless-validator-common/std"]
-openvm = ["zkvm-interface"]
 sp1 = ["zkvm-interface"]
-zisk = ["zkvm-interface"]
 zkvm-interface = [
     "alloy-consensus/crypto-backend",
     "dep:zkvm-interface",
     "stateless/zkvm-interface",
 ]
-
-# host
-host = ["std"]

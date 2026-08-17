@@ -11,8 +11,7 @@ stateless-validator-reth-zisk-v1.0.0-alpha.elf
 ```
 
 Each ELF has a verification key with the same basename and a `.vk` extension.
-Releases also contain `SHA256SUMS`, `RELEASE-MANIFEST.json`, and an offline
-Sigstore provenance bundle.
+Releases also contain `SHA256SUMS` and GitHub artifact attestations.
 
 ## Build
 
@@ -30,8 +29,8 @@ produce a non-empty ELF and verification key.
 
 Pull requests and pushes to `main` build all three artifacts without write
 permissions. Pushing a `reth-guest-v*` tag runs the same matrix, creates
-checksums and a release manifest, signs the result with GitHub artifact
-attestations, and creates a GitHub release after every build succeeds.
+checksums, attests the artifacts, and creates a GitHub release after every
+build and smoke test succeeds.
 
 ## Verify
 

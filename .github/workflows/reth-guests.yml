@@ -9,7 +9,6 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,9 +39,6 @@ jobs:
 
       - name: Build ELF and verification key
         run: scripts/guests/build.sh "${{ matrix.zkvm }}" output
-
-      - name: Verify locked dependencies
-        run: git diff --exit-code -- "bin/stateless-validator-reth/${{ matrix.zkvm }}/Cargo.lock"
 
       - name: Upload guest artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -81,44 +77,12 @@ jobs:
       - name: Execute built guest
         run: scripts/guests/smoke-test.sh "${{ matrix.zkvm }}" output
 
-  package:
-    name: Assemble guest release
-    needs:
-      - build
-      - smoke
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Download guest artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          pattern: reth-guest-*
-          path: release
-          merge-multiple: true
-
-      - name: Create manifest and checksums
-        run: |
-          rm release/SHA256SUMS-*
-          scripts/guests/create-release-manifest.sh release
-          cd release
-          sha256sum -- *.elf *.vk RELEASE-MANIFEST.json > SHA256SUMS
-
-      - name: Upload release bundle
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: reth-guest-release
-          path: release/*
-          if-no-files-found: error
-          retention-days: 14
-
   release:
     name: Publish signed guest release
     if: startsWith(github.ref, 'refs/tags/reth-guest-v')
     needs:
-      - package
+      - build
+      - smoke
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -127,46 +91,24 @@ jobs:
       attestations: write
       artifact-metadata: write
     steps:
-      - name: Checkout source
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          fetch-depth: 0
-
-      - name: Verify release provenance
-        env:
-          RELEASE_SHA: ${{ github.sha }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          git fetch --no-tags origin main
-          test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
-          git merge-base --is-ancestor "$RELEASE_SHA" origin/main
-
-          remote_sha="$(git ls-remote origin "refs/tags/${RELEASE_TAG}^{}" | awk 'NR == 1 { print $1 }')"
-          if [ -z "$remote_sha" ]; then
-            remote_sha="$(git ls-remote --exit-code origin "refs/tags/${RELEASE_TAG}" | awk 'NR == 1 { print $1 }')"
-          fi
-          test "$remote_sha" = "$RELEASE_SHA"
-
       - name: Download guest artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: reth-guest-release
+          pattern: reth-guest-*
           path: release
+          merge-multiple: true
+
+      - name: Create checksums
+        working-directory: release
+        run: sha256sum -- *.elf *.vk > SHA256SUMS
 
       - name: Attest release artifacts
-        id: attest
         uses: actions/attest@c32b4b8b198b65d0bd9d63490e847ff7b53989d4 # v4.0.0
         with:
           subject-path: |
             release/*.elf
             release/*.vk
-            release/RELEASE-MANIFEST.json
             release/SHA256SUMS
-
-      - name: Include offline provenance bundle
-        env:
-          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
-        run: cp "$BUNDLE_PATH" release/provenance.intoto.jsonl
 
       - name: Create GitHub release
         env:

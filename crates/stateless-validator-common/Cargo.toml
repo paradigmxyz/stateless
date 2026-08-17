@@ -9,7 +9,6 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-const-hex = { workspace = true, features = ["alloc"] }
 paste.workspace = true
 thiserror.workspace = true
 

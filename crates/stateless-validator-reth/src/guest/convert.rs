@@ -21,15 +21,12 @@ use reth_primitives_traits::{Block as _, SealedBlock, SignedTransaction};
 use stateless::{Genesis, UncompressedPublicKey};
 use stateless_validator_common::{
     Sha256Hasher, SszEncode, SszList,
-    guest::{
-        Error as CommonError,
-        input::{
-            ChainConfig, ExecutionWitness, ProtocolFork, StatelessInput,
-            new_payload_request::{
-                ExecutionPayloadV1, ExecutionPayloadV2, ExecutionPayloadV3, ExecutionPayloadV4,
-                ExecutionRequestsElectraFulu, ExecutionRequestsGloas, Hash32, NewPayloadRequest,
-                VersionedHashes, Withdrawals,
-            },
+    guest::input::{
+        ChainConfig, ExecutionWitness, ProtocolFork, PublicKeys,
+        new_payload_request::{
+            ExecutionPayloadV2, ExecutionPayloadV3, ExecutionPayloadV4,
+            ExecutionRequestsElectraFulu, ExecutionRequestsGloas, Hash32, NewPayloadRequest,
+            VersionedHashes, Withdrawals,
         },
     },
 };
@@ -44,7 +41,7 @@ const BUILDER_DEPOSIT_REQUEST_TYPE: u8 = 0x03;
 const BUILDER_EXIT_REQUEST_TYPE: u8 = 0x04;
 
 /// Reconstructed reth validation input consumed by `stateless_validation_with_trie`.
-pub(crate) struct RethInput {
+pub(crate) struct ValidationInput {
     pub(crate) chain_spec: Arc<ChainSpec>,
     pub(crate) evm_config: EthEvmConfig,
     pub(crate) block: Block<reth_ethereum_primitives::TransactionSigned>,
@@ -54,61 +51,58 @@ pub(crate) struct RethInput {
 
 /// Converts the decoded canonical stateless input into the reth validation
 /// input consumed by `stateless_validation_with_trie`.
-pub(crate) fn to_reth_input(fork: ProtocolFork, input: StatelessInput) -> Result<RethInput, Error> {
+pub(crate) fn into_validation_input(
+    fork: ProtocolFork,
+    new_payload_request: NewPayloadRequest,
+    witness: ExecutionWitness,
+    chain_config: &ChainConfig,
+    public_keys: PublicKeys,
+) -> Result<ValidationInput, Error> {
     let chain_spec = Arc::new(ChainSpec::from(Genesis {
-        config: to_reth_chain_config(fork, &input.chain_config)?,
+        config: to_reth_chain_config(fork, chain_config),
         ..Default::default()
     }));
     let evm_config = EthEvmConfig::new(chain_spec.clone());
-    let block = to_reth_block(input.new_payload_request, chain_spec.clone())?.into_block();
-    let witness = to_reth_witness(input.witness);
-    let public_keys = Vec::from_iter(input.public_keys.into_iter().map(UncompressedPublicKey));
-    Ok(RethInput { chain_spec, evm_config, block, witness, public_keys })
+    let execution_data = new_payload_request_to_execution_data(new_payload_request);
+    let block = ensure_well_formed_payload(chain_spec.clone(), execution_data)?.into_block();
+    let witness = to_reth_witness(witness);
+    let public_keys = public_keys.into_iter().map(UncompressedPublicKey).collect();
+    Ok(ValidationInput { chain_spec, evm_config, block, witness, public_keys })
 }
 
 /// Converts a chain configuration into an [`alloy_genesis::ChainConfig`].
-fn to_reth_chain_config(
-    fork: ProtocolFork,
-    config: &ChainConfig,
-) -> Result<alloy_genesis::ChainConfig, Error> {
+fn to_reth_chain_config(fork: ProtocolFork, config: &ChainConfig) -> alloy_genesis::ChainConfig {
     let activation = &config.active_fork.activation;
-    if activation.block_number().is_none() && activation.timestamp().is_none() {
-        return Err(CommonError::InvalidForkActivation.into());
-    }
-    let (activation_block_number, activation_timestamp) = if fork >= ProtocolFork::Shanghai {
-        (0, activation.timestamp().unwrap_or_default())
-    } else {
-        (activation.block_number().unwrap_or_default(), 0)
-    };
-    let block_at = |target| match fork.cmp(&target) {
-        Ordering::Greater => Some(0),
-        Ordering::Equal => Some(activation_block_number),
-        Ordering::Less => None,
-    };
+    let activation_block_number = activation.block_number().unwrap_or_default();
+    let activation_timestamp = activation.timestamp().unwrap_or_default();
     let time_at = |target| match fork.cmp(&target) {
         Ordering::Greater => Some(0),
         Ordering::Equal => Some(activation_timestamp),
         Ordering::Less => None,
     };
 
-    Ok(alloy_genesis::ChainConfig {
+    alloy_genesis::ChainConfig {
         chain_id: config.chain_id,
-        homestead_block: block_at(ProtocolFork::Homestead),
-        dao_fork_block: block_at(ProtocolFork::DAOFork),
-        dao_fork_support: fork >= ProtocolFork::DAOFork,
-        eip150_block: block_at(ProtocolFork::TangerineWhistle),
-        eip155_block: block_at(ProtocolFork::SpuriousDragon),
-        eip158_block: block_at(ProtocolFork::SpuriousDragon),
-        byzantium_block: block_at(ProtocolFork::Byzantium),
-        constantinople_block: block_at(ProtocolFork::StPetersburg),
-        petersburg_block: block_at(ProtocolFork::StPetersburg),
-        istanbul_block: block_at(ProtocolFork::Istanbul),
-        muir_glacier_block: block_at(ProtocolFork::MuirGlacier),
-        berlin_block: block_at(ProtocolFork::Berlin),
-        london_block: block_at(ProtocolFork::London),
-        arrow_glacier_block: block_at(ProtocolFork::ArrowGlacier),
-        gray_glacier_block: block_at(ProtocolFork::GrayGlacier),
-        merge_netsplit_block: block_at(ProtocolFork::Paris),
+        homestead_block: Some(0),
+        dao_fork_block: Some(0),
+        dao_fork_support: true,
+        eip150_block: Some(0),
+        eip155_block: Some(0),
+        eip158_block: Some(0),
+        byzantium_block: Some(0),
+        constantinople_block: Some(0),
+        petersburg_block: Some(0),
+        istanbul_block: Some(0),
+        muir_glacier_block: Some(0),
+        berlin_block: Some(0),
+        london_block: Some(0),
+        arrow_glacier_block: Some(0),
+        gray_glacier_block: Some(0),
+        merge_netsplit_block: Some(if fork == ProtocolFork::Paris {
+            activation_block_number
+        } else {
+            0
+        }),
         shanghai_time: time_at(ProtocolFork::Shanghai),
         cancun_time: time_at(ProtocolFork::Cancun),
         prague_time: time_at(ProtocolFork::Prague),
@@ -119,12 +113,12 @@ fn to_reth_chain_config(
         bpo4_time: None,
         bpo5_time: None,
         amsterdam_time: time_at(ProtocolFork::Amsterdam),
-        terminal_total_difficulty: (fork >= ProtocolFork::Paris).then_some(U256::ZERO),
-        terminal_total_difficulty_passed: fork >= ProtocolFork::Paris,
+        terminal_total_difficulty: Some(U256::ZERO),
+        terminal_total_difficulty_passed: true,
         blob_schedule: active_fork_blob_schedule(fork),
         deposit_contract_address: Some(alloy_eips::eip6110::MAINNET_DEPOSIT_CONTRACT_ADDRESS),
         ..Default::default()
-    })
+    }
 }
 
 /// Builds a reth blob schedule for the active fork.
@@ -141,55 +135,6 @@ fn active_fork_blob_schedule(fork: ProtocolFork) -> BTreeMap<String, BlobParams>
         _ => return BTreeMap::new(),
     };
     BTreeMap::from([(key.to_string(), params)])
-}
-
-/// Converts the new payload request into engine-API execution data.
-fn new_payload_request_to_execution_data(request: NewPayloadRequest) -> ExecutionData {
-    let hasher = crypto::sha256_hasher();
-    match request {
-        NewPayloadRequest::Bellatrix(request) => ExecutionData::new(
-            alloy_rpc_types_engine::ExecutionPayload::V1(to_alloy_payload_v1(
-                request.execution_payload,
-            )),
-            ExecutionPayloadSidecar::none(),
-        ),
-        NewPayloadRequest::Capella(request) => ExecutionData::new(
-            alloy_rpc_types_engine::ExecutionPayload::V2(to_alloy_payload_v2(
-                request.execution_payload,
-            )),
-            ExecutionPayloadSidecar::none(),
-        ),
-        NewPayloadRequest::Deneb(request) => ExecutionData::new(
-            alloy_rpc_types_engine::ExecutionPayload::V3(to_alloy_payload_v3(
-                request.execution_payload,
-            )),
-            ExecutionPayloadSidecar::v3(cancun_fields(
-                request.versioned_hashes,
-                request.parent_beacon_block_root,
-            )),
-        ),
-        NewPayloadRequest::ElectraFulu(request) => ExecutionData::new(
-            alloy_rpc_types_engine::ExecutionPayload::V3(to_alloy_payload_v3(
-                request.execution_payload,
-            )),
-            ExecutionPayloadSidecar::v4(
-                cancun_fields(request.versioned_hashes, request.parent_beacon_block_root),
-                prague_fields(compute_requests_hash_electra_fulu(
-                    &request.execution_requests,
-                    &hasher,
-                )),
-            ),
-        ),
-        NewPayloadRequest::Gloas(request) => ExecutionData::new(
-            alloy_rpc_types_engine::ExecutionPayload::V4(to_alloy_payload_v4(
-                request.execution_payload,
-            )),
-            ExecutionPayloadSidecar::v4(
-                cancun_fields(request.versioned_hashes, request.parent_beacon_block_root),
-                prague_fields(compute_requests_hash_gloas(&request.execution_requests, &hasher)),
-            ),
-        ),
-    }
 }
 
 /// Builds the alloy V1 payload from any canonical payload version, which all
@@ -219,8 +164,55 @@ macro_rules! to_alloy_payload_v1 {
     };
 }
 
-fn to_alloy_payload_v1(payload: ExecutionPayloadV1) -> alloy_rpc_types_engine::ExecutionPayloadV1 {
-    to_alloy_payload_v1!(payload)
+/// Converts the new payload request into engine-API execution data.
+fn new_payload_request_to_execution_data(request: NewPayloadRequest) -> ExecutionData {
+    let hasher = crypto::sha256_hasher();
+    match request {
+        NewPayloadRequest::Bellatrix(request) => ExecutionData::new(
+            alloy_rpc_types_engine::ExecutionPayload::V1(to_alloy_payload_v1!(
+                request.execution_payload
+            )),
+            ExecutionPayloadSidecar::none(),
+        ),
+        NewPayloadRequest::Capella(request) => ExecutionData::new(
+            alloy_rpc_types_engine::ExecutionPayload::V2(to_alloy_payload_v2(
+                request.execution_payload,
+            )),
+            ExecutionPayloadSidecar::none(),
+        ),
+        NewPayloadRequest::Deneb(request) => ExecutionData::new(
+            alloy_rpc_types_engine::ExecutionPayload::V3(to_alloy_payload_v3(
+                request.execution_payload,
+            )),
+            ExecutionPayloadSidecar::v3(cancun_fields(
+                request.versioned_hashes,
+                request.parent_beacon_block_root,
+            )),
+        ),
+        NewPayloadRequest::ElectraFulu(request) => ExecutionData::new(
+            alloy_rpc_types_engine::ExecutionPayload::V3(to_alloy_payload_v3(
+                request.execution_payload,
+            )),
+            ExecutionPayloadSidecar::v4(
+                cancun_fields(request.versioned_hashes, request.parent_beacon_block_root),
+                alloy_rpc_types_engine::PraguePayloadFields::new(
+                    compute_requests_hash_electra_fulu(&request.execution_requests, &hasher),
+                ),
+            ),
+        ),
+        NewPayloadRequest::Gloas(request) => ExecutionData::new(
+            alloy_rpc_types_engine::ExecutionPayload::V4(to_alloy_payload_v4(
+                request.execution_payload,
+            )),
+            ExecutionPayloadSidecar::v4(
+                cancun_fields(request.versioned_hashes, request.parent_beacon_block_root),
+                alloy_rpc_types_engine::PraguePayloadFields::new(compute_requests_hash_gloas(
+                    &request.execution_requests,
+                    &hasher,
+                )),
+            ),
+        ),
+    }
 }
 
 fn to_alloy_payload_v2(payload: ExecutionPayloadV2) -> alloy_rpc_types_engine::ExecutionPayloadV2 {
@@ -289,25 +281,19 @@ fn cancun_fields(
     )
 }
 
-fn prague_fields(requests_hash: B256) -> alloy_rpc_types_engine::PraguePayloadFields {
-    alloy_rpc_types_engine::PraguePayloadFields::new(requests_hash)
-}
-
 /// Computes the EIP-7685 requests hash over the Electra/Fulu execution requests.
 fn compute_requests_hash_electra_fulu(
     requests: &ExecutionRequestsElectraFulu,
     hasher: &impl Sha256Hasher,
 ) -> B256 {
-    let hashes = [
-        encode_execution_requests(DEPOSIT_REQUEST_TYPE, &requests.deposits),
-        encode_execution_requests(WITHDRAWAL_REQUEST_TYPE, &requests.withdrawals),
-        encode_execution_requests(CONSOLIDATION_REQUEST_TYPE, &requests.consolidations),
-    ]
-    .into_iter()
-    .flatten()
-    .flat_map(|buf| hasher.hash(&buf))
-    .collect::<Vec<_>>();
-    hasher.hash(&hashes).into()
+    compute_requests_hash(
+        [
+            encode_execution_requests(DEPOSIT_REQUEST_TYPE, &requests.deposits),
+            encode_execution_requests(WITHDRAWAL_REQUEST_TYPE, &requests.withdrawals),
+            encode_execution_requests(CONSOLIDATION_REQUEST_TYPE, &requests.consolidations),
+        ],
+        hasher,
+    )
 }
 
 /// Computes the EIP-7685 requests hash over the Gloas execution requests.
@@ -315,17 +301,27 @@ fn compute_requests_hash_gloas(
     requests: &ExecutionRequestsGloas,
     hasher: &impl Sha256Hasher,
 ) -> B256 {
-    let hashes = [
-        encode_execution_requests(DEPOSIT_REQUEST_TYPE, &requests.deposits),
-        encode_execution_requests(WITHDRAWAL_REQUEST_TYPE, &requests.withdrawals),
-        encode_execution_requests(CONSOLIDATION_REQUEST_TYPE, &requests.consolidations),
-        encode_execution_requests(BUILDER_DEPOSIT_REQUEST_TYPE, &requests.builder_deposits),
-        encode_execution_requests(BUILDER_EXIT_REQUEST_TYPE, &requests.builder_exits),
-    ]
-    .into_iter()
-    .flatten()
-    .flat_map(|buf| hasher.hash(&buf))
-    .collect::<Vec<_>>();
+    compute_requests_hash(
+        [
+            encode_execution_requests(DEPOSIT_REQUEST_TYPE, &requests.deposits),
+            encode_execution_requests(WITHDRAWAL_REQUEST_TYPE, &requests.withdrawals),
+            encode_execution_requests(CONSOLIDATION_REQUEST_TYPE, &requests.consolidations),
+            encode_execution_requests(BUILDER_DEPOSIT_REQUEST_TYPE, &requests.builder_deposits),
+            encode_execution_requests(BUILDER_EXIT_REQUEST_TYPE, &requests.builder_exits),
+        ],
+        hasher,
+    )
+}
+
+fn compute_requests_hash(
+    requests: impl IntoIterator<Item = Option<Vec<u8>>>,
+    hasher: &impl Sha256Hasher,
+) -> B256 {
+    let hashes = requests
+        .into_iter()
+        .flatten()
+        .flat_map(|request| hasher.hash(&request))
+        .collect::<Vec<_>>();
     hasher.hash(&hashes).into()
 }
 
@@ -335,21 +331,14 @@ fn compute_requests_hash_gloas(
 ///
 /// [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.6.2/src/ethereum/forks/amsterdam/execution_engine/requests.py
 fn encode_execution_requests<T: SszEncode>(request_type: u8, requests: &[T]) -> Option<Vec<u8>> {
-    (!requests.is_empty()).then(|| {
-        let mut buf = Vec::with_capacity(1 + requests.len() * T::fixed_size());
-        buf.push(request_type);
-        requests.iter().for_each(|request| request.ssz_append(&mut buf));
-        buf
-    })
-}
+    if requests.is_empty() {
+        return None;
+    }
 
-/// Reconstructs the canonical payload request into a validated reth block.
-fn to_reth_block(
-    new_payload_request: NewPayloadRequest,
-    chain_spec: Arc<ChainSpec>,
-) -> Result<SealedBlock<Block<reth_ethereum_primitives::TransactionSigned>>, Error> {
-    let execution_data = new_payload_request_to_execution_data(new_payload_request);
-    ensure_well_formed_payload(chain_spec, execution_data)
+    let mut buf = Vec::with_capacity(1 + requests.len() * T::fixed_size());
+    buf.push(request_type);
+    requests.iter().for_each(|request| request.ssz_append(&mut buf));
+    Some(buf)
 }
 
 /// Validates payload well-formedness, copied from [`validator.rs`] in the reth
@@ -419,34 +408,26 @@ mod tests {
     use super::*;
     use stateless_validator_common::guest::input::{ForkActivation, ForkConfig};
 
+    fn optional(value: Option<u64>) -> SszList<u64, 1> {
+        value.into_iter().collect::<Vec<_>>().try_into().unwrap()
+    }
+
     fn chain_config(block_number: Option<u64>, timestamp: Option<u64>) -> ChainConfig {
         ChainConfig {
             chain_id: 1,
-            active_fork: ForkConfig::new(ForkActivation::new(block_number, timestamp)),
+            active_fork: ForkConfig {
+                activation: ForkActivation {
+                    block_number: optional(block_number),
+                    timestamp: optional(timestamp),
+                },
+            },
         }
     }
 
     #[test]
     fn accepts_block_only_activation_for_timestamp_fork() {
-        let config =
-            to_reth_chain_config(ProtocolFork::Amsterdam, &chain_config(Some(1), None)).unwrap();
+        let config = to_reth_chain_config(ProtocolFork::Amsterdam, &chain_config(Some(1), None));
 
         assert_eq!(config.amsterdam_time, Some(0));
-    }
-
-    #[test]
-    fn accepts_timestamp_only_activation_for_block_fork() {
-        let config =
-            to_reth_chain_config(ProtocolFork::London, &chain_config(None, Some(1))).unwrap();
-
-        assert_eq!(config.london_block, Some(0));
-    }
-
-    #[test]
-    fn rejects_missing_activation() {
-        assert!(matches!(
-            to_reth_chain_config(ProtocolFork::Amsterdam, &chain_config(None, None)),
-            Err(Error::Common(CommonError::InvalidForkActivation))
-        ));
     }
 }

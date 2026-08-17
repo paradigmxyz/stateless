@@ -12,7 +12,6 @@ use rayon::prelude::*;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use tar::Archive;
-use tracing::info;
 use walkdir::{DirEntry, WalkDir};
 
 const EEST_FIXTURES_URL: &str = "https://github.com/ethereum/execution-specs/releases/download/tests-zkevm@v0.6.2/fixtures_zkevm.tar.gz";
@@ -89,7 +88,6 @@ fn ensure_eest_fixtures() -> PathBuf {
 }
 
 fn download_and_unpack(dir: &Path) {
-    info!("Downloading fixture archive {EEST_FIXTURES_URL}");
     let bytes = reqwest::blocking::get(EEST_FIXTURES_URL)
         .unwrap()
         .error_for_status()

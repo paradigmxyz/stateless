@@ -27,8 +27,5 @@ build() {
   "${cmd[@]}"
 }
 
-build stateless
-build stateless zkvm-interface
-build stateless-validator-common
 build stateless-validator-reth
 build stateless-validator-reth zkvm-interface

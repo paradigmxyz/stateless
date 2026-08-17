@@ -6370,7 +6370,6 @@ dependencies = [
 name = "stateless-validator-common"
 version = "0.1.0"
 dependencies = [
- "const-hex",
  "libssz",
  "libssz-derive",
  "libssz-merkle",
@@ -6394,7 +6393,6 @@ dependencies = [
  "reth-evm-ethereum",
  "reth-payload-validator",
  "reth-primitives-traits",
- "revm",
  "stateless",
  "stateless-validator-common",
  "thiserror",
@@ -6409,7 +6407,6 @@ dependencies = [
  "alloy-primitives",
  "anyhow",
  "const-hex",
- "ere-platform-core",
  "ere-server-client",
  "ere-util-tokio",
  "flate2",
@@ -6422,10 +6419,7 @@ dependencies = [
  "stateless-validator-reth",
  "tar",
  "tempfile",
- "tracing",
- "tracing-subscriber",
  "walkdir",
- "zstd",
 ]
 
 [[package]]

@@ -20,7 +20,7 @@ ere-platform-openvm = { git = "https://github.com/eth-act/ere", rev = "552595938
 
 # local
 stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", features = [
-    "openvm",
+    "zkvm-interface",
 ] }
 
 # Temporary until the revm release containing bluealloy/revm#3855 is published.

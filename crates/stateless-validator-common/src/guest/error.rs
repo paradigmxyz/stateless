@@ -3,8 +3,6 @@
 use libssz::DecodeError;
 use thiserror::Error;
 
-use crate::guest::input::ProtocolFork;
-
 /// Common errors for the stateless input guest.
 #[derive(Debug, Error)]
 pub enum Error {
@@ -14,9 +12,6 @@ pub enum Error {
     /// The schema identifier prefix does not match the supported schema id.
     #[error("unsupported stateless input schema id {0:#06x}")]
     UnsupportedSchemaId(u16),
-    /// The protocol fork is not supported.
-    #[error("unsupported protocol fork {0:?}")]
-    UnsupportedProtocolFork(ProtocolFork),
     /// The SSZ body failed to decode.
     #[error("SSZ decode error {0:?}")]
     Ssz(DecodeError),

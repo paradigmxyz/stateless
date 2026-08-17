@@ -65,18 +65,17 @@ fn verify_and_compute_sender(
     tx: &TransactionSigned,
     is_homestead: bool,
 ) -> Result<Address, StatelessValidationError> {
-    verify_and_compute_sender_from_signature(vk, tx.signature(), tx.signature_hash(), is_homestead)
+    recover_and_verify_sender(vk, tx.signature(), tx.signature_hash(), is_homestead)
 }
 
-fn verify_and_compute_sender_from_signature(
+fn recover_and_verify_sender(
     vk: &UncompressedPublicKey,
     sig: &Signature,
     sig_hash: B256,
     is_homestead: bool,
 ) -> Result<Address, StatelessValidationError> {
     // non-normalized signatures are only valid pre-homestead
-    let sig_is_normalized = sig.normalize_s().is_none();
-    if is_homestead && !sig_is_normalized {
+    if is_homestead && sig.normalize_s().is_some() {
         return Err(StatelessValidationError::HomesteadSignatureNotNormalized);
     }
 
@@ -109,9 +108,7 @@ mod tests {
         let signature = Signature::test_signature();
         let public_key = public_key(signature, hash);
 
-        assert!(
-            verify_and_compute_sender_from_signature(&public_key, &signature, hash, true).is_ok()
-        );
+        assert!(recover_and_verify_sender(&public_key, &signature, hash, true).is_ok());
     }
 
     #[test]
@@ -121,7 +118,7 @@ mod tests {
         let opposite_public_key = public_key(signature.with_parity(!signature.v()), hash);
 
         assert!(matches!(
-            verify_and_compute_sender_from_signature(&opposite_public_key, &signature, hash, true),
+            recover_and_verify_sender(&opposite_public_key, &signature, hash, true),
             Err(StatelessValidationError::SignerRecovery)
         ));
     }

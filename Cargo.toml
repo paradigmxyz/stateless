@@ -130,10 +130,7 @@ sha2 = "0.10"
 tar = "0.4"
 tempfile = "3.20"
 thiserror = { version = "2.0", default-features = false }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 walkdir = "2.5"
-zstd = "0.13"
 
 # Temporary until the revm release containing bluealloy/revm#3855 is published.
 [patch.crates-io]

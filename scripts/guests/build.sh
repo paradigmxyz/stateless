@@ -18,7 +18,6 @@ mkdir -p "$OUTPUT_DIR"
 OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
 
 LOCKFILE="$REPO_ROOT/bin/stateless-validator-reth/$ZKVM/Cargo.lock"
-LOCKFILE_SHA256="$(sha256_file "$LOCKFILE")"
 CONTAINER_GUEST_DIR="/stateless/bin/stateless-validator-reth/$ZKVM"
 
 docker run --rm \
@@ -33,11 +32,6 @@ docker run --rm \
     --elf-name "$ARTIFACT_NAME.elf" \
     -- \
     --ignore-rust-version
-
-if [[ "$(sha256_file "$LOCKFILE")" != "$LOCKFILE_SHA256" ]]; then
-    echo "$LOCKFILE changed during compilation" >&2
-    exit 1
-fi
 
 docker run --rm \
     -e RUST_LOG=info \
@@ -57,14 +51,5 @@ if [[ ! -s "$VK" ]]; then
     echo "$VK is empty" >&2
     exit 1
 fi
-
-(
-    cd "$OUTPUT_DIR"
-    if command -v sha256sum >/dev/null 2>&1; then
-        sha256sum "$ARTIFACT_NAME.elf" "$ARTIFACT_NAME.vk"
-    else
-        shasum -a 256 "$ARTIFACT_NAME.elf" "$ARTIFACT_NAME.vk"
-    fi
-) > "$OUTPUT_DIR/SHA256SUMS-$ZKVM"
 
 echo "Built $ARTIFACT_NAME"

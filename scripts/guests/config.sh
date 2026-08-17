@@ -27,11 +27,3 @@ guest_config() {
     ARTIFACT_NAME="stateless-validator-reth-${ZKVM}-${ZKVM_VERSION}"
     export ZKVM ZKVM_VERSION COMPILER_IMAGE SERVER_IMAGE ARTIFACT_NAME
 }
-
-sha256_file() {
-    if command -v sha256sum >/dev/null 2>&1; then
-        sha256sum "$1" | awk '{print $1}'
-    else
-        shasum -a 256 "$1" | awk '{print $1}'
-    fi
-}
