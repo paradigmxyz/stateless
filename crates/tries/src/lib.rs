@@ -12,6 +12,7 @@
 extern crate alloc;
 
 /// Default trie implementation based on `reth_trie_sparse`.
+#[cfg(feature = "std")]
 pub mod default;
 mod error;
 /// Zeth trie implementation backed by `zeth-mpt`.

@@ -8,7 +8,12 @@ use itertools::Itertools;
 use reth_trie_common::{
     BranchNodeMasks, DecodedMultiProofV2, HashedPostState, Nibbles, ProofTrieNodeV2,
 };
-use reth_trie_sparse::{RevealableSparseTrie, SparseStateTrie, errors::SparseStateTrieResult};
+use reth_trie_sparse::{
+    LeafUpdate, RevealableSparseTrie, SparseStateTrie, TrieNodeEpoch,
+    errors::{SparseStateTrieErrorKind, SparseStateTrieResult, SparseTrieErrorKind},
+};
+
+const POST_STATE_EPOCH: TrieNodeEpoch = TrieNodeEpoch::new(1);
 
 /// `StatelessSparseTrie` structure for usage during stateless validation
 #[derive(Debug)]
@@ -160,8 +165,9 @@ fn verify_execution_witness(
         .map_err(|_e| StatelessTrieError::WitnessRevealFailed { pre_state_root })?;
 
     // Calculate the root
-    let computed_root =
-        trie.root().map_err(|_e| StatelessTrieError::StatelessPreStateRootCalculationFailed)?;
+    let computed_root = trie
+        .root(TrieNodeEpoch::UNMODIFIED)
+        .map_err(|_e| StatelessTrieError::StatelessPreStateRootCalculationFailed)?;
 
     if computed_root == pre_state_root {
         Ok((trie, bytecode))
@@ -269,10 +275,14 @@ fn build_multiproof_from_witness(
 ///
 /// It modifies the input `trie` in place to reflect these changes and then calculates the
 /// final post-execution state root.
+// Reth's batch leaf update API requires its `B256Map` alias.
+#[allow(clippy::disallowed_types)]
 fn calculate_state_root(
     trie: &mut SparseStateTrie,
     state: HashedPostState,
 ) -> SparseStateTrieResult<B256> {
+    use alloy_primitives::map::B256Map;
+
     // 1. Apply storage‑slot updates and compute each contract's storage root
     //
     //
@@ -292,20 +302,29 @@ fn calculate_state_root(
             storage_trie.wipe()?;
         }
 
-        // Apply slot-level changes
-        for (hashed_slot, value) in
-            storage.storage.into_iter().sorted_unstable_by_key(|(slot, _)| *slot)
-        {
-            let nibbles = Nibbles::unpack(hashed_slot);
-            if value.is_zero() {
-                storage_trie.remove_leaf(&nibbles)?;
-            } else {
-                storage_trie.update_leaf(nibbles, alloy_rlp::encode_fixed_size(&value).to_vec())?;
-            }
+        let mut updates = storage
+            .storage
+            .into_iter()
+            .map(|(hashed_slot, value)| {
+                let value = if value.is_zero() {
+                    Vec::new()
+                } else {
+                    alloy_rlp::encode_fixed_size(&value).to_vec()
+                };
+                (hashed_slot, LeafUpdate::Changed(value))
+            })
+            .collect::<B256Map<_>>();
+        storage_trie.update_leaves(&mut updates, |_, _| {})?;
+        if let Some((hashed_slot, _)) = updates.into_iter().next() {
+            return Err(SparseStateTrieErrorKind::SparseStorageTrie(
+                address,
+                SparseTrieErrorKind::BlindedNode(Nibbles::unpack(hashed_slot)),
+            )
+            .into());
         }
 
         // Finalise the storage‑trie root before pushing the result
-        storage_trie.root();
+        storage_trie.root(POST_STATE_EPOCH);
         storage_results.push((address, storage_trie));
     }
 
@@ -315,12 +334,31 @@ fn calculate_state_root(
     }
 
     // 2. Apply account‑level updates and (re)encode the account nodes
-    for (hashed_address, account) in
-        state.accounts.into_iter().sorted_unstable_by_key(|(addr, _)| *addr)
-    {
-        trie.update_account_stateless(hashed_address, account)?;
+    let mut updates = B256Map::default();
+    for (hashed_address, account) in state.accounts {
+        let value = if let Some(account) = account {
+            let storage_root =
+                if let Some(storage_trie) = trie.storage_tries_mut().get_mut(&hashed_address) {
+                    storage_trie.root(POST_STATE_EPOCH).ok_or(SparseTrieErrorKind::Blind)?
+                } else if let Some(value) = trie.get_account_value(&hashed_address) {
+                    TrieAccount::decode(&mut &value[..])?.storage_root
+                } else {
+                    EMPTY_ROOT_HASH
+                };
+            alloy_rlp::encode(account.into_trie_account(storage_root))
+        } else {
+            Vec::new()
+        };
+        updates.insert(hashed_address, LeafUpdate::Changed(value));
+    }
+    trie.trie_mut().update_leaves(&mut updates, |_, _| {})?;
+    if let Some((hashed_address, _)) = updates.into_iter().next() {
+        return Err(SparseStateTrieErrorKind::Sparse(SparseTrieErrorKind::BlindedNode(
+            Nibbles::unpack(hashed_address),
+        ))
+        .into());
     }
 
     // Return new state root
-    trie.root()
+    trie.root(POST_STATE_EPOCH)
 }

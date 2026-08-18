@@ -1,7 +1,7 @@
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.93"
+rust-version = "1.95"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/paradigmxyz/stateless"
 repository = "https://github.com/paradigmxyz/stateless"
@@ -10,9 +10,12 @@ exclude = [".github/"]
 [workspace]
 members = [
     "crates/stateless",
+    "crates/stateless-validator-common",
+    "crates/stateless-validator-reth",
     "crates/tries",
     "crates/zeth-mpt",
     "testing/ef-tests",
+    "testing/stateless-validator",
 ]
 resolver = "2"
 
@@ -20,6 +23,7 @@ resolver = "2"
 missing_debug_implementations = "warn"
 missing_docs = "warn"
 rust_2018_idioms = { level = "deny", priority = -1 }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_vendor, values("zisk"))'] }
 unreachable_pub = "warn"
 unused_must_use = "deny"
 
@@ -40,50 +44,79 @@ strip = "symbols"
 
 [workspace.dependencies]
 # internal
-stateless = { path = "crates/stateless" }
-tries = { path = "crates/tries" }
+stateless = { path = "crates/stateless", default-features = false }
+stateless-validator-common = { path = "crates/stateless-validator-common", default-features = false }
+stateless-validator-reth = { path = "crates/stateless-validator-reth", default-features = false }
+tries = { path = "crates/tries", default-features = false }
 
 # reth
-reth-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0", default-features = false }
-reth-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0", default-features = false }
-reth-db = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0" }
-reth-db-api = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0" }
-reth-db-common = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0" }
-reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0", default-features = false }
-reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0", default-features = false }
-reth-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0", default-features = false }
-reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0" }
-reth-primitives-traits = { version = "0.4.1", default-features = false }
-reth-provider = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0" }
-reth-revm = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0", default-features = false }
-reth-tracing = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0" }
-reth-trie = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0" }
-reth-trie-common = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0", default-features = false }
-reth-trie-db = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0" }
-reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", tag = "v2.3.0", default-features = false }
+reth-chainspec = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee", default-features = false }
+reth-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee", default-features = false }
+reth-db = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee" }
+reth-db-api = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee" }
+reth-db-common = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee" }
+reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee", default-features = false }
+reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee", default-features = false }
+reth-evm = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee", default-features = false }
+reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee", default-features = false }
+reth-primitives-traits = { version = "0.6.0", default-features = false }
+reth-payload-validator = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee", default-features = false }
+reth-provider = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee" }
+reth-revm = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee", default-features = false }
+reth-tracing = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee" }
+reth-trie = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee" }
+reth-trie-common = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee", default-features = false }
+reth-trie-db = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee" }
+reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", rev = "f804dc1eaa06927b1bdf17f2b67572f6f6b2deee", default-features = false }
 
 # alloy
-alloy-consensus = { version = "2.0.5", default-features = false }
-alloy-eips = { version = "2.0.5", default-features = false }
-alloy-genesis = { version = "2.0.5", default-features = false }
+alloy-consensus = { version = "2.1.1", default-features = false }
+alloy-eips = { version = "2.1.1", default-features = false }
+alloy-genesis = { version = "2.1.1", default-features = false }
 alloy-primitives = { version = "1.6.0", default-features = false, features = ["map-foldhash", "map-indexmap"] }
 alloy-rlp = { version = "0.3.13", default-features = false }
-alloy-rpc-types-debug = { version = "2.0.5", default-features = false }
+alloy-rpc-types-debug = { version = "2.1.1", default-features = false }
+alloy-rpc-types-engine = { version = "2.1.1", default-features = false }
 alloy-trie = { version = "0.9.4", default-features = false }
 
 # revm
-revm = { version = "40.0.3", default-features = false }
-revm-bytecode = { version = "11.0.0", default-features = false }
-revm-database-interface = { version = "12.0.0", default-features = false }
-revm-state = { version = "12.0.0", default-features = false }
+revm = { version = "42.0.1", default-features = false }
+revm-bytecode = { version = "42.0.0", default-features = false }
+revm-database-interface = { version = "42.0.0", default-features = false }
+revm-state = { version = "42.0.0", default-features = false }
+
+# zkVM standard
+zkvm-interface = { git = "https://github.com/eth-act/zkvm-standards", rev = "282cd356c3a0498416bb0619f9c8a347ce9933fb" }
+
+# Ere
+ere-platform-core = { git = "https://github.com/eth-act/ere", rev = "552595938b48884d87cfada24f29d39223695c1e" }
+ere-server-client = { git = "https://github.com/eth-act/ere", rev = "552595938b48884d87cfada24f29d39223695c1e" }
+ere-util-tokio = { git = "https://github.com/eth-act/ere", rev = "552595938b48884d87cfada24f29d39223695c1e" }
+
+# ssz
+libssz = { version = "0.2.2", default-features = false, features = ["alloc"] }
+libssz-derive = "0.2.2"
+libssz-merkle = { version = "0.2.2", default-features = false, features = [
+    "alloc",
+    "sha2-backend",
+] }
+libssz-types = { version = "0.2.2", default-features = false, features = ["alloc"] }
 
 # misc
+anyhow = "1.0"
 arrayvec = { version = "0.7", default-features = false }
 bincode = "1.3"
+const-hex = { version = "1.19", default-features = false, features = ["alloc"] }
+flate2 = "1.1"
 itertools = { version = "0.14", default-features = false, features = [
     "use_alloc",
 ] }
+paste = "1.0"
 rayon = "1.8"
+reqwest = { version = "0.12", default-features = false, features = [
+    "blocking",
+    "rustls-tls",
+] }
 rkyv = "0.8"
 serde = { version = "1.0", default-features = false, features = [
     "derive",
@@ -93,5 +126,23 @@ serde_json = "1.0"
 serde_with = { version = "3.16", default-features = false, features = [
     "alloc",
 ] }
+sha2 = "0.10"
+tar = "0.4"
+tempfile = "3.20"
 thiserror = { version = "2.0", default-features = false }
 walkdir = "2.5"
+
+# Temporary until the revm release containing bluealloy/revm#3855 is published.
+[patch.crates-io]
+revm = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-bytecode = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-context = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-context-interface = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-database = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-database-interface = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-handler = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-inspector = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-interpreter = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-precompile = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-primitives = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-state = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }

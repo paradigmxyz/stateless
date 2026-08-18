@@ -25,8 +25,11 @@ use reth_evm::{
     execute::{BlockExecutionOutput, Executor},
 };
 use reth_primitives_traits::{RecoveredBlock, SealedHeader};
-use reth_trie_common::{HashedPostState, KeccakKeyHasher};
-use tries::{StatelessTrie, StatelessTrieError, default::StatelessSparseTrie};
+use reth_trie_common::{HashedStorage, KeccakKeyHasher, KeyHasher};
+use tries::{StatelessTrie, StatelessTrieError};
+
+#[cfg(feature = "reth-trie")]
+use tries::default::StatelessSparseTrie;
 
 /// BLOCKHASH ancestor lookup window limit per EVM (number of most recent blocks accessible).
 const BLOCKHASH_ANCESTOR_LIMIT: usize = 256;
@@ -173,6 +176,7 @@ pub struct StatelessValidationOutput {
 }
 
 /// Performs stateless validation of a block using the provided witness data.
+#[cfg(feature = "reth-trie")]
 pub fn stateless_validation<ChainSpec, E>(
     current_block: Block,
     public_keys: Vec<UncompressedPublicKey>,
@@ -217,6 +221,7 @@ where
 }
 
 /// Performs stateless validation of an already-recovered block.
+#[cfg(feature = "reth-trie")]
 pub fn stateless_validation_recovered<ChainSpec, E>(
     recovered_block: RecoveredBlock<Block>,
     witness: ExecutionWitness,
@@ -309,7 +314,24 @@ where
     )
     .map_err(StatelessValidationError::ConsensusValidationFailed)?;
 
-    let hashed_state = HashedPostState::from_bundle_state::<KeccakKeyHasher>(&output.state.state);
+    let hashed_state = output
+        .state
+        .state()
+        .iter()
+        .map(|(address, account)| {
+            let hashed_address = KeccakKeyHasher::hash_key(address);
+            let hashed_account = account.info.as_ref().map(Into::into);
+            let hashed_storage = HashedStorage::from_iter(
+                account.was_destroyed(),
+                account
+                    .storage
+                    .iter()
+                    .map(|(slot, value)| (keccak256(B256::from(*slot)), value.present_value)),
+            );
+
+            (hashed_address, hashed_account, (!hashed_storage.is_empty()).then_some(hashed_storage))
+        })
+        .collect();
     let state_root = trie.calculate_state_root(hashed_state)?;
     if state_root != current_block.state_root {
         return Err(StatelessValidationError::PostStateRootMismatch {

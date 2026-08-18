@@ -47,8 +47,10 @@ pub use tries::StatelessTrie;
 #[doc(inline)]
 pub use validation::StatelessValidationOutput;
 #[doc(inline)]
+#[cfg(feature = "reth-trie")]
 pub use validation::stateless_validation;
 #[doc(inline)]
+#[cfg(feature = "reth-trie")]
 pub use validation::stateless_validation_recovered;
 #[doc(inline)]
 pub use validation::stateless_validation_recovered_with_trie;
@@ -58,6 +60,9 @@ pub use validation::stateless_validation_with_trie;
 /// Implementation of stateless validation
 pub mod validation;
 pub(crate) mod witness_db;
+#[cfg(feature = "zkvm-interface")]
+#[cfg_attr(docsrs, doc(cfg(feature = "zkvm-interface")))]
+pub mod zkvm_interface;
 
 #[doc(inline)]
 pub use alloy_rpc_types_debug::ExecutionWitness;

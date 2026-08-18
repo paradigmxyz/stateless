@@ -1,0 +1,48 @@
+[package]
+name = "stateless-validator-reth"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+thiserror.workspace = true
+
+# alloy
+alloy-consensus.workspace = true
+alloy-eips.workspace = true
+alloy-genesis.workspace = true
+alloy-primitives.workspace = true
+alloy-rpc-types-engine.workspace = true
+
+# reth
+reth-chainspec.workspace = true
+reth-ethereum-primitives.workspace = true
+reth-evm-ethereum.workspace = true
+reth-payload-validator.workspace = true
+reth-primitives-traits.workspace = true
+stateless.workspace = true
+tries = { workspace = true, default-features = false }
+
+# zkvm-standard
+zkvm-interface = { workspace = true, optional = true }
+
+# ere
+ere-platform-core.workspace = true
+
+# local
+stateless-validator-common.workspace = true
+
+[features]
+# guest
+default = ["std"]
+std = ["stateless-validator-common/std"]
+sp1 = ["zkvm-interface"]
+zkvm-interface = [
+    "alloy-consensus/crypto-backend",
+    "dep:zkvm-interface",
+    "stateless/zkvm-interface",
+]

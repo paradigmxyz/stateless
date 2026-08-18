@@ -1,0 +1,49 @@
+[workspace]
+
+[package]
+name = "stateless-validator-reth-sp1"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# enable features
+alloy-primitives = { version = "1.6.1", default-features = false, features = [
+    "map-foldhash",
+    "native-keccak",
+] }
+
+# ere
+ere-platform-sp1 = { git = "https://github.com/eth-act/ere", rev = "552595938b48884d87cfada24f29d39223695c1e" }
+
+# local
+stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", default-features = false, features = [
+    "sp1",
+] }
+
+[patch.crates-io]
+# FIXME: Remove the patch once https://github.com/succinctlabs/sp1/pull/2865 is merged and released.
+sp1-lib = { git = "https://github.com/han0110/sp1", rev = "8564a70ea1952826fc0926eba5a3ce62af53ffac" }
+
+# Temporary until the revm release containing bluealloy/revm#3855 is published.
+revm = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-bytecode = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-context = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-context-interface = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-database = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-database-interface = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-handler = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-inspector = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-interpreter = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-precompile = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-primitives = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+revm-state = { git = "https://github.com/bluealloy/revm", rev = "8382708f04bdb7b2052729eb1ec3492712bb3203" }
+
+[patch."https://github.com/succinctlabs/sp1.git"]
+sp1-lib = { git = "https://github.com/han0110/sp1", rev = "8564a70ea1952826fc0926eba5a3ce62af53ffac" }
+sp1-primitives = { git = "https://github.com/han0110/sp1", rev = "8564a70ea1952826fc0926eba5a3ce62af53ffac" }
+sp1-zkvm = { git = "https://github.com/han0110/sp1", rev = "8564a70ea1952826fc0926eba5a3ce62af53ffac" }
+sp1-libzkevm = { git = "https://github.com/han0110/sp1", rev = "8564a70ea1952826fc0926eba5a3ce62af53ffac", package = "libzkevm" }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"

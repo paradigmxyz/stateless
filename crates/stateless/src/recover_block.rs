@@ -1,7 +1,7 @@
 use crate::validation::StatelessValidationError;
 use alloc::vec::Vec;
 use alloy_consensus::BlockHeader;
-use alloy_primitives::Address;
+use alloy_primitives::{Address, B256, Signature};
 use core::ops::Deref;
 use reth_chainspec::EthereumHardforks;
 use reth_ethereum_primitives::{Block, TransactionSigned};
@@ -65,14 +65,61 @@ fn verify_and_compute_sender(
     tx: &TransactionSigned,
     is_homestead: bool,
 ) -> Result<Address, StatelessValidationError> {
-    let sig = tx.signature();
+    recover_and_verify_sender(vk, tx.signature(), tx.signature_hash(), is_homestead)
+}
 
+fn recover_and_verify_sender(
+    vk: &UncompressedPublicKey,
+    sig: &Signature,
+    sig_hash: B256,
+    is_homestead: bool,
+) -> Result<Address, StatelessValidationError> {
     // non-normalized signatures are only valid pre-homestead
-    let sig_is_normalized = sig.normalize_s().is_none();
-    if is_homestead && !sig_is_normalized {
+    if is_homestead && sig.normalize_s().is_some() {
         return Err(StatelessValidationError::HomesteadSignatureNotNormalized);
     }
-    let sig_hash = tx.signature_hash();
-    alloy_consensus::crypto::secp256k1::verify_and_compute_signer_unchecked(&vk.0, sig, sig_hash)
-        .map_err(|_| StatelessValidationError::SignerRecovery)
+
+    if vk.0[0] != 0x04 {
+        return Err(StatelessValidationError::SignerRecovery);
+    }
+    let expected = Address::from_raw_public_key(&vk.0[1..]);
+    let recovered = if is_homestead {
+        alloy_consensus::crypto::secp256k1::recover_signer(sig, sig_hash)
+    } else {
+        alloy_consensus::crypto::secp256k1::recover_signer_unchecked(sig, sig_hash)
+    }
+    .map_err(|_| StatelessValidationError::SignerRecovery)?;
+
+    (recovered == expected).then_some(recovered).ok_or(StatelessValidationError::SignerRecovery)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn public_key(signature: Signature, hash: B256) -> UncompressedPublicKey {
+        let key = signature.recover_from_prehash(&hash).unwrap();
+        UncompressedPublicKey(key.to_encoded_point(false).as_bytes().try_into().unwrap())
+    }
+
+    #[test]
+    fn accepts_public_key_matching_signature_parity() {
+        let hash = B256::ZERO;
+        let signature = Signature::test_signature();
+        let public_key = public_key(signature, hash);
+
+        assert!(recover_and_verify_sender(&public_key, &signature, hash, true).is_ok());
+    }
+
+    #[test]
+    fn rejects_public_key_from_opposite_signature_parity() {
+        let hash = B256::ZERO;
+        let signature = Signature::test_signature();
+        let opposite_public_key = public_key(signature.with_parity(!signature.v()), hash);
+
+        assert!(matches!(
+            recover_and_verify_sender(&opposite_public_key, &signature, hash, true),
+            Err(StatelessValidationError::SignerRecovery)
+        ));
+    }
 }
