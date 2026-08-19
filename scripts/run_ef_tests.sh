@@ -22,4 +22,4 @@ esac
 "$SCRIPT_DIR/setup_ef_tests.sh"
 
 # Run EF tests
-EF_TEST_TRIE="$TRIE_IMPL" cargo nextest run --no-fail-fast -p ef-tests --release --features "asm-keccak ef-tests"
+EF_TEST_TRIE="$TRIE_IMPL" cargo nextest run --no-fail-fast -p ef-tests --release --locked --features "asm-keccak ef-tests"
