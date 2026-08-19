@@ -27,7 +27,7 @@ The three guest packages are independent Cargo workspaces with committed
 lockfiles. A build fails if its lockfile changes or if the compiler does not
 produce a non-empty ELF and verification key.
 
-Pull requests and pushes to `main` build all three artifacts without write
+Manual workflow runs build and smoke-test all three artifacts without write
 permissions. Pushing a `reth-guest-v*` tag runs the same matrix, creates
 checksums, attests the artifacts, and creates a GitHub release after every
 build and smoke test succeeds.

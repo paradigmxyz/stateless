@@ -2,17 +2,12 @@ name: Reth guest artifacts
 
 on:
   push:
-    branches:
-      - main
     tags:
       - "reth-guest-v*"
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
