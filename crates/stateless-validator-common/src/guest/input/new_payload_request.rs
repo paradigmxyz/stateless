@@ -420,8 +420,7 @@ impl SszEncode for NewPayloadRequest {
 mod tests {
     use alloc::vec;
 
-    use libssz::SszEncode as _;
-    use libssz_merkle::{HashTreeRoot as _, Sha2Hasher};
+    use libssz_merkle::Sha2Hasher;
 
     use crate::guest::input::{
         ExecutionWitness, ProtocolFork, StatelessInput, new_payload_request::*,

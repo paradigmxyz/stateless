@@ -182,7 +182,6 @@ declare_stateless_input_variants!(Bellatrix, Capella, Deneb, ElectraFulu, Gloas)
 mod tests {
     use alloc::vec;
 
-    use libssz::SszEncode as _;
     use libssz_merkle::{HashTreeRoot as _, Sha2Hasher};
 
     use super::*;
