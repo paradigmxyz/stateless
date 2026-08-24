@@ -5,9 +5,9 @@
 //! execution-apis, because a multi-fork crate needs distinct names while each execution-specs
 //! fork module defines a single `ExecutionPayload` shape.
 //!
-//! [`types.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.6.2/src/ethereum/forks/amsterdam/execution_engine/types.py
-//! [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.6.2/src/ethereum/forks/amsterdam/execution_engine/requests.py
-//! [`blocks.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.6.2/src/ethereum/forks/amsterdam/blocks.py
+//! [`types.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.2/src/ethereum/forks/amsterdam/execution_engine/types.py
+//! [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.2/src/ethereum/forks/amsterdam/execution_engine/requests.py
+//! [`blocks.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.2/src/ethereum/forks/amsterdam/blocks.py
 
 #![allow(missing_docs)]
 
@@ -15,8 +15,8 @@ use alloc::vec::Vec;
 
 use libssz::SszEncode;
 use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use libssz_merkle::{HashTreeRoot, Sha256Hasher};
-use libssz_types::SszList;
+use libssz_merkle::{HashTreeRoot, Sha256Hasher, merkleize_progressive, mix_in_active_fields};
+use libssz_types::{ProgressiveList, SszList};
 
 /// Primitive types from the Amsterdam stateless schema.
 pub type Hash32 = [u8; 32];
@@ -28,31 +28,20 @@ pub type Bloom = [u8; 256];
 pub type VersionedHash = Hash32;
 pub type ExtraData = SszList<u8, MAX_EXTRA_DATA_BYTES>;
 
-/// SSZ list bounds from the Amsterdam stateless schema.
+/// SSZ list bounds retained by the Amsterdam stateless schema.
 pub const MAX_EXTRA_DATA_BYTES: usize = 32;
-pub const MAX_WITHDRAWALS_PER_PAYLOAD: usize = 16;
-pub const MAX_TRANSACTIONS_PER_PAYLOAD: usize = 1 << 20;
-pub const MAX_BYTES_PER_TRANSACTION: usize = 1 << 30;
-pub const MAX_BLOB_COMMITMENTS_PER_BLOCK: usize = 4096;
-pub const MAX_DEPOSIT_REQUESTS_PER_PAYLOAD: usize = 8192;
-pub const MAX_WITHDRAWAL_REQUESTS_PER_PAYLOAD: usize = 16;
-pub const MAX_CONSOLIDATION_REQUESTS_PER_PAYLOAD: usize = 2;
-pub const MAX_BUILDER_DEPOSIT_REQUESTS_PER_PAYLOAD: usize = 64;
-pub const MAX_BUILDER_EXIT_REQUESTS_PER_PAYLOAD: usize = 16;
 
 /// Composite types from the Amsterdam stateless schema.
-pub type BlockAccessList = SszList<u8, MAX_BYTES_PER_TRANSACTION>;
-pub type Transaction = SszList<u8, MAX_BYTES_PER_TRANSACTION>;
-pub type Transactions = SszList<Transaction, MAX_TRANSACTIONS_PER_PAYLOAD>;
-pub type Withdrawals = SszList<Withdrawal, MAX_WITHDRAWALS_PER_PAYLOAD>;
-pub type VersionedHashes = SszList<VersionedHash, MAX_BLOB_COMMITMENTS_PER_BLOCK>;
-pub type DepositRequests = SszList<DepositRequest, MAX_DEPOSIT_REQUESTS_PER_PAYLOAD>;
-pub type WithdrawalRequests = SszList<WithdrawalRequest, MAX_WITHDRAWAL_REQUESTS_PER_PAYLOAD>;
-pub type ConsolidationRequests =
-    SszList<ConsolidationRequest, MAX_CONSOLIDATION_REQUESTS_PER_PAYLOAD>;
-pub type BuilderDepositRequests =
-    SszList<BuilderDepositRequest, MAX_BUILDER_DEPOSIT_REQUESTS_PER_PAYLOAD>;
-pub type BuilderExitRequests = SszList<BuilderExitRequest, MAX_BUILDER_EXIT_REQUESTS_PER_PAYLOAD>;
+pub type BlockAccessList = ProgressiveList<u8>;
+pub type Transaction = ProgressiveList<u8>;
+pub type Transactions = ProgressiveList<Transaction>;
+pub type Withdrawals = ProgressiveList<Withdrawal>;
+pub type VersionedHashes = ProgressiveList<VersionedHash>;
+pub type DepositRequests = ProgressiveList<DepositRequest>;
+pub type WithdrawalRequests = ProgressiveList<WithdrawalRequest>;
+pub type ConsolidationRequests = ProgressiveList<ConsolidationRequest>;
+pub type BuilderDepositRequests = ProgressiveList<BuilderDepositRequest>;
+pub type BuilderExitRequests = ProgressiveList<BuilderExitRequest>;
 
 /// Withdrawals represent a transfer of ETH from the consensus layer (beacon chain) to the
 /// execution layer, as validated by the consensus layer. Each withdrawal is listed in the block's
@@ -114,7 +103,7 @@ pub struct BuilderExitRequest {
 /// Typed engine-API container of execution-layer triggered requests, as of Electra.
 ///
 /// Mirrors the consensus-layer `ExecutionRequests` Container.
-#[derive(Debug, Clone, Default, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, SszEncode, SszDecode)]
 pub struct ExecutionRequestsElectraFulu {
     pub deposits: DepositRequests,
     pub withdrawals: WithdrawalRequests,
@@ -123,7 +112,7 @@ pub struct ExecutionRequestsElectraFulu {
 
 /// Typed engine-API container of execution-layer triggered requests, as of Gloas, which
 /// EIP-8282 extends with the builder deposit and builder exit lists.
-#[derive(Debug, Clone, Default, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, SszEncode, SszDecode)]
 pub struct ExecutionRequestsGloas {
     pub deposits: DepositRequests,
     pub withdrawals: WithdrawalRequests,
@@ -132,7 +121,7 @@ pub struct ExecutionRequestsGloas {
     pub builder_exits: BuilderExitRequests,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, Eq, SszEncode, SszDecode)]
 pub struct ExecutionPayloadV1 {
     pub parent_hash: Hash32,
     pub fee_recipient: Address,
@@ -150,7 +139,7 @@ pub struct ExecutionPayloadV1 {
     pub transactions: Transactions,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, Eq, SszEncode, SszDecode)]
 pub struct ExecutionPayloadV2 {
     pub parent_hash: Hash32,
     pub fee_recipient: Address,
@@ -169,7 +158,7 @@ pub struct ExecutionPayloadV2 {
     pub withdrawals: Withdrawals,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, Eq, SszEncode, SszDecode)]
 pub struct ExecutionPayloadV3 {
     pub parent_hash: Hash32,
     pub fee_recipient: Address,
@@ -190,7 +179,7 @@ pub struct ExecutionPayloadV3 {
     pub excess_blob_gas: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, Eq, SszEncode, SszDecode)]
 pub struct ExecutionPayloadV4 {
     pub parent_hash: Hash32,
     pub fee_recipient: Address,
@@ -212,6 +201,111 @@ pub struct ExecutionPayloadV4 {
     pub block_access_list: BlockAccessList,
     pub slot_number: u64,
 }
+
+macro_rules! impl_progressive_container_hash_tree_root {
+    ($ty:ty, $($field:ident),+ $(,)?) => {
+        impl HashTreeRoot for $ty {
+            fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> [u8; 32] {
+                let field_roots = [$(self.$field.hash_tree_root(hasher)),+];
+                let active_fields = [$({ let _ = stringify!($field); true }),+];
+                let root = merkleize_progressive(hasher, &field_roots);
+                mix_in_active_fields(hasher, &root, &active_fields)
+            }
+        }
+    };
+}
+
+impl_progressive_container_hash_tree_root!(
+    ExecutionPayloadV1,
+    parent_hash,
+    fee_recipient,
+    state_root,
+    receipts_root,
+    logs_bloom,
+    prev_randao,
+    block_number,
+    gas_limit,
+    gas_used,
+    timestamp,
+    extra_data,
+    base_fee_per_gas,
+    block_hash,
+    transactions,
+);
+impl_progressive_container_hash_tree_root!(
+    ExecutionPayloadV2,
+    parent_hash,
+    fee_recipient,
+    state_root,
+    receipts_root,
+    logs_bloom,
+    prev_randao,
+    block_number,
+    gas_limit,
+    gas_used,
+    timestamp,
+    extra_data,
+    base_fee_per_gas,
+    block_hash,
+    transactions,
+    withdrawals,
+);
+impl_progressive_container_hash_tree_root!(
+    ExecutionPayloadV3,
+    parent_hash,
+    fee_recipient,
+    state_root,
+    receipts_root,
+    logs_bloom,
+    prev_randao,
+    block_number,
+    gas_limit,
+    gas_used,
+    timestamp,
+    extra_data,
+    base_fee_per_gas,
+    block_hash,
+    transactions,
+    withdrawals,
+    blob_gas_used,
+    excess_blob_gas,
+);
+impl_progressive_container_hash_tree_root!(
+    ExecutionPayloadV4,
+    parent_hash,
+    fee_recipient,
+    state_root,
+    receipts_root,
+    logs_bloom,
+    prev_randao,
+    block_number,
+    gas_limit,
+    gas_used,
+    timestamp,
+    extra_data,
+    base_fee_per_gas,
+    block_hash,
+    transactions,
+    withdrawals,
+    blob_gas_used,
+    excess_blob_gas,
+    block_access_list,
+    slot_number,
+);
+impl_progressive_container_hash_tree_root!(
+    ExecutionRequestsElectraFulu,
+    deposits,
+    withdrawals,
+    consolidations,
+);
+impl_progressive_container_hash_tree_root!(
+    ExecutionRequestsGloas,
+    deposits,
+    withdrawals,
+    consolidations,
+    builder_deposits,
+    builder_exits,
+);
 
 #[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
 pub struct NewPayloadRequestBellatrix {
@@ -326,8 +420,11 @@ impl SszEncode for NewPayloadRequest {
 mod tests {
     use alloc::vec;
 
+    use libssz::SszEncode as _;
+    use libssz_merkle::{HashTreeRoot as _, Sha2Hasher};
+
     use crate::guest::input::{
-        ChainConfig, ExecutionWitness, ProtocolFork, StatelessInput, new_payload_request::*,
+        ExecutionWitness, ProtocolFork, StatelessInput, new_payload_request::*,
     };
 
     fn payload_v1() -> ExecutionPayloadV1 {
@@ -528,7 +625,7 @@ mod tests {
         StatelessInput {
             new_payload_request,
             witness: ExecutionWitness::default(),
-            chain_config: ChainConfig::default(),
+            chain_id: 1,
             public_keys: Default::default(),
         }
     }
@@ -558,5 +655,69 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn progressive_container_roots_match_reference_vectors() {
+        let hasher = Sha2Hasher;
+        for (root, expected) in [
+            (
+                payload_v1().hash_tree_root(&hasher),
+                "7607fcf862b0f219726ad51d8651d49a9bbbe12fb62edaacd399c25db92b8d77",
+            ),
+            (
+                payload_v2().hash_tree_root(&hasher),
+                "2e3ce606be3d7aa667c2babf22196711f68b45bea6716c6446ec5dce4bd39449",
+            ),
+            (
+                payload_v3().hash_tree_root(&hasher),
+                "b9ccbb429059770fb1c3796aa98dc5d5df321b6226d46ed14203cfe8df186834",
+            ),
+            (
+                payload_v4().hash_tree_root(&hasher),
+                "fc49b59feaa0a2877a26f64bf9e6e30c3848c32c6c2ffa6ca4943a57d640f753",
+            ),
+            (
+                execution_requests_electra_fulu().hash_tree_root(&hasher),
+                "56dff976fcc8547491480bb0c68c391852c66410c1768707a851c5038047b78f",
+            ),
+            (
+                execution_requests_gloas().hash_tree_root(&hasher),
+                "0304da3c1bcc50b26b9d6408ea98648962bde84bc81f5d50d645f2b3dcc0e9b0",
+            ),
+        ] {
+            assert_eq!(const_hex::encode(root), expected);
+        }
+    }
+
+    #[test]
+    fn progressive_lists_retain_bounded_list_byte_encoding() {
+        let transaction: Transaction = vec![1_u8, 2, 3].into();
+        let bounded_transaction: SszList<u8, 8> = vec![1_u8, 2, 3].try_into().unwrap();
+        assert_eq!(transaction.to_ssz(), bounded_transaction.to_ssz());
+
+        let transactions: Transactions = vec![transaction].into();
+        let bounded_transactions: SszList<SszList<u8, 8>, 8> =
+            vec![bounded_transaction].try_into().unwrap();
+        assert_eq!(transactions.to_ssz(), bounded_transactions.to_ssz());
+
+        let withdrawals = payload_v2().withdrawals;
+        let bounded_withdrawals: SszList<Withdrawal, 8> =
+            withdrawals.clone().into_inner().try_into().unwrap();
+        assert_eq!(withdrawals.to_ssz(), bounded_withdrawals.to_ssz());
+
+        let versioned_hashes = versioned_hashes();
+        let bounded_versioned_hashes: SszList<VersionedHash, 8> =
+            versioned_hashes.clone().into_inner().try_into().unwrap();
+        assert_eq!(versioned_hashes.to_ssz(), bounded_versioned_hashes.to_ssz());
+
+        let deposits = deposit_requests();
+        let bounded_deposits: SszList<DepositRequest, 8> =
+            deposits.clone().into_inner().try_into().unwrap();
+        assert_eq!(deposits.to_ssz(), bounded_deposits.to_ssz());
+
+        let block_access_list: BlockAccessList = vec![0xba_u8; 33].into();
+        let bounded_block_access_list: SszList<u8, 64> = vec![0xba_u8; 33].try_into().unwrap();
+        assert_eq!(block_access_list.to_ssz(), bounded_block_access_list.to_ssz());
     }
 }

@@ -36,6 +36,9 @@ ere-platform-core.workspace = true
 # local
 stateless-validator-common.workspace = true
 
+[dev-dependencies]
+critical-section = { version = "1.2.0", features = ["std"] }
+
 [features]
 # guest
 default = ["std"]

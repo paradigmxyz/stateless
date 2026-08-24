@@ -321,13 +321,13 @@ where
         .map(|(address, account)| {
             let hashed_address = KeccakKeyHasher::hash_key(address);
             let hashed_account = account.info.as_ref().map(Into::into);
-            let hashed_storage = HashedStorage::from_iter(
-                account.was_destroyed(),
+            let mut hashed_storage = HashedStorage::from_iter(
                 account
                     .storage
                     .iter()
                     .map(|(slot, value)| (keccak256(B256::from(*slot)), value.present_value)),
             );
+            hashed_storage.wiped = account.was_destroyed();
 
             (hashed_address, hashed_account, (!hashed_storage.is_empty()).then_some(hashed_storage))
         })

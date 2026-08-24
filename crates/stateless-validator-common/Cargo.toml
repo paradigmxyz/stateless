@@ -22,3 +22,6 @@ libssz-types.workspace = true
 # guest
 default = ["std"]
 std = []
+
+[dev-dependencies]
+const-hex.workspace = true

@@ -14,9 +14,9 @@ use sha2::{Digest, Sha256};
 use tar::Archive;
 use walkdir::{DirEntry, WalkDir};
 
-const EEST_FIXTURES_URL: &str = "https://github.com/ethereum/execution-specs/releases/download/tests-zkevm@v0.6.2/fixtures_zkevm.tar.gz";
+const EEST_FIXTURES_URL: &str = "https://github.com/ethereum/execution-specs/releases/download/tests-zkevm@v0.8.2/fixtures_zkevm.tar.gz";
 const EEST_FIXTURES_SHA256: &str =
-    "cf9395b2cb1a87c195fd827ea03dce65a37c6036bb182441da28e7b0f6d45f40";
+    "c58fbe493c1c37ab8371fd0ebb4ded668c08daf774f7f2fb798f6e7939810155";
 
 /// A fixture normalized to canonical schema-prefixed SSZ input and output bytes.
 #[derive(Debug, Clone)]
@@ -29,7 +29,7 @@ pub struct StatelessValidatorFixture {
     pub stateless_output_bytes: Vec<u8>,
 }
 
-/// Returns all `tests-zkevm@v0.6.2` fixtures, downloading them on first use.
+/// Returns all `tests-zkevm@v0.8.2` fixtures, downloading them on first use.
 pub fn eest_fixtures() -> Vec<StatelessValidatorFixture> {
     load_fixtures_from_dir(ensure_eest_fixtures())
 }
@@ -78,9 +78,8 @@ fn ensure_eest_fixtures() -> PathBuf {
     static LOCK: Mutex<()> = Mutex::new(());
     let _guard = LOCK.lock().unwrap_or_else(|err| err.into_inner());
 
-    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("fixtures")
-        .join("eest-glamsterdam-devnet-7");
+    let dir =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures").join("eest-tests-zkevm-v0.8.2");
     if !dir.exists() {
         download_and_unpack(&dir);
     }

@@ -6,8 +6,6 @@ use alloc::{
     sync::Arc,
     vec::Vec,
 };
-use core::cmp::Ordering;
-
 use alloy_consensus::Block;
 use alloy_eips::eip7840::BlobParams;
 use alloy_primitives::{Address, B256, Bloom, Bytes, U256};
@@ -22,7 +20,7 @@ use stateless::{Genesis, UncompressedPublicKey};
 use stateless_validator_common::{
     Sha256Hasher, SszEncode, SszList,
     guest::input::{
-        ChainConfig, ExecutionWitness, ProtocolFork, PublicKeys,
+        ExecutionWitness, ProtocolFork, PublicKeys,
         new_payload_request::{
             ExecutionPayloadV2, ExecutionPayloadV3, ExecutionPayloadV4,
             ExecutionRequestsElectraFulu, ExecutionRequestsGloas, Hash32, NewPayloadRequest,
@@ -55,11 +53,11 @@ pub(crate) fn into_validation_input(
     fork: ProtocolFork,
     new_payload_request: NewPayloadRequest,
     witness: ExecutionWitness,
-    chain_config: &ChainConfig,
+    chain_id: u64,
     public_keys: PublicKeys,
 ) -> Result<ValidationInput, Error> {
     let chain_spec = Arc::new(ChainSpec::from(Genesis {
-        config: to_reth_chain_config(fork, chain_config),
+        config: to_reth_chain_config(fork, chain_id),
         ..Default::default()
     }));
     let evm_config = EthEvmConfig::new(chain_spec.clone());
@@ -71,18 +69,11 @@ pub(crate) fn into_validation_input(
 }
 
 /// Converts a chain configuration into an [`alloy_genesis::ChainConfig`].
-fn to_reth_chain_config(fork: ProtocolFork, config: &ChainConfig) -> alloy_genesis::ChainConfig {
-    let activation = &config.active_fork.activation;
-    let activation_block_number = activation.block_number().unwrap_or_default();
-    let activation_timestamp = activation.timestamp().unwrap_or_default();
-    let time_at = |target| match fork.cmp(&target) {
-        Ordering::Greater => Some(0),
-        Ordering::Equal => Some(activation_timestamp),
-        Ordering::Less => None,
-    };
+fn to_reth_chain_config(fork: ProtocolFork, chain_id: u64) -> alloy_genesis::ChainConfig {
+    let time_at = |target| (fork >= target).then_some(0);
 
     alloy_genesis::ChainConfig {
-        chain_id: config.chain_id,
+        chain_id,
         homestead_block: Some(0),
         dao_fork_block: Some(0),
         dao_fork_support: true,
@@ -98,11 +89,7 @@ fn to_reth_chain_config(fork: ProtocolFork, config: &ChainConfig) -> alloy_genes
         london_block: Some(0),
         arrow_glacier_block: Some(0),
         gray_glacier_block: Some(0),
-        merge_netsplit_block: Some(if fork == ProtocolFork::Paris {
-            activation_block_number
-        } else {
-            0
-        }),
+        merge_netsplit_block: Some(0),
         shanghai_time: time_at(ProtocolFork::Shanghai),
         cancun_time: time_at(ProtocolFork::Cancun),
         prague_time: time_at(ProtocolFork::Prague),
@@ -329,7 +316,7 @@ fn compute_requests_hash(
 /// mirroring `encode_execution_requests` in [`requests.py`]. A list holding no items has no wire
 /// form and contributes nothing to the commitment.
 ///
-/// [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.6.2/src/ethereum/forks/amsterdam/execution_engine/requests.py
+/// [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.2/src/ethereum/forks/amsterdam/execution_engine/requests.py
 fn encode_execution_requests<T: SszEncode>(request_type: u8, requests: &[T]) -> Option<Vec<u8>> {
     if requests.is_empty() {
         return None;
@@ -346,7 +333,7 @@ fn encode_execution_requests<T: SszEncode>(request_type: u8, requests: &[T]) -> 
 /// unsuited to zkVM targets, so the function is vendored until it can be used
 /// with minimal alloy-consensus features.
 ///
-/// [`validator.rs`]: https://github.com/paradigmxyz/reth/blob/8eecad3d1d433ed509373713c21c31504290d17d/crates/ethereum/payload/src/validator.rs#L66
+/// [`validator.rs`]: https://github.com/paradigmxyz/reth/blob/3d270d933daeeb90c5735d81ff7f80c00322d6de/crates/ethereum/payload/src/validator.rs#L66
 fn ensure_well_formed_payload<ChainSpec, T>(
     chain_spec: ChainSpec,
     payload: ExecutionData,
@@ -399,35 +386,50 @@ fn to_reth_witness(witness: ExecutionWitness) -> stateless::ExecutionWitness {
 }
 
 /// Converts a canonical SSZ byte list collection into alloy byte vectors.
-fn to_bytes_vec<const M: usize, const N: usize>(items: SszList<SszList<u8, M>, N>) -> Vec<Bytes> {
+fn to_bytes_vec<const M: usize>(items: impl IntoIterator<Item = SszList<u8, M>>) -> Vec<Bytes> {
     items.into_iter().map(|item| Bytes::from(item.into_inner())).collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use stateless_validator_common::guest::input::{ForkActivation, ForkConfig};
-
-    fn optional(value: Option<u64>) -> SszList<u64, 1> {
-        value.into_iter().collect::<Vec<_>>().try_into().unwrap()
-    }
-
-    fn chain_config(block_number: Option<u64>, timestamp: Option<u64>) -> ChainConfig {
-        ChainConfig {
-            chain_id: 1,
-            active_fork: ForkConfig {
-                activation: ForkActivation {
-                    block_number: optional(block_number),
-                    timestamp: optional(timestamp),
-                },
-            },
-        }
-    }
 
     #[test]
-    fn accepts_block_only_activation_for_timestamp_fork() {
-        let config = to_reth_chain_config(ProtocolFork::Amsterdam, &chain_config(Some(1), None));
+    fn activates_each_selected_fork_at_genesis() {
+        for fork_index in ProtocolFork::Paris.as_u64()..=ProtocolFork::Amsterdam.as_u64() {
+            let fork = ProtocolFork::from_u64(fork_index).unwrap();
+            let config = to_reth_chain_config(fork, 42);
 
-        assert_eq!(config.amsterdam_time, Some(0));
+            assert_eq!(config.chain_id, 42);
+            assert_eq!(config.merge_netsplit_block, Some(0));
+            assert_eq!(config.shanghai_time, (fork >= ProtocolFork::Shanghai).then_some(0));
+            assert_eq!(config.cancun_time, (fork >= ProtocolFork::Cancun).then_some(0));
+            assert_eq!(config.prague_time, (fork >= ProtocolFork::Prague).then_some(0));
+            assert_eq!(config.osaka_time, (fork >= ProtocolFork::Osaka).then_some(0));
+            assert_eq!(config.bpo1_time, (fork >= ProtocolFork::BPO1).then_some(0));
+            assert_eq!(config.bpo2_time, (fork >= ProtocolFork::BPO2).then_some(0));
+            assert_eq!(config.amsterdam_time, (fork >= ProtocolFork::Amsterdam).then_some(0));
+
+            let expected_blob_schedule = match fork {
+                ProtocolFork::Paris | ProtocolFork::Shanghai => BTreeMap::new(),
+                ProtocolFork::Cancun => {
+                    BTreeMap::from([("cancun".to_string(), BlobParams::cancun())])
+                }
+                ProtocolFork::Prague => {
+                    BTreeMap::from([("prague".to_string(), BlobParams::prague())])
+                }
+                ProtocolFork::Osaka => BTreeMap::from([("osaka".to_string(), BlobParams::osaka())]),
+                ProtocolFork::BPO1 => BTreeMap::from([("bpo1".to_string(), BlobParams::bpo1())]),
+                ProtocolFork::BPO2 => BTreeMap::from([("bpo2".to_string(), BlobParams::bpo2())]),
+                ProtocolFork::Amsterdam => {
+                    BTreeMap::from([("Amsterdam".to_string(), BlobParams::bpo2())])
+                }
+            };
+            assert_eq!(config.blob_schedule, expected_blob_schedule);
+            assert_eq!(
+                config.deposit_contract_address,
+                Some(alloy_eips::eip6110::MAINNET_DEPOSIT_CONTRACT_ADDRESS)
+            );
+        }
     }
 }
