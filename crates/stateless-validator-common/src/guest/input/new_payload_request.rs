@@ -15,7 +15,7 @@ use alloc::vec::Vec;
 
 use libssz::SszEncode;
 use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use libssz_merkle::{HashTreeRoot, Sha256Hasher, merkleize_progressive, mix_in_active_fields};
+use libssz_merkle::{HashTreeRoot, Sha256Hasher};
 use libssz_types::{ProgressiveList, SszList};
 
 /// Primitive types from the Amsterdam stateless schema.
@@ -103,7 +103,8 @@ pub struct BuilderExitRequest {
 /// Typed engine-API container of execution-layer triggered requests, as of Electra.
 ///
 /// Mirrors the consensus-layer `ExecutionRequests` Container.
-#[derive(Debug, Clone, Default, PartialEq, Eq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[ssz(progressive_container)]
 pub struct ExecutionRequestsElectraFulu {
     pub deposits: DepositRequests,
     pub withdrawals: WithdrawalRequests,
@@ -112,7 +113,8 @@ pub struct ExecutionRequestsElectraFulu {
 
 /// Typed engine-API container of execution-layer triggered requests, as of Gloas, which
 /// EIP-8282 extends with the builder deposit and builder exit lists.
-#[derive(Debug, Clone, Default, PartialEq, Eq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[ssz(progressive_container)]
 pub struct ExecutionRequestsGloas {
     pub deposits: DepositRequests,
     pub withdrawals: WithdrawalRequests,
@@ -121,7 +123,8 @@ pub struct ExecutionRequestsGloas {
     pub builder_exits: BuilderExitRequests,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[ssz(progressive_container)]
 pub struct ExecutionPayloadV1 {
     pub parent_hash: Hash32,
     pub fee_recipient: Address,
@@ -139,7 +142,8 @@ pub struct ExecutionPayloadV1 {
     pub transactions: Transactions,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[ssz(progressive_container)]
 pub struct ExecutionPayloadV2 {
     pub parent_hash: Hash32,
     pub fee_recipient: Address,
@@ -158,7 +162,8 @@ pub struct ExecutionPayloadV2 {
     pub withdrawals: Withdrawals,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[ssz(progressive_container)]
 pub struct ExecutionPayloadV3 {
     pub parent_hash: Hash32,
     pub fee_recipient: Address,
@@ -179,7 +184,8 @@ pub struct ExecutionPayloadV3 {
     pub excess_blob_gas: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+#[ssz(progressive_container)]
 pub struct ExecutionPayloadV4 {
     pub parent_hash: Hash32,
     pub fee_recipient: Address,
@@ -201,111 +207,6 @@ pub struct ExecutionPayloadV4 {
     pub block_access_list: BlockAccessList,
     pub slot_number: u64,
 }
-
-macro_rules! impl_progressive_container_hash_tree_root {
-    ($ty:ty, $($field:ident),+ $(,)?) => {
-        impl HashTreeRoot for $ty {
-            fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> [u8; 32] {
-                let field_roots = [$(self.$field.hash_tree_root(hasher)),+];
-                let active_fields = [$({ let _ = stringify!($field); true }),+];
-                let root = merkleize_progressive(hasher, &field_roots);
-                mix_in_active_fields(hasher, &root, &active_fields)
-            }
-        }
-    };
-}
-
-impl_progressive_container_hash_tree_root!(
-    ExecutionPayloadV1,
-    parent_hash,
-    fee_recipient,
-    state_root,
-    receipts_root,
-    logs_bloom,
-    prev_randao,
-    block_number,
-    gas_limit,
-    gas_used,
-    timestamp,
-    extra_data,
-    base_fee_per_gas,
-    block_hash,
-    transactions,
-);
-impl_progressive_container_hash_tree_root!(
-    ExecutionPayloadV2,
-    parent_hash,
-    fee_recipient,
-    state_root,
-    receipts_root,
-    logs_bloom,
-    prev_randao,
-    block_number,
-    gas_limit,
-    gas_used,
-    timestamp,
-    extra_data,
-    base_fee_per_gas,
-    block_hash,
-    transactions,
-    withdrawals,
-);
-impl_progressive_container_hash_tree_root!(
-    ExecutionPayloadV3,
-    parent_hash,
-    fee_recipient,
-    state_root,
-    receipts_root,
-    logs_bloom,
-    prev_randao,
-    block_number,
-    gas_limit,
-    gas_used,
-    timestamp,
-    extra_data,
-    base_fee_per_gas,
-    block_hash,
-    transactions,
-    withdrawals,
-    blob_gas_used,
-    excess_blob_gas,
-);
-impl_progressive_container_hash_tree_root!(
-    ExecutionPayloadV4,
-    parent_hash,
-    fee_recipient,
-    state_root,
-    receipts_root,
-    logs_bloom,
-    prev_randao,
-    block_number,
-    gas_limit,
-    gas_used,
-    timestamp,
-    extra_data,
-    base_fee_per_gas,
-    block_hash,
-    transactions,
-    withdrawals,
-    blob_gas_used,
-    excess_blob_gas,
-    block_access_list,
-    slot_number,
-);
-impl_progressive_container_hash_tree_root!(
-    ExecutionRequestsElectraFulu,
-    deposits,
-    withdrawals,
-    consolidations,
-);
-impl_progressive_container_hash_tree_root!(
-    ExecutionRequestsGloas,
-    deposits,
-    withdrawals,
-    consolidations,
-    builder_deposits,
-    builder_exits,
-);
 
 #[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
 pub struct NewPayloadRequestBellatrix {
