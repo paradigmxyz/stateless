@@ -15,14 +15,6 @@ pub enum Error {
     /// The SSZ body failed to decode.
     #[error("SSZ decode error {0:?}")]
     Ssz(DecodeError),
-    /// The fork activation has neither block_number nor timestamp set, mirroring the spec
-    /// `InvalidForkActivationError`.
-    #[error("Fork activation must set block_number or timestamp")]
-    InvalidForkActivation,
-    /// The configured active fork is not active for the payload, mirroring the spec
-    /// `InactiveForkConfigError`.
-    #[error("ChainConfig active_fork is not active for the target payload")]
-    InactiveForkConfig,
 }
 
 impl From<DecodeError> for Error {

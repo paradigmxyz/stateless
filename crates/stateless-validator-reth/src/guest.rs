@@ -9,8 +9,7 @@ use stateless_validator_common::{
     guest::{
         StatelessInput, StatelessValidationResult,
         input::{
-            ChainConfig, ExecutionWitness, ProtocolFork, PublicKeys,
-            new_payload_request::NewPayloadRequest,
+            ExecutionWitness, ProtocolFork, PublicKeys, new_payload_request::NewPayloadRequest,
         },
     },
 };
@@ -38,19 +37,19 @@ pub fn run_stateless_guest(input_bytes: &[u8]) -> Vec<u8> {
         return StatelessValidationResult::default().to_ssz();
     };
 
-    let StatelessInput { new_payload_request, witness, chain_config, public_keys } = input;
+    let StatelessInput { new_payload_request, witness, chain_id, public_keys } = input;
     let new_payload_request_root = new_payload_request.hash_tree_root(&sha256_hasher());
-    let successful_validation = verify_stateless_new_payload(
-        fork,
-        new_payload_request,
-        witness,
-        &chain_config,
-        public_keys,
-    )
-    .is_ok();
+    let successful_validation =
+        verify_stateless_new_payload(fork, new_payload_request, witness, chain_id, public_keys)
+            .is_ok();
 
-    StatelessValidationResult { new_payload_request_root, successful_validation, chain_config }
-        .to_ssz()
+    StatelessValidationResult {
+        new_payload_request_root,
+        successful_validation,
+        chain_id,
+        schema_id: fork.schema_id(),
+    }
+    .to_ssz()
 }
 
 /// Statelessly validates the execution payload, mirroring
@@ -59,12 +58,10 @@ fn verify_stateless_new_payload(
     fork: ProtocolFork,
     new_payload_request: NewPayloadRequest,
     witness: ExecutionWitness,
-    chain_config: &ChainConfig,
+    chain_id: u64,
     public_keys: PublicKeys,
 ) -> Result<(), Error> {
-    chain_config.validate(&new_payload_request)?;
-    let input =
-        into_validation_input(fork, new_payload_request, witness, chain_config, public_keys)?;
+    let input = into_validation_input(fork, new_payload_request, witness, chain_id, public_keys)?;
     stateless_validation_with_trie::<SparseState, _, _>(
         input.block,
         input.public_keys,

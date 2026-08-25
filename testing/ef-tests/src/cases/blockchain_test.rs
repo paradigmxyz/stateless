@@ -315,16 +315,20 @@ where
             Error::block_failed(block_number, program_inputs.clone(), err)
         })?;
 
-        let mut witness_record = ExecutionWitnessRecord::default();
-
         // Execute the block
         let state_provider = provider.latest();
         let state_db = StateProviderDatabase(&state_provider);
         let executor = executor_provider.batch_executor(state_db);
+        let mut exec_witness = None;
 
         let output = executor
             .execute_with_state_closure_always(&(*block).clone(), |statedb: &State<_>| {
-                witness_record.record_executed_state(statedb, ExecutionWitnessMode::default());
+                exec_witness = Some(ExecutionWitnessRecord::new(statedb).into_execution_witness(
+                    &state_provider,
+                    &provider,
+                    block_number,
+                    ExecutionWitnessMode::default(),
+                ));
             })
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
@@ -333,12 +337,8 @@ where
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
         // Generate the stateless witness
-        let exec_witness = witness_record.into_execution_witness(
-            &state_provider,
-            &provider,
-            block_number,
-            ExecutionWitnessMode::default(),
-        )?;
+        let exec_witness =
+            exec_witness.expect("state closure is called after block execution completes")?;
 
         program_inputs.push((block.clone(), exec_witness));
 
