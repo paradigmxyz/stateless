@@ -6,8 +6,8 @@ for OpenVM, SP1, and ZisK under these names:
 
 ```text
 stateless-validator-reth-openvm-v2.1.0-preview.elf
-stateless-validator-reth-sp1-v6.3.1.elf
-stateless-validator-reth-zisk-v1.0.0-alpha.elf
+stateless-validator-reth-sp1-v6.4.0.elf
+stateless-validator-reth-zisk-v1.1.0-alpha.elf
 ```
 
 Each ELF has a verification key with the same basename and a `.vk` extension.
@@ -15,7 +15,7 @@ Releases also contain `SHA256SUMS` and GitHub artifact attestations.
 
 ## Build
 
-The build scripts use digest-pinned ERE v0.15.0 compiler and server images:
+The build scripts use digest-pinned ERE v0.16.2 compiler and server images:
 
 ```bash
 scripts/guests/build.sh openvm output
@@ -38,7 +38,7 @@ After downloading a release, verify checksums and GitHub's signed provenance:
 
 ```bash
 sha256sum --check SHA256SUMS
-gh attestation verify stateless-validator-reth-sp1-v6.3.1.elf \
+gh attestation verify stateless-validator-reth-sp1-v6.4.0.elf \
   --repo paradigmxyz/stateless
 ```
 

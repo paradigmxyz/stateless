@@ -942,11 +942,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "circuit"
-version = "1.0.0-alpha"
-source = "git+https://github.com/0xPolygonHermez/zisk.git?tag=v1.0.0-alpha#4b9f758fabc4955cac20af837019ccc31b803a46"
-
-[[package]]
 name = "clang-sys"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1022,6 +1017,15 @@ name = "critical-section"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "790eea4361631c5e7d22598ecd5723ff611904e3344ce8720784c93e3d83d40b"
+
+[[package]]
+name = "crossbeam-channel"
+version = "0.5.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d85363c37faeca707aef026efa9f3b34d077bce547e48f770770625c6013679e"
+dependencies = [
+ "crossbeam-utils",
+]
 
 [[package]]
 name = "crossbeam-utils"
@@ -1325,13 +1329,13 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "ere-platform-core"
-version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?rev=552595938b48884d87cfada24f29d39223695c1e#552595938b48884d87cfada24f29d39223695c1e"
+version = "0.16.2"
+source = "git+https://github.com/eth-act/ere?rev=8961a4e7ac5c9ca2dc6a2fc848452f23a186b1aa#8961a4e7ac5c9ca2dc6a2fc848452f23a186b1aa"
 
 [[package]]
 name = "ere-platform-zisk"
-version = "0.15.0"
-source = "git+https://github.com/eth-act/ere?rev=552595938b48884d87cfada24f29d39223695c1e#552595938b48884d87cfada24f29d39223695c1e"
+version = "0.16.2"
+source = "git+https://github.com/eth-act/ere?rev=8961a4e7ac5c9ca2dc6a2fc848452f23a186b1aa#8961a4e7ac5c9ca2dc6a2fc848452f23a186b1aa"
 dependencies = [
  "ere-platform-core",
  "ziskos",
@@ -1351,17 +1355,6 @@ checksum = "c0b50bfb653653f9ca9095b427bed08ab8d75a137839d9ad64eb11810d5b6393"
 dependencies = [
  "rand_core 0.6.4",
  "subtle",
-]
-
-[[package]]
-name = "fields"
-version = "1.0.0-alpha"
-source = "git+https://github.com/0xPolygonHermez/pil2-proofman.git?tag=v1.0.0-alpha#4f2a34ac686c788ad66a1a8ea0a17a016319e65b"
-dependencies = [
- "cfg-if",
- "num-bigint",
- "paste",
- "serde",
 ]
 
 [[package]]
@@ -1813,11 +1806,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
-name = "lib-c"
-version = "1.0.0-alpha"
-source = "git+https://github.com/0xPolygonHermez/zisk.git?tag=v1.0.0-alpha#4b9f758fabc4955cac20af837019ccc31b803a46"
-
-[[package]]
 name = "libc"
 version = "0.2.189"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2239,24 +2227,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "precompiles-helpers"
-version = "1.0.0-alpha"
-source = "git+https://github.com/0xPolygonHermez/zisk.git?tag=v1.0.0-alpha#4b9f758fabc4955cac20af837019ccc31b803a46"
-dependencies = [
- "ark-bls12-381 0.5.0",
- "ark-bn254 0.5.0",
- "ark-ff 0.5.0",
- "ark-secp256k1",
- "ark-secp256r1",
- "cfg-if",
- "circuit",
- "crunchy",
- "lib-c",
- "num-bigint",
- "num-traits",
-]
-
-[[package]]
 name = "prettyplease"
 version = "0.2.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2307,12 +2277,42 @@ dependencies = [
 ]
 
 [[package]]
-name = "proofman-verifier"
-version = "1.0.0-alpha"
-source = "git+https://github.com/0xPolygonHermez/pil2-proofman.git?tag=v1.0.0-alpha#4f2a34ac686c788ad66a1a8ea0a17a016319e65b"
+name = "proofman-fields"
+version = "1.1.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ea663e7b8fbeaba6a3d0e6046fd7d85250186cdc2fac56ce102bfe8bfcfdf0d"
 dependencies = [
- "fields",
+ "cfg-if",
+ "num-bigint",
+ "paste",
+ "proofman-starks-lib-c",
+ "serde",
+]
+
+[[package]]
+name = "proofman-starks-lib-c"
+version = "1.1.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eebeb94ceceb5009296fa5603ea710861ca262af8dcdcd43c243707aec9d6726"
+dependencies = [
+ "crossbeam-channel",
+ "proofman-starks-src",
+]
+
+[[package]]
+name = "proofman-starks-src"
+version = "1.1.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f652a3899833633da4829ee714b7d8ecdece399929bfd6673a471ecf0ce3227"
+
+[[package]]
+name = "proofman-verifier"
+version = "1.1.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e578aca4212b4e4d083d62c54c74cbf2aa01926e15a76d6b0c9c70a4b98e2719"
+dependencies = [
  "num-traits",
+ "proofman-fields",
  "serde",
 ]
 
@@ -3311,7 +3311,7 @@ dependencies = [
  "serde_with",
  "thiserror",
  "tries",
- "zkvm-interface 0.1.0",
+ "zkvm-interface",
 ]
 
 [[package]]
@@ -3345,7 +3345,7 @@ dependencies = [
  "stateless-validator-common",
  "thiserror",
  "tries",
- "zkvm-interface 0.1.0",
+ "zkvm-interface",
 ]
 
 [[package]]
@@ -3806,22 +3806,65 @@ dependencies = [
 ]
 
 [[package]]
+name = "zisk-circuit"
+version = "1.1.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28185dd7ca65e2ffebc9a19992239aa6e379ac95dab73ec90d34344f59719355"
+
+[[package]]
 name = "zisk-definitions"
-version = "1.0.0-alpha"
-source = "git+https://github.com/0xPolygonHermez/zisk.git?tag=v1.0.0-alpha#4b9f758fabc4955cac20af837019ccc31b803a46"
+version = "1.1.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc7078fc25f294bfcdf4f9089f113b60f1efc6c8a55518d6ea24093aa7c59c2a"
+
+[[package]]
+name = "zisk-lib-c"
+version = "1.1.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc8968509c571acf9334322c06301b2bf9443054982a82893af957a65143b8ba"
+
+[[package]]
+name = "zisk-precomp-helpers"
+version = "1.1.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3416ae98910aacd8b615e04088f25f00181f1765dae7b24e0a66ebad78b8e8b8"
+dependencies = [
+ "ark-bls12-381 0.5.0",
+ "ark-bn254 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-secp256k1",
+ "ark-secp256r1",
+ "cfg-if",
+ "crunchy",
+ "num-bigint",
+ "num-traits",
+ "zisk-circuit",
+ "zisk-lib-c",
+]
 
 [[package]]
 name = "zisk-verifier"
-version = "1.0.0-alpha"
-source = "git+https://github.com/0xPolygonHermez/zisk.git?tag=v1.0.0-alpha#4b9f758fabc4955cac20af837019ccc31b803a46"
+version = "1.1.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ffde99de17184da25de7823ad37f57d8d5aaa75bc89335fc8e13ed8dc521627"
 dependencies = [
  "proofman-verifier",
 ]
 
 [[package]]
+name = "zisk-zkvm-interface"
+version = "1.1.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c5d7999bdac04dd84053c34946d18a1cc7b452b860d46f2025defe48a06c42d"
+dependencies = [
+ "bindgen",
+]
+
+[[package]]
 name = "ziskos"
-version = "1.0.0-alpha"
-source = "git+https://github.com/0xPolygonHermez/zisk.git?tag=v1.0.0-alpha#4b9f758fabc4955cac20af837019ccc31b803a46"
+version = "1.1.0-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2edae833e0d199eca7145fabe0bcdf1fc9d380f68833f280d9b45d6307b1f14e"
 dependencies = [
  "ark-bn254 0.5.0",
  "ark-ec 0.5.0",
@@ -3831,15 +3874,13 @@ dependencies = [
  "bincode",
  "blst",
  "cfg-if",
- "fields",
  "getrandom 0.2.17",
  "lazy_static",
- "lib-c",
  "libc",
  "num-bigint",
  "num-integer",
  "num-traits",
- "precompiles-helpers",
+ "proofman-fields",
  "rand 0.8.7",
  "ripemd 0.1.3",
  "secp256k1 0.31.1",
@@ -3847,22 +3888,16 @@ dependencies = [
  "sha2 0.10.9",
  "tiny-keccak",
  "zisk-definitions",
+ "zisk-lib-c",
+ "zisk-precomp-helpers",
  "zisk-verifier",
- "zkvm-interface 1.0.0-alpha",
+ "zisk-zkvm-interface",
 ]
 
 [[package]]
 name = "zkvm-interface"
 version = "0.1.0"
 source = "git+https://github.com/eth-act/zkvm-standards?rev=282cd356c3a0498416bb0619f9c8a347ce9933fb#282cd356c3a0498416bb0619f9c8a347ce9933fb"
-dependencies = [
- "bindgen",
-]
-
-[[package]]
-name = "zkvm-interface"
-version = "1.0.0-alpha"
-source = "git+https://github.com/0xPolygonHermez/zisk.git?tag=v1.0.0-alpha#4b9f758fabc4955cac20af837019ccc31b803a46"
 dependencies = [
  "bindgen",
 ]
