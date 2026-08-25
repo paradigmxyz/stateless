@@ -20,8 +20,17 @@ OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
 LOCKFILE="$REPO_ROOT/bin/stateless-validator-reth/$ZKVM/Cargo.lock"
 CONTAINER_GUEST_DIR="/stateless/bin/stateless-validator-reth/$ZKVM"
 
+compiler_options=()
+case "$ZKVM" in
+    zisk)
+        # The ZisK RV64IMA target leaves unaligned scalar access off by default.
+        compiler_options+=(-e "ERE_RUSTFLAGS=-C target-feature=+unaligned-scalar-mem")
+        ;;
+esac
+
 docker run --rm \
     -e RUST_LOG=info \
+    "${compiler_options[@]}" \
     --mount "type=bind,src=$REPO_ROOT,dst=/stateless" \
     --mount "type=bind,src=$LOCKFILE,dst=$CONTAINER_GUEST_DIR/Cargo.lock,readonly" \
     --mount "type=bind,src=$OUTPUT_DIR,dst=/output" \
