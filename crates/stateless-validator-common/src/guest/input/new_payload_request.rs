@@ -123,90 +123,48 @@ pub struct ExecutionRequestsGloas {
     pub builder_exits: BuilderExitRequests,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
-#[ssz(progressive_container)]
-pub struct ExecutionPayloadV1 {
-    pub parent_hash: Hash32,
-    pub fee_recipient: Address,
-    pub state_root: Hash32,
-    pub receipts_root: Hash32,
-    pub logs_bloom: Bloom,
-    pub prev_randao: Hash32,
-    pub block_number: u64,
-    pub gas_limit: u64,
-    pub gas_used: u64,
-    pub timestamp: u64,
-    pub extra_data: ExtraData,
-    pub base_fee_per_gas: Uint256Bytes,
-    pub block_hash: Hash32,
-    pub transactions: Transactions,
+// Keep payloads flat: field order defines their SSZ encoding and progressive roots.
+macro_rules! execution_payload {
+    ($name:ident { $($field:ident: $ty:ty),* $(,)? }) => {
+        #[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
+        #[ssz(progressive_container)]
+        pub struct $name {
+            pub parent_hash: Hash32,
+            pub fee_recipient: Address,
+            pub state_root: Hash32,
+            pub receipts_root: Hash32,
+            pub logs_bloom: Bloom,
+            pub prev_randao: Hash32,
+            pub block_number: u64,
+            pub gas_limit: u64,
+            pub gas_used: u64,
+            pub timestamp: u64,
+            pub extra_data: ExtraData,
+            pub base_fee_per_gas: Uint256Bytes,
+            pub block_hash: Hash32,
+            pub transactions: Transactions,
+            $(pub $field: $ty,)*
+        }
+    };
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
-#[ssz(progressive_container)]
-pub struct ExecutionPayloadV2 {
-    pub parent_hash: Hash32,
-    pub fee_recipient: Address,
-    pub state_root: Hash32,
-    pub receipts_root: Hash32,
-    pub logs_bloom: Bloom,
-    pub prev_randao: Hash32,
-    pub block_number: u64,
-    pub gas_limit: u64,
-    pub gas_used: u64,
-    pub timestamp: u64,
-    pub extra_data: ExtraData,
-    pub base_fee_per_gas: Uint256Bytes,
-    pub block_hash: Hash32,
-    pub transactions: Transactions,
-    pub withdrawals: Withdrawals,
-}
+execution_payload!(ExecutionPayloadV1 {});
 
-#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
-#[ssz(progressive_container)]
-pub struct ExecutionPayloadV3 {
-    pub parent_hash: Hash32,
-    pub fee_recipient: Address,
-    pub state_root: Hash32,
-    pub receipts_root: Hash32,
-    pub logs_bloom: Bloom,
-    pub prev_randao: Hash32,
-    pub block_number: u64,
-    pub gas_limit: u64,
-    pub gas_used: u64,
-    pub timestamp: u64,
-    pub extra_data: ExtraData,
-    pub base_fee_per_gas: Uint256Bytes,
-    pub block_hash: Hash32,
-    pub transactions: Transactions,
-    pub withdrawals: Withdrawals,
-    pub blob_gas_used: u64,
-    pub excess_blob_gas: u64,
-}
+execution_payload!(ExecutionPayloadV2 { withdrawals: Withdrawals });
 
-#[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
-#[ssz(progressive_container)]
-pub struct ExecutionPayloadV4 {
-    pub parent_hash: Hash32,
-    pub fee_recipient: Address,
-    pub state_root: Hash32,
-    pub receipts_root: Hash32,
-    pub logs_bloom: Bloom,
-    pub prev_randao: Hash32,
-    pub block_number: u64,
-    pub gas_limit: u64,
-    pub gas_used: u64,
-    pub timestamp: u64,
-    pub extra_data: ExtraData,
-    pub base_fee_per_gas: Uint256Bytes,
-    pub block_hash: Hash32,
-    pub transactions: Transactions,
-    pub withdrawals: Withdrawals,
-    pub blob_gas_used: u64,
-    pub excess_blob_gas: u64,
-    pub block_access_list: BlockAccessList,
-    pub slot_number: u64,
-}
+execution_payload!(ExecutionPayloadV3 {
+    withdrawals: Withdrawals,
+    blob_gas_used: u64,
+    excess_blob_gas: u64,
+});
+
+execution_payload!(ExecutionPayloadV4 {
+    withdrawals: Withdrawals,
+    blob_gas_used: u64,
+    excess_blob_gas: u64,
+    block_access_list: BlockAccessList,
+    slot_number: u64,
+});
 
 #[derive(Debug, Clone, PartialEq, Eq, HashTreeRoot, SszEncode, SszDecode)]
 pub struct NewPayloadRequestBellatrix {
