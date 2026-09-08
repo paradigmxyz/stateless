@@ -117,6 +117,10 @@ impl StatelessTrie for StatelessSparseTrie {
         self.storage(address, slot)
     }
 
+    fn clear_storage(&mut self, hashed_address: B256) {
+        self.inner.insert_storage_trie(hashed_address, RevealableSparseTrie::revealed_empty());
+    }
+
     fn calculate_state_root(&mut self, state: HashedPostState) -> Result<B256, StatelessTrieError> {
         self.calculate_state_root(state)
     }
@@ -297,10 +301,6 @@ fn calculate_state_root(
         // Take the existing storage trie (or create an empty, "revealed" one)
         let mut storage_trie =
             trie.take_storage_trie(&address).unwrap_or_else(RevealableSparseTrie::revealed_empty);
-
-        if storage.wiped {
-            storage_trie.wipe()?;
-        }
 
         let mut updates = storage
             .storage

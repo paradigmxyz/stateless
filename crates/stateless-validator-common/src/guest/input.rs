@@ -4,8 +4,8 @@
 //! format is a 2-byte big-endian schema identifier followed by the SSZ-encoded `StatelessInput`
 //! container.
 //!
-//! [`stateless.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.2/src/ethereum/forks/amsterdam/stateless.py
-//! [`stateless_ssz.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.2/src/ethereum/forks/amsterdam/stateless_ssz.py
+//! [`stateless.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/stateless.py
+//! [`stateless_ssz.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/stateless_ssz.py
 
 #![allow(missing_docs)]
 
@@ -114,7 +114,7 @@ impl StatelessInput {
     /// Serializes to schema-prefixed SSZ bytes, mirroring `serialize_stateless_input` in
     /// [`stateless_host.py`]. The fork is encoded into the schema identifier prefix.
     ///
-    /// [`stateless_host.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.2/src/ethereum/forks/amsterdam/stateless_host.py
+    /// [`stateless_host.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/stateless_host.py
     pub fn to_schema_prefixed_ssz(&self, fork: ProtocolFork) -> Vec<u8> {
         let mut out = Vec::with_capacity(STATELESS_INPUT_SCHEMA_ID_SIZE + self.encoded_len());
         out.extend_from_slice(&fork.schema_id().to_be_bytes());
@@ -126,7 +126,7 @@ impl StatelessInput {
     /// [`stateless_guest.py`]. Returns the fork carried by the schema identifier alongside the
     /// decoded input, and rejects a payload request whose shape does not match that fork.
     ///
-    /// [`stateless_guest.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.2/src/ethereum/forks/amsterdam/stateless_guest.py
+    /// [`stateless_guest.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/stateless_guest.py
     pub fn from_schema_prefixed_ssz(bytes: &[u8]) -> Result<(ProtocolFork, Self), Error> {
         use ProtocolFork::*;
         let (schema_id, body) = bytes

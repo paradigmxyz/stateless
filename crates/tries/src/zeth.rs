@@ -161,6 +161,10 @@ impl StatelessTrie for SparseState {
         Ok(storage_trie.get(keccak256(B256::from(slot)))?.unwrap_or(U256::ZERO))
     }
 
+    fn clear_storage(&mut self, hashed_address: B256) {
+        self.clear_storage(hashed_address);
+    }
+
     /// Computes the new state root from the HashedPostState.
     fn calculate_state_root(&mut self, state: HashedPostState) -> Result<B256, StatelessTrieError> {
         let mut removed_accounts = Vec::new();
@@ -179,12 +183,9 @@ impl StatelessTrie for SparseState {
                     .map_err(|_| StatelessTrieError::StatelessStateRootCalculationFailed)?
                     .map_or(EMPTY_ROOT_HASH, |account| account.storage_root),
                 Some(storage) => {
-                    let storage_trie = if storage.wiped {
-                        self.clear_storage(hashed_address)
-                    } else {
-                        self.storage_trie_mut(hashed_address)
-                            .map_err(|_| StatelessTrieError::StatelessStateRootCalculationFailed)?
-                    };
+                    let storage_trie = self
+                        .storage_trie_mut(hashed_address)
+                        .map_err(|_| StatelessTrieError::StatelessStateRootCalculationFailed)?;
 
                     // apply all state modifications
                     for (hashed_key, value) in &storage.storage {

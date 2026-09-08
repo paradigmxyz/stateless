@@ -25,7 +25,7 @@ use reth_evm::{
     execute::{BlockExecutionOutput, Executor},
 };
 use reth_primitives_traits::{RecoveredBlock, SealedHeader};
-use reth_trie_common::{HashedStorage, KeccakKeyHasher, KeyHasher};
+use reth_trie_common::{HashedPostState, KeccakKeyHasher};
 use tries::{StatelessTrie, StatelessTrieError};
 
 #[cfg(feature = "reth-trie")]
@@ -314,24 +314,17 @@ where
     )
     .map_err(StatelessValidationError::ConsensusValidationFailed)?;
 
-    let hashed_state = output
-        .state
-        .state()
-        .iter()
-        .map(|(address, account)| {
-            let hashed_address = KeccakKeyHasher::hash_key(address);
-            let hashed_account = account.info.as_ref().map(Into::into);
-            let mut hashed_storage = HashedStorage::from_iter(
-                account
-                    .storage
-                    .iter()
-                    .map(|(slot, value)| (keccak256(B256::from(*slot)), value.present_value)),
-            );
-            hashed_storage.wiped = account.was_destroyed();
-
-            (hashed_address, hashed_account, (!hashed_storage.is_empty()).then_some(hashed_storage))
-        })
-        .collect();
+    let mut hashed_state =
+        HashedPostState::from_bundle_state::<KeccakKeyHasher>(output.state.state());
+    // Reth no longer carries storage-wipe markers in HashedPostState. Reset storage directly
+    // so accounts destroyed and recreated in the block cannot retain untouched pre-state slots.
+    for (address, account) in output.state.state() {
+        if account.was_destroyed() {
+            let hashed_address = keccak256(address);
+            trie.clear_storage(hashed_address);
+            hashed_state.storages.entry(hashed_address).or_default();
+        }
+    }
     let state_root = trie.calculate_state_root(hashed_state)?;
     if state_root != current_block.state_root {
         return Err(StatelessValidationError::PostStateRootMismatch {

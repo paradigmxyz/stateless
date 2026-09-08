@@ -316,7 +316,7 @@ fn compute_requests_hash(
 /// mirroring `encode_execution_requests` in [`requests.py`]. A list holding no items has no wire
 /// form and contributes nothing to the commitment.
 ///
-/// [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.2/src/ethereum/forks/amsterdam/execution_engine/requests.py
+/// [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/execution_engine/requests.py
 fn encode_execution_requests<T: SszEncode>(request_type: u8, requests: &[T]) -> Option<Vec<u8>> {
     if requests.is_empty() {
         return None;

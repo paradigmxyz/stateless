@@ -67,6 +67,18 @@ Or manually:
 EF_TEST_TRIE=default cargo test -p ef-tests --release --features "asm-keccak ef-tests"
 ```
 
+## Running stateless validator tests
+
+The Reth validator tests use the `tests-zkevm@v0.8.4` execution-spec fixtures.
+The first run downloads the archive and checks its SHA-256 checksum.
+Later runs reuse the versioned fixture cache.
+
+```bash
+cargo test -p stateless-validator-tests --test host_execution --locked
+```
+
+The suite requires every fixture to pass, including the EIP-8037 cross-frame state gas refund tests.
+
 ## Contributing
 
 Contributions are welcome! Join the conversation in the [Telegram group][tg-url].
