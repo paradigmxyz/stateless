@@ -19,10 +19,15 @@ env:
 
 jobs:
   lint:
+    permissions:
+      contents: read
+      id-token: write
     name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@48ff2b0c97ede86c9f10d105424380b9605f790d
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -39,6 +44,9 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
   ef-tests:
+    permissions:
+      contents: read
+      id-token: write
     name: Ethereum Foundation tests (${{ matrix.trie }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -55,15 +63,20 @@ jobs:
       RUST_LOG: info,sync=error
       RUST_BACKTRACE: 1
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@48ff2b0c97ede86c9f10d105424380b9605f790d
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # master
         with:
           toolchain: stable
-      - uses: taiki-e/install-action@7f4eb899022d8fe70b20c4f3de697aa85c309026 # v2.85.11
+      - name: Install nextest
+        uses: tempoxyz/gh-actions/vendor/taiki-e/install-action@48ff2b0c97ede86c9f10d105424380b9605f790d
         with:
-          tool: nextest
+          tool: nextest@0.9.140
+          checksum: true
+          fallback: none
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
@@ -71,10 +84,15 @@ jobs:
         run: ./scripts/run_ef_tests.sh ${{ matrix.trie }}
 
   no-std:
+    permissions:
+      contents: read
+      id-token: write
     name: no_std (RISC-V rv64im)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@48ff2b0c97ede86c9f10d105424380b9605f790d
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -89,12 +107,17 @@ jobs:
         run: ./scripts/check_no_std.sh
 
   stateless-validator:
+    permissions:
+      contents: read
+      id-token: write
     name: Reth stateless validator fixtures
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       RUST_BACKTRACE: 1
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@48ff2b0c97ede86c9f10d105424380b9605f790d
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
