@@ -20,6 +20,13 @@ OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
 LOCKFILE="$REPO_ROOT/bin/stateless-validator-reth/$ZKVM/Cargo.lock"
 CONTAINER_GUEST_DIR="/stateless/bin/stateless-validator-reth/$ZKVM"
 
+# Fetch on the host so CI's package firewall checks downloads before compilation.
+# A fresh cache prevents previously downloaded packages from bypassing that check.
+DEPENDENCY_CACHE="$(mktemp -d)"
+trap 'rm -rf "$DEPENDENCY_CACHE"' EXIT
+CARGO_HOME="$DEPENDENCY_CACHE" cargo fetch --locked \
+    --manifest-path "$REPO_ROOT/bin/stateless-validator-reth/$ZKVM/Cargo.toml"
+
 compiler_options=()
 case "$ZKVM" in
     zisk)
@@ -28,9 +35,12 @@ case "$ZKVM" in
         ;;
 esac
 
-docker run --rm \
+docker run --rm --network none \
     -e RUST_LOG=info \
     "${compiler_options[@]}" \
+    --mount "type=bind,src=$SCRIPT_DIR/cargo-offline.toml,dst=/usr/local/cargo/config.toml,readonly" \
+    --mount "type=bind,src=$DEPENDENCY_CACHE/registry,dst=/usr/local/cargo/registry,readonly" \
+    --mount "type=bind,src=$DEPENDENCY_CACHE/git,dst=/usr/local/cargo/git,readonly" \
     --mount "type=bind,src=$REPO_ROOT,dst=/stateless" \
     --mount "type=bind,src=$LOCKFILE,dst=$CONTAINER_GUEST_DIR/Cargo.lock,readonly" \
     --mount "type=bind,src=$OUTPUT_DIR,dst=/output" \
