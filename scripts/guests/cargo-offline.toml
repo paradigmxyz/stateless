@@ -1,0 +1,3 @@
+# Use a file because the OpenVM build wrapper strips Cargo environment variables.
+[net]
+offline = true
