@@ -37,6 +37,14 @@ jobs:
         if: matrix.zkvm == 'zisk'
         run: .github/scripts/free-up-disk-space.sh
 
+      - name: Install Rust
+        uses: tempoxyz/gh-actions/vendor/dtolnay/rust-toolchain@e8f9d5c23ab43d0645c6d50fb73e98b362cdec02
+        with:
+          toolchain: stable
+
+      - name: Check guest dependencies through Aegis
+        run: cargo fetch --locked --manifest-path bin/stateless-validator-reth/${{ matrix.zkvm }}/Cargo.toml
+
       - name: Build ELF and verification key
         run: scripts/guests/build.sh "${{ matrix.zkvm }}" output
 
