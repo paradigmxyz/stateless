@@ -1,134 +1,61 @@
-name: Reth guest artifacts
-
+name: Guest dependency gate evidence
 on:
-  push:
-    tags:
-      - "reth-guest-v*"
   workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-
 permissions:
   contents: read
-
 jobs:
-  build:
+  lockfile:
+    name: Read-only lockfile (${{ matrix.zkvm }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     permissions:
       contents: read
       id-token: write
-    name: Build Reth guest (${{ matrix.zkvm }})
-    runs-on: ubuntu-24.04
-    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
-        zkvm:
-          - openvm
-          - sp1
-          - zisk
+        zkvm: [openvm, sp1, zisk]
     steps:
       - name: Secure runner
         uses: tempoxyz/gh-actions/actions/secure-runner@48ff2b0c97ede86c9f10d105424380b9605f790d
-      - name: Checkout source
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Free disk space
         if: matrix.zkvm == 'zisk'
         run: .github/scripts/free-up-disk-space.sh
-
       - name: Install Rust
         uses: tempoxyz/gh-actions/vendor/dtolnay/rust-toolchain@e8f9d5c23ab43d0645c6d50fb73e98b362cdec02
         with:
           toolchain: stable
-
-      - name: Build ELF and verification key
-        # Cargo downloads run on the protected host; compiler containers run offline.
-        run: scripts/guests/build.sh "${{ matrix.zkvm }}" output
-
-      - name: Upload guest artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - name: Exercise pinned compiler with stale read-only lockfile
+        run: bash .github/tests/guest-gates.sh lockfile '${{ matrix.zkvm }}'
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: reth-guest-${{ matrix.zkvm }}
-          path: output/*
-          if-no-files-found: error
+          name: lockfile-${{ matrix.zkvm }}
+          path: evidence/
           retention-days: 14
-
-  smoke:
-    permissions:
-      contents: read
-      id-token: write
-    name: Execute Reth guest (${{ matrix.zkvm }})
-    needs:
-      - build
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        zkvm:
-          - openvm
-          - sp1
-          - zisk
-    steps:
-      - name: Secure runner
-        uses: tempoxyz/gh-actions/actions/secure-runner@48ff2b0c97ede86c9f10d105424380b9605f790d
-      - name: Checkout source
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Free disk space
-        run: .github/scripts/free-up-disk-space.sh
-
-      - name: Download guest artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: reth-guest-${{ matrix.zkvm }}
-          path: output
-
-      - name: Execute built guest
-        run: scripts/guests/smoke-test.sh "${{ matrix.zkvm }}" output
-
-  release:
-    name: Publish signed guest release
-    if: startsWith(github.ref, 'refs/tags/reth-guest-v')
-    needs:
-      - build
-      - smoke
+  cooldown:
+    name: Aegis cooldown stops build
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
-      contents: write
+      contents: read
       id-token: write
-      attestations: write
-      artifact-metadata: write
     steps:
       - name: Secure runner
         uses: tempoxyz/gh-actions/actions/secure-runner@48ff2b0c97ede86c9f10d105424380b9605f790d
-      - name: Download guest artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install Rust
+        uses: tempoxyz/gh-actions/vendor/dtolnay/rust-toolchain@e8f9d5c23ab43d0645c6d50fb73e98b362cdec02
         with:
-          pattern: reth-guest-*
-          path: release
-          merge-multiple: true
-
-      - name: Create checksums
-        working-directory: release
-        run: sha256sum -- *.elf *.vk > SHA256SUMS
-
-      - name: Attest release artifacts
-        uses: actions/attest@c32b4b8b198b65d0bd9d63490e847ff7b53989d4 # v4.0.0
+          toolchain: stable
+      - name: Positive control then real cooldown rejection
+        run: bash .github/tests/guest-gates.sh cooldown
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          subject-path: |
-            release/*.elf
-            release/*.vk
-            release/SHA256SUMS
-
-      - name: Create GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" release/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --verify-tag \
-            --generate-notes \
-            --title "Reth stateless validator $GITHUB_REF_NAME"
+          name: cooldown-gate
+          path: evidence/
+          retention-days: 14
