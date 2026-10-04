@@ -8,9 +8,7 @@ use stateless_validator_common::{
     HashTreeRoot, SszEncode as _,
     guest::{
         StatelessInput, StatelessValidationResult,
-        input::{
-            ExecutionWitness, ProtocolFork, PublicKeys, new_payload_request::NewPayloadRequest,
-        },
+        input::{ExecutionWitness, ProtocolFork, new_payload_request::NewPayloadRequest},
     },
 };
 use tries::zeth::SparseState;
@@ -37,11 +35,10 @@ pub fn run_stateless_guest(input_bytes: &[u8]) -> Vec<u8> {
         return StatelessValidationResult::default().to_ssz();
     };
 
-    let StatelessInput { new_payload_request, witness, chain_id, public_keys } = input;
+    let StatelessInput { new_payload_request, witness, chain_id } = input;
     let new_payload_request_root = new_payload_request.hash_tree_root(&sha256_hasher());
     let successful_validation =
-        verify_stateless_new_payload(fork, new_payload_request, witness, chain_id, public_keys)
-            .is_ok();
+        verify_stateless_new_payload(fork, new_payload_request, witness, chain_id).is_ok();
 
     StatelessValidationResult {
         new_payload_request_root,
@@ -59,12 +56,10 @@ fn verify_stateless_new_payload(
     new_payload_request: NewPayloadRequest,
     witness: ExecutionWitness,
     chain_id: u64,
-    public_keys: PublicKeys,
 ) -> Result<(), Error> {
-    let input = into_validation_input(fork, new_payload_request, witness, chain_id, public_keys)?;
+    let input = into_validation_input(fork, new_payload_request, witness, chain_id)?;
     stateless_validation_with_trie::<SparseState, _, _>(
         input.block,
-        input.public_keys,
         input.witness,
         input.chain_spec,
         input.evm_config,

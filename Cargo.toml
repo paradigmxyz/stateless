@@ -89,9 +89,9 @@ revm-state = { version = "43.0.0", default-features = false }
 zkvm-interface = { git = "https://github.com/eth-act/zkvm-standards", rev = "282cd356c3a0498416bb0619f9c8a347ce9933fb" }
 
 # Ere
-ere-platform-core = { git = "https://github.com/eth-act/ere", tag = "v0.17.0" }
-ere-server-client = { git = "https://github.com/eth-act/ere", tag = "v0.17.0" }
-ere-util-tokio = { git = "https://github.com/eth-act/ere", tag = "v0.17.0" }
+ere-platform-core = { git = "https://github.com/eth-act/ere", tag = "v0.18.1" }
+ere-server-client = { git = "https://github.com/eth-act/ere", tag = "v0.18.1" }
+ere-util-tokio = { git = "https://github.com/eth-act/ere", tag = "v0.18.1" }
 
 # ssz
 libssz = { version = "0.3.0", default-features = false, features = ["alloc"] }

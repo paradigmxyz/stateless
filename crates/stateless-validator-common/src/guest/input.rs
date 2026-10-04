@@ -1,11 +1,9 @@
 //! Canonical stateless validation input types.
 //!
-//! The types mirror [`stateless.py`] and their SSZ schemas in [`stateless_ssz.py`]. The wire
-//! format is a 2-byte big-endian schema identifier followed by the SSZ-encoded `StatelessInput`
-//! container.
+//! The types and their SSZ schemas mirror [`stateless.py`]. The wire format is a 2-byte big-endian
+//! schema identifier followed by the SSZ-encoded `StatelessInput` container.
 //!
-//! [`stateless.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/stateless.py
-//! [`stateless_ssz.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/stateless_ssz.py
+//! [`stateless.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v21.0.1/src/ethereum/forks/amsterdam/stateless.py
 
 #![allow(missing_docs)]
 
@@ -34,10 +32,6 @@ pub const MAX_WITNESS_HEADERS: usize = 256;
 pub const MAX_BYTES_PER_WITNESS_NODE: usize = 1 << 10;
 pub const MAX_BYTES_PER_CODE: usize = 1 << 16;
 pub const MAX_BYTES_PER_HEADER: usize = 1 << 10;
-pub const PUBLIC_KEY_BYTES: usize = 65;
-
-/// Transaction public keys in payload order.
-pub type PublicKeys = ProgressiveList<[u8; PUBLIC_KEY_BYTES]>;
 
 /// Execution witness data for stateless validation.
 #[derive(Debug, Clone, Default, PartialEq, Eq, SszEncode, SszDecode)]
@@ -106,15 +100,13 @@ pub struct StatelessInput {
     pub witness: ExecutionWitness,
     /// Chain identifier used during payload validation and execution.
     pub chain_id: u64,
-    /// 65-byte uncompressed transaction public keys, in payload order.
-    pub public_keys: PublicKeys,
 }
 
 impl StatelessInput {
     /// Serializes to schema-prefixed SSZ bytes, mirroring `serialize_stateless_input` in
     /// [`stateless_host.py`]. The fork is encoded into the schema identifier prefix.
     ///
-    /// [`stateless_host.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/stateless_host.py
+    /// [`stateless_host.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v21.0.1/src/ethereum/forks/amsterdam/stateless_host.py
     pub fn to_schema_prefixed_ssz(&self, fork: ProtocolFork) -> Vec<u8> {
         let mut out = Vec::with_capacity(STATELESS_INPUT_SCHEMA_ID_SIZE + self.encoded_len());
         out.extend_from_slice(&fork.schema_id().to_be_bytes());
@@ -126,7 +118,7 @@ impl StatelessInput {
     /// [`stateless_guest.py`]. Returns the fork carried by the schema identifier alongside the
     /// decoded input, and rejects a payload request whose shape does not match that fork.
     ///
-    /// [`stateless_guest.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/stateless_guest.py
+    /// [`stateless_guest.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v21.0.1/src/ethereum/forks/amsterdam/stateless_guest.py
     pub fn from_schema_prefixed_ssz(bytes: &[u8]) -> Result<(ProtocolFork, Self), Error> {
         use ProtocolFork::*;
         let (schema_id, body) = bytes
@@ -158,7 +150,6 @@ macro_rules! declare_stateless_input_variants {
                     new_payload_request: new_payload_request::[<NewPayloadRequest $variant>],
                     witness: ExecutionWitness,
                     chain_id: u64,
-                    public_keys: PublicKeys,
                 }
 
                 impl From<[<StatelessInput $variant>]> for StatelessInput {
@@ -167,7 +158,6 @@ macro_rules! declare_stateless_input_variants {
                             new_payload_request: NewPayloadRequest::$variant(input.new_payload_request),
                             witness: input.witness,
                             chain_id: input.chain_id,
-                            public_keys: input.public_keys,
                         }
                     }
                 }
@@ -211,7 +201,6 @@ mod tests {
             }),
             witness: ExecutionWitness::default(),
             chain_id: 1,
-            public_keys: Default::default(),
         }
     }
 
@@ -253,13 +242,12 @@ mod tests {
     }
 
     #[test]
-    fn progressive_witness_and_public_key_roots_match_reference_vectors() {
+    fn progressive_witness_roots_match_reference_vectors() {
         let hasher = Sha2Hasher;
         let state: ProgressiveList<SszList<u8, MAX_BYTES_PER_WITNESS_NODE>> =
             ProgressiveList::from(vec![vec![0xaa_u8; 3].try_into().unwrap()]);
         let codes: ProgressiveList<SszList<u8, MAX_BYTES_PER_CODE>> =
             ProgressiveList::from(vec![vec![0xbb_u8; 5].try_into().unwrap()]);
-        let public_keys = PublicKeys::from(vec![[0xcc; PUBLIC_KEY_BYTES]]);
 
         assert_eq!(
             const_hex::encode(state.hash_tree_root(&hasher)),
@@ -269,13 +257,5 @@ mod tests {
             const_hex::encode(codes.hash_tree_root(&hasher)),
             "a547789a596b86c52d812f5e04a9375ad0030c486748e04eb80ae80fc7a93e9c"
         );
-        assert_eq!(
-            const_hex::encode(public_keys.hash_tree_root(&hasher)),
-            "4c4b20e8ab80e7c80dc192092e936a59dd856cb8fa3f7e73b1e05e552fa0f783"
-        );
-
-        let bounded: SszList<[u8; PUBLIC_KEY_BYTES], 8> =
-            vec![[0xcc; PUBLIC_KEY_BYTES]].try_into().unwrap();
-        assert_eq!(public_keys.to_ssz(), bounded.to_ssz());
     }
 }

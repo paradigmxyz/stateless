@@ -13,7 +13,7 @@ alloy-primitives = { version = "1.6.1", default-features = false, features = [
 ] }
 
 # ere
-ere-platform-sp1 = { git = "https://github.com/eth-act/ere", tag = "v0.17.0" }
+ere-platform-sp1 = { git = "https://github.com/eth-act/ere", tag = "v0.18.1" }
 
 # local
 stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", default-features = false, features = [
@@ -22,13 +22,13 @@ stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", 
 
 [patch.crates-io]
 # FIXME: Remove the patch once https://github.com/succinctlabs/sp1/pull/2865 is merged and released.
-sp1-lib = { git = "https://github.com/han0110/sp1", rev = "7929b001303feb6803ce1214557d5ab1f17eee84" }
+sp1-lib = { git = "https://github.com/han0110/sp1", rev = "b4f72fe1de5d6d26b3d3f531fcabd137b03e3338" }
 
 [patch."https://github.com/succinctlabs/sp1.git"]
-sp1-lib = { git = "https://github.com/han0110/sp1", rev = "7929b001303feb6803ce1214557d5ab1f17eee84" }
-sp1-primitives = { git = "https://github.com/han0110/sp1", rev = "7929b001303feb6803ce1214557d5ab1f17eee84" }
-sp1-zkvm = { git = "https://github.com/han0110/sp1", rev = "7929b001303feb6803ce1214557d5ab1f17eee84" }
-sp1-libzkevm = { git = "https://github.com/han0110/sp1", rev = "7929b001303feb6803ce1214557d5ab1f17eee84", package = "libzkevm" }
+sp1-lib = { git = "https://github.com/han0110/sp1", rev = "b4f72fe1de5d6d26b3d3f531fcabd137b03e3338" }
+sp1-primitives = { git = "https://github.com/han0110/sp1", rev = "b4f72fe1de5d6d26b3d3f531fcabd137b03e3338" }
+sp1-zkvm = { git = "https://github.com/han0110/sp1", rev = "b4f72fe1de5d6d26b3d3f531fcabd137b03e3338" }
+sp1-libzkevm = { git = "https://github.com/han0110/sp1", rev = "b4f72fe1de5d6d26b3d3f531fcabd137b03e3338", package = "libzkevm" }
 
 [profile.release]
 codegen-units = 1

@@ -1,8 +1,4 @@
-use crate::{
-    ExecutionWitness,
-    recover_block::{UncompressedPublicKey, recover_block_with_public_keys},
-    witness_db::WitnessDatabase,
-};
+use crate::{ExecutionWitness, recover_block::recover_block, witness_db::WitnessDatabase};
 use alloc::{
     collections::BTreeMap,
     fmt::Debug,
@@ -179,7 +175,6 @@ pub struct StatelessValidationOutput {
 #[cfg(feature = "reth-trie")]
 pub fn stateless_validation<ChainSpec, E>(
     current_block: Block,
-    public_keys: Vec<UncompressedPublicKey>,
     witness: ExecutionWitness,
     chain_spec: Arc<ChainSpec>,
     evm_config: E,
@@ -190,7 +185,6 @@ where
 {
     stateless_validation_with_trie::<StatelessSparseTrie, ChainSpec, E>(
         current_block,
-        public_keys,
         witness,
         chain_spec,
         evm_config,
@@ -200,7 +194,6 @@ where
 /// Performs stateless validation of a block using a custom `StatelessTrie` implementation.
 pub fn stateless_validation_with_trie<T, ChainSpec, E>(
     current_block: Block,
-    public_keys: Vec<UncompressedPublicKey>,
     witness: ExecutionWitness,
     chain_spec: Arc<ChainSpec>,
     evm_config: E,
@@ -210,7 +203,7 @@ where
     ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
     E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
 {
-    let recovered_block = recover_block_with_public_keys(current_block, public_keys, &*chain_spec)?;
+    let recovered_block = recover_block(current_block, &*chain_spec)?;
 
     stateless_validation_recovered_with_trie::<T, ChainSpec, E>(
         recovered_block,

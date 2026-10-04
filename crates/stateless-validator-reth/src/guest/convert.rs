@@ -16,11 +16,11 @@ use reth_chainspec::{ChainSpec, EthereumHardforks};
 use reth_evm_ethereum::EthEvmConfig;
 use reth_payload_validator::{cancun, prague, shanghai};
 use reth_primitives_traits::{Block as _, SealedBlock, SignedTransaction};
-use stateless::{Genesis, UncompressedPublicKey};
+use stateless::Genesis;
 use stateless_validator_common::{
     Sha256Hasher, SszEncode, SszList,
     guest::input::{
-        ExecutionWitness, ProtocolFork, PublicKeys,
+        ExecutionWitness, ProtocolFork,
         new_payload_request::{
             ExecutionPayloadV2, ExecutionPayloadV3, ExecutionPayloadV4,
             ExecutionRequestsElectraFulu, ExecutionRequestsGloas, Hash32, NewPayloadRequest,
@@ -44,7 +44,6 @@ pub(crate) struct ValidationInput {
     pub(crate) evm_config: EthEvmConfig,
     pub(crate) block: Block<reth_ethereum_primitives::TransactionSigned>,
     pub(crate) witness: stateless::ExecutionWitness,
-    pub(crate) public_keys: Vec<UncompressedPublicKey>,
 }
 
 /// Converts the decoded canonical stateless input into the reth validation
@@ -54,7 +53,6 @@ pub(crate) fn into_validation_input(
     new_payload_request: NewPayloadRequest,
     witness: ExecutionWitness,
     chain_id: u64,
-    public_keys: PublicKeys,
 ) -> Result<ValidationInput, Error> {
     let chain_spec = Arc::new(ChainSpec::from(Genesis {
         config: to_reth_chain_config(fork, chain_id),
@@ -64,8 +62,7 @@ pub(crate) fn into_validation_input(
     let execution_data = new_payload_request_to_execution_data(new_payload_request);
     let block = ensure_well_formed_payload(chain_spec.clone(), execution_data)?.into_block();
     let witness = to_reth_witness(witness);
-    let public_keys = public_keys.into_iter().map(UncompressedPublicKey).collect();
-    Ok(ValidationInput { chain_spec, evm_config, block, witness, public_keys })
+    Ok(ValidationInput { chain_spec, evm_config, block, witness })
 }
 
 /// Converts a chain configuration into an [`alloy_genesis::ChainConfig`].
@@ -316,7 +313,7 @@ fn compute_requests_hash(
 /// mirroring `encode_execution_requests` in [`requests.py`]. A list holding no items has no wire
 /// form and contributes nothing to the commitment.
 ///
-/// [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/execution_engine/requests.py
+/// [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v21.0.1/src/ethereum/forks/amsterdam/execution_engine/requests.py
 fn encode_execution_requests<T: SszEncode>(request_type: u8, requests: &[T]) -> Option<Vec<u8>> {
     if requests.is_empty() {
         return None;
