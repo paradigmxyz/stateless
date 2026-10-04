@@ -39,9 +39,7 @@ mod recover_block;
 
 use alloy_genesis::ChainConfig;
 #[doc(inline)]
-pub use recover_block::UncompressedPublicKey;
-#[doc(inline)]
-pub use recover_block::recover_block_with_public_keys;
+pub use recover_block::recover_block;
 #[doc(inline)]
 pub use tries::StatelessTrie;
 #[doc(inline)]

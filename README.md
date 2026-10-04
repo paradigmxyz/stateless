@@ -31,7 +31,6 @@ use stateless::{stateless_validation, ExecutionWitness};
 
 let validation = stateless_validation(
     block,
-    public_keys,
     witness,
     chain_spec,
     evm_config,
@@ -69,7 +68,8 @@ EF_TEST_TRIE=default cargo test -p ef-tests --release --features "asm-keccak ef-
 
 ## Running stateless validator tests
 
-The Reth validator tests use the `tests-zkevm@v0.8.4` execution-spec fixtures.
+The Reth validator tests use the `tests-zkevm@v21.0.1` execution-spec fixtures,
+in both the `blockchain_test` and `blockchain_test_engine` formats.
 The first run downloads the archive and checks its SHA-256 checksum.
 Later runs reuse the versioned fixture cache.
 
@@ -77,7 +77,9 @@ Later runs reuse the versioned fixture cache.
 cargo test -p stateless-validator-tests --test host_execution --locked
 ```
 
-The suite requires every fixture to pass, including the EIP-8037 cross-frame state gas refund tests.
+The suite requires every fixture to pass, except the EIP-7928 tests listed in
+`KNOWN_FAILURES` in `testing/stateless-validator/tests/host_execution.rs`.
+Those fail on upstream alloy-evm and revm bugs, and the suite fails once they pass.
 
 ## Contributing
 

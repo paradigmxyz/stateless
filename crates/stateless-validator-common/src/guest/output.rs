@@ -1,10 +1,9 @@
 //! Canonical stateless validation output types.
 //!
-//! The types mirror `StatelessValidationResult` in [`stateless.py`] and its SSZ schema in
-//! [`stateless_ssz.py`]. The serialized form is the plain SSZ encoding without a schema prefix.
+//! The types mirror `StatelessValidationResult` and its SSZ schema in [`stateless.py`]. The
+//! serialized form is the plain SSZ encoding without a schema prefix.
 //!
-//! [`stateless.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/stateless.py
-//! [`stateless_ssz.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/stateless_ssz.py
+//! [`stateless.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v21.0.1/src/ethereum/forks/amsterdam/stateless.py
 
 use alloc::vec::Vec;
 

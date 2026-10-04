@@ -5,9 +5,9 @@
 //! execution-apis, because a multi-fork crate needs distinct names while each execution-specs
 //! fork module defines a single `ExecutionPayload` shape.
 //!
-//! [`types.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/execution_engine/types.py
-//! [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/execution_engine/requests.py
-//! [`blocks.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v0.8.4/src/ethereum/forks/amsterdam/blocks.py
+//! [`types.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v21.0.1/src/ethereum/forks/amsterdam/execution_engine/types.py
+//! [`requests.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v21.0.1/src/ethereum/forks/amsterdam/execution_engine/requests.py
+//! [`blocks.py`]: https://github.com/ethereum/execution-specs/blob/tests-zkevm@v21.0.1/src/ethereum/forks/amsterdam/blocks.py
 
 #![allow(missing_docs)]
 
@@ -480,12 +480,7 @@ mod tests {
     }
 
     fn stateless_input(new_payload_request: NewPayloadRequest) -> StatelessInput {
-        StatelessInput {
-            new_payload_request,
-            witness: ExecutionWitness::default(),
-            chain_id: 1,
-            public_keys: Default::default(),
-        }
+        StatelessInput { new_payload_request, witness: ExecutionWitness::default(), chain_id: 1 }
     }
 
     #[test]

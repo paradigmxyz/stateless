@@ -10,12 +10,10 @@ use reth_chainspec::ChainSpec;
 use reth_consensus::{Consensus, HeaderValidator};
 use reth_db_common::init::{insert_genesis_hashes, insert_genesis_history, insert_genesis_state};
 use reth_ethereum_consensus::{EthBeaconConsensus, validate_block_post_execution};
-use reth_ethereum_primitives::{Block, TransactionSigned};
+use reth_ethereum_primitives::Block;
 use reth_evm::{ConfigureEvm, execute::Executor};
 use reth_evm_ethereum::EthEvmConfig;
-use reth_primitives_traits::{
-    Block as BlockTrait, ParallelBridgeBuffered, RecoveredBlock, SealedBlock,
-};
+use reth_primitives_traits::{ParallelBridgeBuffered, RecoveredBlock, SealedBlock};
 use reth_provider::{
     BlockWriter, DatabaseProviderFactory, ExecutionOutcome, HistoryWriter, OriginalValuesKnown,
     StateWriteConfig, StateWriter, StaticFileProviderFactory, StaticFileSegment, StaticFileWriter,
@@ -29,9 +27,7 @@ use reth_trie_common::ExecutionWitnessMode;
 use reth_trie_db::{
     DatabaseHashedCursorFactory, DatabaseStateRoot, DatabaseTrieCursorFactory, LegacyKeyAdapter,
 };
-use stateless::{
-    ExecutionWitness, UncompressedPublicKey, validation::stateless_validation_with_trie,
-};
+use stateless::{ExecutionWitness, validation::stateless_validation_with_trie};
 use std::{
     collections::BTreeMap,
     env, fs,
@@ -412,13 +408,8 @@ where
     for (recovered_block, execution_witness) in &program_inputs {
         let block = recovered_block.clone().into_block();
 
-        // Recover the actual public keys from the transaction signatures
-        let public_keys = recover_signers(block.body().transactions())
-            .expect("Failed to recover public keys from transaction signatures");
-
         stateless_validation_with_trie::<T, _, _>(
             block,
-            public_keys,
             execution_witness.clone(),
             chain_spec.clone(),
             EthEvmConfig::new(chain_spec.clone()),
@@ -471,26 +462,6 @@ fn pre_execution_checks(
     consensus.validate_block_pre_execution(block)?;
 
     Ok(())
-}
-
-/// Recover public keys from transaction signatures.
-fn recover_signers<'a, I>(txs: I) -> Result<Vec<UncompressedPublicKey>, Box<dyn std::error::Error>>
-where
-    I: IntoIterator<Item = &'a TransactionSigned>,
-{
-    txs.into_iter()
-        .enumerate()
-        .map(|(i, tx)| {
-            tx.signature()
-                .recover_from_prehash(&tx.signature_hash())
-                .map(|keys| {
-                    UncompressedPublicKey(
-                        keys.to_encoded_point(false).as_bytes().try_into().unwrap(),
-                    )
-                })
-                .map_err(|e| format!("failed to recover signature for tx #{i}: {e}").into())
-        })
-        .collect::<Result<Vec<UncompressedPublicKey>, _>>()
 }
 
 /// Returns whether the test at the given path should be skipped.
