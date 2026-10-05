@@ -27,6 +27,11 @@ trap 'rm -rf "$DEPENDENCY_CACHE"' EXIT
 CARGO_HOME="$DEPENDENCY_CACHE" cargo fetch --locked \
     --manifest-path "$REPO_ROOT/bin/stateless-validator-reth/$ZKVM/Cargo.toml"
 
+git_cache_mount="type=bind,src=$DEPENDENCY_CACHE/git,dst=/usr/local/cargo/git"
+if [[ "$ZKVM" != openvm ]]; then
+    git_cache_mount+=",readonly"
+fi
+
 compiler_options=()
 case "$ZKVM" in
     zisk)
@@ -40,7 +45,7 @@ docker run --rm --network none \
     "${compiler_options[@]}" \
     --mount "type=bind,src=$SCRIPT_DIR/cargo-offline.toml,dst=/usr/local/cargo/config.toml,readonly" \
     --mount "type=bind,src=$DEPENDENCY_CACHE/registry,dst=/usr/local/cargo/registry,readonly" \
-    --mount "type=bind,src=$DEPENDENCY_CACHE/git,dst=/usr/local/cargo/git,readonly" \
+    --mount "$git_cache_mount" \
     --mount "type=bind,src=$REPO_ROOT,dst=/stateless" \
     --mount "type=bind,src=$LOCKFILE,dst=$CONTAINER_GUEST_DIR/Cargo.lock,readonly" \
     --mount "type=bind,src=$OUTPUT_DIR,dst=/output" \
