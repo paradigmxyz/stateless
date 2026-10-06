@@ -135,4 +135,6 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --generate-notes \
-            --title "Reth stateless validator $GITHUB_REF_NAME"
+            --prerelease \
+            --latest=false \
+            --title "$GITHUB_REF_NAME"
