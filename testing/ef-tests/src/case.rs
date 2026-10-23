@@ -1,10 +1,12 @@
 //! Test case definitions
 
 use crate::result::{CaseResult, Error};
-use rayon::prelude::*;
 use std::{
     fmt::Debug,
+    num::NonZeroUsize,
     path::{Path, PathBuf},
+    sync::Mutex,
+    thread,
 };
 
 /// A single test case, capable of loading a JSON description of itself and running it.
@@ -34,10 +36,28 @@ pub struct Cases<T> {
 
 impl<T: Case> Cases<T> {
     /// Run the contained test cases.
+    ///
+    /// Cases run on a fixed set of scoped threads rather than rayon workers. A rayon worker that
+    /// waits on nested parallel work steals other cases, so with rayon an unbounded number of
+    /// cases, each holding its own temporary database, can be in flight at once.
     pub fn run(self) -> Vec<CaseResult> {
-        self.test_cases
-            .into_par_iter()
-            .map(|(path, case)| CaseResult::new(&path, case.description(), case.run()))
-            .collect()
+        let threads = thread::available_parallelism().map_or(1, NonZeroUsize::get);
+        let cases = Mutex::new(self.test_cases.into_iter());
+        thread::scope(|scope| {
+            let workers: Vec<_> = (0..threads)
+                .map(|_| {
+                    scope.spawn(|| {
+                        let mut results = Vec::new();
+                        loop {
+                            let Some((path, case)) = cases.lock().unwrap().next() else {
+                                break results;
+                            };
+                            results.push(CaseResult::new(&path, case.description(), case.run()));
+                        }
+                    })
+                })
+                .collect();
+            workers.into_iter().flat_map(|worker| worker.join().unwrap()).collect()
+        })
     }
 }
