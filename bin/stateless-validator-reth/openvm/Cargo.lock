@@ -403,14 +403,26 @@ dependencies = [
 
 [[package]]
 name = "ark-bls12-381"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3df4dcc01ff89867cd86b0da835f23c3f02738353aaee7dde7495af71363b8d5"
+dependencies = [
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
+]
+
+[[package]]
+name = "ark-bls12-381"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be2ede2c0c96fa37d5d3484e8a59fec566c4a52b8c84bf993eaa6c67d7225a4c"
 dependencies = [
- "ark-ec",
- "ark-ff",
- "ark-serialize",
- "ark-std",
+ "ark-ec 0.6.0",
+ "ark-ff 0.6.0",
+ "ark-serialize 0.6.0",
+ "ark-std 0.6.0",
 ]
 
 [[package]]
@@ -419,9 +431,30 @@ version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bc66f96ebe2a17a499475b4f94791d379817592ef494171586967ffdc6f95db"
 dependencies = [
- "ark-ec",
- "ark-ff",
- "ark-std",
+ "ark-ec 0.6.0",
+ "ark-ff 0.6.0",
+ "ark-std 0.6.0",
+]
+
+[[package]]
+name = "ark-ec"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43d68f2d516162846c1238e755a7c4d131b892b70cc70c471a8e3ca3ed818fce"
+dependencies = [
+ "ahash",
+ "ark-ff 0.5.0",
+ "ark-poly 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
+ "educe",
+ "fnv",
+ "hashbrown 0.15.5",
+ "itertools 0.13.0",
+ "num-bigint",
+ "num-integer",
+ "num-traits",
+ "zeroize",
 ]
 
 [[package]]
@@ -431,10 +464,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8352a2b2aedf6ba2cc38f7520fc51191d518dde96175c729af19f2d059f191c4"
 dependencies = [
  "ahash",
- "ark-ff",
- "ark-poly",
- "ark-serialize",
- "ark-std",
+ "ark-ff 0.6.0",
+ "ark-poly 0.6.0",
+ "ark-serialize 0.6.0",
+ "ark-std 0.6.0",
  "educe",
  "fnv",
  "hashbrown 0.17.1",
@@ -447,14 +480,34 @@ dependencies = [
 
 [[package]]
 name = "ark-ff"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a177aba0ed1e0fbb62aa9f6d0502e9b46dad8c2eab04c14258a1212d2557ea70"
+dependencies = [
+ "ark-ff-asm 0.5.0",
+ "ark-ff-macros 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
+ "arrayvec",
+ "digest 0.10.7",
+ "educe",
+ "itertools 0.13.0",
+ "num-bigint",
+ "num-traits",
+ "paste",
+ "zeroize",
+]
+
+[[package]]
+name = "ark-ff"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7a806ac6c8307b929df4645776290a50ee2aac754ad09d8bdf73391309e43af"
 dependencies = [
- "ark-ff-asm",
- "ark-ff-macros",
- "ark-serialize",
- "ark-std",
+ "ark-ff-asm 0.6.0",
+ "ark-ff-macros 0.6.0",
+ "ark-serialize 0.6.0",
+ "ark-std 0.6.0",
  "digest 0.10.7",
  "educe",
  "num-bigint",
@@ -464,10 +517,33 @@ dependencies = [
 
 [[package]]
 name = "ark-ff-asm"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62945a2f7e6de02a31fe400aa489f0e0f5b2502e69f95f853adb82a96c7a6b60"
+dependencies = [
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "ark-ff-asm"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1479009684adc073dff49a1025d3a7065b317a9ead25aaaca38cdc70058ba8a2"
 dependencies = [
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "ark-ff-macros"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09be120733ee33f7693ceaa202ca41accd5653b779563608f1234f78ae07c4b3"
+dependencies = [
+ "num-bigint",
+ "num-traits",
+ "proc-macro2",
  "quote",
  "syn 2.0.119",
 ]
@@ -487,17 +563,45 @@ dependencies = [
 
 [[package]]
 name = "ark-poly"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "579305839da207f02b89cd1679e50e67b4331e2f9294a57693e5051b7703fe27"
+dependencies = [
+ "ahash",
+ "ark-ff 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
+ "educe",
+ "fnv",
+ "hashbrown 0.15.5",
+]
+
+[[package]]
+name = "ark-poly"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75f55af10b672002b8d953e230282c51206842e20e5791a94432219b4201de5c"
 dependencies = [
  "ahash",
- "ark-ff",
- "ark-serialize",
- "ark-std",
+ "ark-ff 0.6.0",
+ "ark-serialize 0.6.0",
+ "ark-std 0.6.0",
  "educe",
  "fnv",
  "hashbrown 0.17.1",
+]
+
+[[package]]
+name = "ark-serialize"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f4d068aaf107ebcd7dfb52bc748f8030e0fc930ac8e360146ca54c1203088f7"
+dependencies = [
+ "ark-serialize-derive 0.5.0",
+ "ark-std 0.5.0",
+ "arrayvec",
+ "digest 0.10.7",
+ "num-bigint",
 ]
 
 [[package]]
@@ -506,10 +610,21 @@ version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a74dd304fd536fb95d0a328e72be759209cc496a9da094c5bc56e5fea4f9e86b"
 dependencies = [
- "ark-serialize-derive",
- "ark-std",
+ "ark-serialize-derive 0.6.0",
+ "ark-std 0.6.0",
  "digest 0.10.7",
  "num-bigint",
+]
+
+[[package]]
+name = "ark-serialize-derive"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "213888f660fddcca0d257e88e54ac05bca01885f258ccdf695bafd77031bb69d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -521,6 +636,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "ark-std"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "246a225cc6131e9ee4f24619af0f19d67761fff15d7ccc22e42b80846e69449a"
+dependencies = [
+ "num-traits",
+ "rand 0.8.7",
 ]
 
 [[package]]
@@ -1207,31 +1332,19 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "ere-platform-core"
-version = "0.18.1"
-source = "git+https://github.com/eth-act/ere?tag=v0.18.1#20e87aa7bcc09a8eac3bee2c941d8bfcf447e5ba"
+version = "0.19.5"
+source = "git+https://github.com/eth-act/ere?tag=v0.19.5#fba5601fd907634acdc0ce9f19dc8651aa8c0edd"
 
 [[package]]
 name = "ere-platform-openvm"
-version = "0.18.1"
-source = "git+https://github.com/eth-act/ere?tag=v0.18.1#20e87aa7bcc09a8eac3bee2c941d8bfcf447e5ba"
+version = "0.19.5"
+source = "git+https://github.com/eth-act/ere?tag=v0.19.5#fba5601fd907634acdc0ce9f19dc8651aa8c0edd"
 dependencies = [
- "ark-bls12-381",
- "ark-ec",
- "ark-serialize",
- "aurora-engine-modexp",
  "ere-platform-core",
- "k256 0.13.4 (git+https://github.com/openvm-org/openvm.git?tag=v2.1.0-preview)",
  "openvm",
+ "openvm-accelerators",
  "openvm-algebra-guest",
- "openvm-curve-utils",
  "openvm-ecc-guest",
- "openvm-keccak256",
- "openvm-kzg",
- "openvm-pairing",
- "openvm-sha2",
- "p256 0.13.2 (git+https://github.com/openvm-org/openvm.git?tag=v2.1.0-preview)",
- "ripemd",
- "zkvm-interface",
 ]
 
 [[package]]
@@ -2098,6 +2211,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "openvm-accelerators"
+version = "0.4.0"
+source = "git+https://github.com/han0110/openvm-eth?branch=patch%2Fdevelop-v2.x.0%2F38baa3f#7eca04230713d2ddb333dcf00f6149833ba30db1"
+dependencies = [
+ "ark-bls12-381 0.5.0",
+ "ark-ec 0.5.0",
+ "ark-serialize 0.5.0",
+ "aurora-engine-modexp",
+ "k256 0.13.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "k256 0.13.4 (git+https://github.com/openvm-org/openvm.git?tag=v2.1.0-preview)",
+ "openvm-curve-utils",
+ "openvm-ecc-guest",
+ "openvm-keccak256",
+ "openvm-kzg",
+ "openvm-pairing",
+ "openvm-pairing-guest",
+ "openvm-sha2",
+ "p256 0.13.2 (git+https://github.com/openvm-org/openvm.git?tag=v2.1.0-preview)",
+ "ripemd 0.1.3",
+]
+
+[[package]]
 name = "openvm-algebra-complex-macros"
 version = "2.0.0"
 source = "git+https://github.com/openvm-org/openvm.git?tag=v2.1.0-preview#538c5488130da56c8442d33445efe3c1fe5ea8b8"
@@ -2138,7 +2273,7 @@ dependencies = [
 [[package]]
 name = "openvm-curve-utils"
 version = "0.4.0"
-source = "git+https://github.com/han0110/openvm-eth?branch=patch%2Fv2.1.0-preview#2ed8f057bf5dbc53bc75149af45010ec2327ff48"
+source = "git+https://github.com/han0110/openvm-eth?branch=patch%2Fdevelop-v2.x.0%2F38baa3f#7eca04230713d2ddb333dcf00f6149833ba30db1"
 dependencies = [
  "hex-literal",
  "openvm-ecc-guest",
@@ -2205,7 +2340,7 @@ dependencies = [
 [[package]]
 name = "openvm-kzg"
 version = "0.4.0"
-source = "git+https://github.com/han0110/openvm-eth?branch=patch%2Fv2.1.0-preview#2ed8f057bf5dbc53bc75149af45010ec2327ff48"
+source = "git+https://github.com/han0110/openvm-eth?branch=patch%2Fdevelop-v2.x.0%2F38baa3f#7eca04230713d2ddb333dcf00f6149833ba30db1"
 dependencies = [
  "bls12_381",
  "hex",
@@ -2238,6 +2373,7 @@ version = "2.0.0"
 source = "git+https://github.com/openvm-org/openvm.git?tag=v2.1.0-preview#538c5488130da56c8442d33445efe3c1fe5ea8b8"
 dependencies = [
  "group",
+ "halo2curves-axiom",
  "hex-literal",
  "itertools 0.14.0",
  "num-bigint",
@@ -2260,6 +2396,7 @@ name = "openvm-pairing-guest"
 version = "2.0.0"
 source = "git+https://github.com/openvm-org/openvm.git?tag=v2.1.0-preview#538c5488130da56c8442d33445efe3c1fe5ea8b8"
 dependencies = [
+ "halo2curves-axiom",
  "hex-literal",
  "itertools 0.14.0",
  "lazy_static",
@@ -3201,11 +3338,11 @@ version = "43.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac4dc0279f2a44770faa8c93d008df684440cf573c91b8e0e39d0d581abf7b3d"
 dependencies = [
- "ark-bls12-381",
+ "ark-bls12-381 0.6.0",
  "ark-bn254",
- "ark-ec",
- "ark-ff",
- "ark-serialize",
+ "ark-ec 0.6.0",
+ "ark-ff 0.6.0",
+ "ark-serialize 0.6.0",
  "arrayref",
  "aurora-engine-modexp",
  "cfg-if",
@@ -3213,7 +3350,7 @@ dependencies = [
  "p256 0.13.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "revm-context-interface",
  "revm-primitives",
- "ripemd",
+ "ripemd 0.2.0",
  "sha2 0.11.0",
 ]
 
@@ -3250,6 +3387,15 @@ checksum = "f8dd2a808d456c4a54e300a23e9f5a67e122c3024119acbfd73e3bf664491cb2"
 dependencies = [
  "hmac",
  "subtle",
+]
+
+[[package]]
+name = "ripemd"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd124222d17ad93a644ed9d011a40f4fb64aa54275c08cc216524a9ea82fb09f"
+dependencies = [
+ "digest 0.10.7",
 ]
 
 [[package]]

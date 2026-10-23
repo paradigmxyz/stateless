@@ -4,18 +4,18 @@ guest_config() {
     case "${1:?zkVM name is required}" in
         openvm)
             ZKVM_VERSION="v2.1.0-preview"
-            COMPILER_IMAGE="ghcr.io/eth-act/ere/ere-compiler-openvm:0.18.1@sha256:711448e51acbe0993bec3f385afe52e83d5ad598dbceb0a50bf04bb4906b4101"
-            SERVER_IMAGE="ghcr.io/eth-act/ere/ere-server-openvm:0.18.1@sha256:742c94a39d413c6068c15189031739bd6b6f98cfd899255b7d283fbdbc8591b4"
+            COMPILER_IMAGE="ghcr.io/eth-act/ere/ere-compiler-openvm:0.19.5@sha256:6b13350c2795b0f8368c74decdce0508e2552ae598771a6c86d6e449f974e165"
+            SERVER_IMAGE="ghcr.io/eth-act/ere/ere-server-openvm:0.19.5@sha256:aa1cf825cb23c0ea9e850ac9b1f08311ae8195454c0289e1cc520fa127e8cea4"
             ;;
         sp1)
-            ZKVM_VERSION="v6.6.0"
-            COMPILER_IMAGE="ghcr.io/eth-act/ere/ere-compiler-sp1:0.18.1@sha256:964d36534d773c5019855b583f6c36800a4803580b551304a7ee271cfb786dec"
-            SERVER_IMAGE="ghcr.io/eth-act/ere/ere-server-sp1:0.18.1@sha256:e486bc228be6590b54601655d2b705a2ca475021ee378fcfa3a92bd575af5925"
+            ZKVM_VERSION="v6.9.0"
+            COMPILER_IMAGE="ghcr.io/eth-act/ere/ere-compiler-sp1:0.19.5@sha256:a1d0b55bc2b37596bdfd129ea2545fd82dbbcd9fa3b84a68c9bc2af3859590fe"
+            SERVER_IMAGE="ghcr.io/eth-act/ere/ere-server-sp1:0.19.5@sha256:82e0b809148a08f82f86ff2ddee9d352cf399a17f145754b417ecf2634578cc0"
             ;;
         zisk)
-            ZKVM_VERSION="v1.2.0-alpha"
-            COMPILER_IMAGE="ghcr.io/eth-act/ere/ere-compiler-zisk:0.18.1@sha256:86200b0a3fa8669f26215ae276350d9099e847454ec2779874e9146796e08a57"
-            SERVER_IMAGE="ghcr.io/eth-act/ere/ere-server-zisk:0.18.1@sha256:c4770368115dbfd557f4ccec2a0a1f9cb8cd9428ad8b0896ede553e570628415"
+            ZKVM_VERSION="v1.3.2-alpha"
+            COMPILER_IMAGE="ghcr.io/eth-act/ere/ere-compiler-zisk:0.19.5@sha256:3d93a876a9377ebf1b97b3f28effde515f6561faac686924a3ded909660db9b2"
+            SERVER_IMAGE="ghcr.io/eth-act/ere/ere-server-zisk:0.19.5@sha256:569468bab192afc020c652011e68a6b06028917977d6a7567def27606d8ea96c"
             ;;
         *)
             echo "unsupported zkVM: $1" >&2
