@@ -42,5 +42,3 @@ pub enum WitnessDbError {
     #[error("RLP decode error: {0}")]
     Rlp(#[from] alloy_rlp::Error),
 }
-
-impl revm_database_interface::DBErrorMarker for WitnessDbError {}

@@ -12,7 +12,7 @@ workspace = true
 
 [features]
 ef-tests = []
-asm-keccak = ["alloy-primitives/asm-keccak", "revm/asm-keccak"]
+asm-keccak = ["alloy-primitives/asm-keccak", "evm2/asm-keccak"]
 
 [dependencies]
 stateless = { workspace = true, features = ["reth-trie"] }
@@ -26,15 +26,14 @@ reth-db = { workspace = true, features = ["mdbx", "test-utils", "disable-lock"] 
 reth-db-api.workspace = true
 reth-db-common.workspace = true
 reth-provider = { workspace = true, features = ["test-utils"] }
-reth-evm = { workspace = true, features = ["std"] }
-reth-evm-ethereum = { workspace = true, features = ["std"] }
+reth-evm = { workspace = true, features = ["std", "witness"] }
+reth-evm-ethereum = { workspace = true, features = ["std", "blst", "c-kzg"] }
 reth-ethereum-consensus = { workspace = true, features = ["std"] }
-reth-revm = { workspace = true, features = ["std", "witness"] }
 reth-trie-common = { workspace = true, features = ["std"] }
 reth-tracing.workspace = true
 reth-trie.workspace = true
 reth-trie-db.workspace = true
-revm = { workspace = true, features = ["secp256k1", "blst", "c-kzg", "memory_limit"] }
+evm2 = { workspace = true, features = ["std"] }
 
 alloy-rlp.workspace = true
 alloy-primitives.workspace = true

@@ -58,7 +58,7 @@ fn verify_stateless_new_payload(
     chain_id: u64,
 ) -> Result<(), Error> {
     let input = into_validation_input(fork, new_payload_request, witness, chain_id)?;
-    stateless_validation_with_trie::<SparseState, _, _>(
+    stateless_validation_with_trie::<SparseState, _>(
         input.block,
         input.witness,
         input.chain_spec,

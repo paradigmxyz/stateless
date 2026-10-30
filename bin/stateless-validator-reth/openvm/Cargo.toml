@@ -26,3 +26,9 @@ stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", 
 [profile.release]
 codegen-units = 1
 lto = "fat"
+
+# Mirrors the reth-core patches in the root workspace, which do not apply to this workspace.
+[patch.crates-io]
+reth-codecs = { git = "https://github.com/paradigmxyz/reth-core", rev = "275ce4cf5befeb9f1e8acd935ff2882d2d25fc61" }
+reth-codecs-derive = { git = "https://github.com/paradigmxyz/reth-core", rev = "275ce4cf5befeb9f1e8acd935ff2882d2d25fc61" }
+reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth-core", rev = "275ce4cf5befeb9f1e8acd935ff2882d2d25fc61" }
