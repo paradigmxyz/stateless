@@ -5,21 +5,24 @@ use crate::{
     models::{BlockchainTest, ForkSpec},
 };
 use alloy_rlp::{Decodable, Encodable};
+use evm2::evm::{CacheDB, Db};
 use rayon::iter::{IndexedParallelIterator, ParallelIterator};
 use reth_chainspec::ChainSpec;
 use reth_consensus::{Consensus, HeaderValidator};
 use reth_db_common::init::{insert_genesis_hashes, insert_genesis_history, insert_genesis_state};
 use reth_ethereum_consensus::{EthBeaconConsensus, validate_block_post_execution};
 use reth_ethereum_primitives::Block;
-use reth_evm::{ConfigureEvm, execute::Executor};
+use reth_evm::{
+    ConfigureEvm, database::StateProviderDatabase, execute::Executor,
+    witness::ExecutionWitnessRecord,
+};
 use reth_evm_ethereum::EthEvmConfig;
 use reth_primitives_traits::{ParallelBridgeBuffered, RecoveredBlock, SealedBlock};
 use reth_provider::{
     BlockWriter, DatabaseProviderFactory, ExecutionOutcome, HistoryWriter, OriginalValuesKnown,
-    StateWriteConfig, StateWriter, StaticFileProviderFactory, StaticFileSegment, StaticFileWriter,
-    test_utils::create_test_provider_factory_with_chain_spec_and_db_args,
+    StateProvider, StateWriteConfig, StateWriter, StaticFileProviderFactory, StaticFileSegment,
+    StaticFileWriter, test_utils::create_test_provider_factory_with_chain_spec_and_db_args,
 };
-use reth_revm::{State, database::StateProviderDatabase, witness::ExecutionWitnessRecord};
 use reth_trie::{
     HashedPostState, KeccakKeyHasher, StateRoot, hashed_cursor::zero_destroyed_account_storage,
 };
@@ -311,21 +314,15 @@ where
             Error::block_failed(block_number, program_inputs.clone(), err)
         })?;
 
-        // Execute the block
+        // Execute the block. The cache records the parent state read during execution, which the
+        // witness is built from.
         let state_provider = provider.latest();
-        let state_db = StateProviderDatabase(&state_provider);
-        let executor = executor_provider.batch_executor(state_db);
-        let mut exec_witness = None;
-
-        let output = executor
-            .execute_with_state_closure_always(&(*block).clone(), |statedb: &State<_>| {
-                exec_witness = Some(ExecutionWitnessRecord::new(statedb).into_execution_witness(
-                    &state_provider,
-                    &provider,
-                    block_number,
-                    ExecutionWitnessMode::default(),
-                ));
-            })
+        let mut db = CacheDB::new(Db::new(StateProviderDatabase::new(
+            (&state_provider).into_evm_state_provider(),
+        )));
+        let output = executor_provider
+            .executor(&mut db)
+            .execute(block)
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
         // Consensus checks after block execution
@@ -333,8 +330,14 @@ where
             .map_err(|err| Error::block_failed(block_number, program_inputs.clone(), err))?;
 
         // Generate the stateless witness
+        let codes = ExecutionWitnessRecord::commit_execution(&mut db, &output.state);
         let exec_witness =
-            exec_witness.expect("state closure is called after block execution completes")?;
+            ExecutionWitnessRecord::new(&db).with_canonical_codes(codes).into_execution_witness(
+                &state_provider,
+                &provider,
+                block_number,
+                ExecutionWitnessMode::default(),
+            )?;
 
         program_inputs.push((block.clone(), exec_witness));
 
@@ -408,7 +411,7 @@ where
     for (recovered_block, execution_witness) in &program_inputs {
         let block = recovered_block.clone().into_block();
 
-        stateless_validation_with_trie::<T, _, _>(
+        stateless_validation_with_trie::<T, _>(
             block,
             execution_witness.clone(),
             chain_spec.clone(),

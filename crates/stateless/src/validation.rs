@@ -11,15 +11,17 @@ use alloy_eips::eip7928::{
     BlockAccessList, ITEM_COST, compute_block_access_list_hash, total_bal_items,
 };
 use alloy_primitives::{B256, keccak256};
-use reth_chainspec::{EthChainSpec, EthereumHardforks};
+use evm2::evm::{Database, Db};
+use reth_chainspec::{EthChainSpec, EthereumHardforks, Hardforks};
 use reth_consensus::ConsensusError;
 use reth_consensus::{Consensus, HeaderValidator};
 use reth_ethereum_consensus::{EthBeaconConsensus, validate_block_post_execution};
-use reth_ethereum_primitives::{Block, EthPrimitives, EthereumReceipt};
+use reth_ethereum_primitives::{Block, EthereumReceipt};
 use reth_evm::{
     ConfigureEvm,
-    execute::{BlockExecutionOutput, Executor},
+    execute::{BlockExecutionError, BlockExecutionOutput, BlockExecutor, BlockExecutorFactory},
 };
+use reth_evm_ethereum::EthEvmConfig;
 use reth_primitives_traits::{RecoveredBlock, SealedHeader};
 use reth_trie_common::{HashedPostState, KeccakKeyHasher};
 use tries::{StatelessTrie, StatelessTrieError};
@@ -173,17 +175,22 @@ pub struct StatelessValidationOutput {
 
 /// Performs stateless validation of a block using the provided witness data.
 #[cfg(feature = "reth-trie")]
-pub fn stateless_validation<ChainSpec, E>(
+pub fn stateless_validation<ChainSpec>(
     current_block: Block,
     witness: ExecutionWitness,
     chain_spec: Arc<ChainSpec>,
-    evm_config: E,
+    evm_config: EthEvmConfig<ChainSpec>,
 ) -> Result<StatelessValidationOutput, StatelessValidationError>
 where
-    ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
-    E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
+    ChainSpec: Send
+        + Sync
+        + EthChainSpec<Header = Header>
+        + EthereumHardforks
+        + Hardforks
+        + Debug
+        + 'static,
 {
-    stateless_validation_with_trie::<StatelessSparseTrie, ChainSpec, E>(
+    stateless_validation_with_trie::<StatelessSparseTrie, ChainSpec>(
         current_block,
         witness,
         chain_spec,
@@ -192,20 +199,25 @@ where
 }
 
 /// Performs stateless validation of a block using a custom `StatelessTrie` implementation.
-pub fn stateless_validation_with_trie<T, ChainSpec, E>(
+pub fn stateless_validation_with_trie<T, ChainSpec>(
     current_block: Block,
     witness: ExecutionWitness,
     chain_spec: Arc<ChainSpec>,
-    evm_config: E,
+    evm_config: EthEvmConfig<ChainSpec>,
 ) -> Result<StatelessValidationOutput, StatelessValidationError>
 where
     T: StatelessTrie,
-    ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
-    E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
+    ChainSpec: Send
+        + Sync
+        + EthChainSpec<Header = Header>
+        + EthereumHardforks
+        + Hardforks
+        + Debug
+        + 'static,
 {
     let recovered_block = recover_block(current_block, &*chain_spec)?;
 
-    stateless_validation_recovered_with_trie::<T, ChainSpec, E>(
+    stateless_validation_recovered_with_trie::<T, ChainSpec>(
         recovered_block,
         witness,
         chain_spec,
@@ -215,17 +227,22 @@ where
 
 /// Performs stateless validation of an already-recovered block.
 #[cfg(feature = "reth-trie")]
-pub fn stateless_validation_recovered<ChainSpec, E>(
+pub fn stateless_validation_recovered<ChainSpec>(
     recovered_block: RecoveredBlock<Block>,
     witness: ExecutionWitness,
     chain_spec: Arc<ChainSpec>,
-    evm_config: E,
+    evm_config: EthEvmConfig<ChainSpec>,
 ) -> Result<StatelessValidationOutput, StatelessValidationError>
 where
-    ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
-    E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
+    ChainSpec: Send
+        + Sync
+        + EthChainSpec<Header = Header>
+        + EthereumHardforks
+        + Hardforks
+        + Debug
+        + 'static,
 {
-    stateless_validation_recovered_with_trie::<StatelessSparseTrie, ChainSpec, E>(
+    stateless_validation_recovered_with_trie::<StatelessSparseTrie, ChainSpec>(
         recovered_block,
         witness,
         chain_spec,
@@ -234,16 +251,21 @@ where
 }
 
 /// Performs stateless validation of an already-recovered block using a custom `StatelessTrie` implementation.
-pub fn stateless_validation_recovered_with_trie<T, ChainSpec, E>(
+pub fn stateless_validation_recovered_with_trie<T, ChainSpec>(
     current_block: RecoveredBlock<Block>,
     witness: ExecutionWitness,
     chain_spec: Arc<ChainSpec>,
-    evm_config: E,
+    evm_config: EthEvmConfig<ChainSpec>,
 ) -> Result<StatelessValidationOutput, StatelessValidationError>
 where
     T: StatelessTrie,
-    ChainSpec: Send + Sync + EthChainSpec<Header = Header> + EthereumHardforks + Debug,
-    E: ConfigureEvm<Primitives = EthPrimitives> + Clone + 'static,
+    ChainSpec: Send
+        + Sync
+        + EthChainSpec<Header = Header>
+        + EthereumHardforks
+        + Hardforks
+        + Debug
+        + 'static,
 {
     let ancestor_headers: Vec<_> = witness
         .headers
@@ -277,12 +299,8 @@ where
 
     let db = WitnessDatabase::new(&trie, bytecode, ancestor_hashes);
 
-    let mut executor = evm_config.executor(db);
-    let result = executor
-        .execute_one(&current_block)
+    let (output, block_access_list) = execute_block(&evm_config, &current_block, db)
         .map_err(|e| StatelessValidationError::StatelessExecutionFailed(e.to_string()))?;
-
-    let block_access_list = executor.take_bal();
 
     // Validate the block access list gas limit constraint.
     if let Some(bal) = block_access_list.as_ref() {
@@ -294,9 +312,6 @@ where
     }
 
     let block_access_list_hash = block_access_list.as_deref().map(compute_block_access_list_hash);
-
-    let mut state = executor.into_state();
-    let output = BlockExecutionOutput { state: state.take_bundle(), result };
 
     validate_block_post_execution(
         &current_block,
@@ -331,6 +346,35 @@ where
         execution_output: output,
         block_access_list,
     })
+}
+
+/// Executes `block` over `db` with the executor factory of `evm_config`.
+///
+/// Without `std`, reth's `ConfigureEvm::executor` returns an executor that rejects every block, so
+/// this drives the factory directly, as reth's `BasicBlockExecutor` does with `std`.
+fn execute_block<ChainSpec>(
+    evm_config: &EthEvmConfig<ChainSpec>,
+    block: &RecoveredBlock<Block>,
+    db: impl Database,
+) -> Result<(BlockExecutionOutput<EthereumReceipt>, Option<BlockAccessList>), BlockExecutionError>
+where
+    ChainSpec: EthChainSpec<Header = Header> + EthereumHardforks + Hardforks + 'static,
+{
+    let factory = &evm_config.executor_factory;
+    let evm_env = evm_config.evm_env(block.header()).map_err(BlockExecutionError::other)?;
+    let evm = factory.evm_with_env(Db::new(db), evm_env);
+    let ctx =
+        evm_config.context_for_block(block.sealed_block()).map_err(BlockExecutionError::other)?;
+    let mut executor = factory.create_executor(evm, ctx);
+    if block.header().block_access_list_hash().is_some() {
+        executor.enable_block_access_list_builder();
+    }
+
+    executor.apply_pre_execution_changes()?;
+    for transaction in block.transactions_recovered() {
+        executor.execute_transaction(transaction)?;
+    }
+    executor.finish_with_block_access_list()
 }
 
 fn validate_block_consensus<ChainSpec>(
