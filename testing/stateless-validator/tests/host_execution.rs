@@ -7,33 +7,22 @@ use stateless_validator_tests::{
 
 /// Tests whose fixtures fail, matched by test name or, where only some cases fail, by test ID.
 ///
-/// EIP-7928 tests fail on upstream block access list bugs:
-///
-/// - alloy-evm runs the post-execution system calls before it credits withdrawals, the reverse of
-///   EELS `apply_body`.
-/// - revm's BAL builder records a change when a value returns to its start-of-index value within
-///   one block access index. EELS records no change, or a storage read.
-/// - revm's BAL builder drops a change made earlier in a block access index when a later system
-///   call in that index touches the account without changing the value.
+/// The EIP-7928 test fails because reth-evm-ethereum runs the post-execution system calls before it
+/// credits withdrawals, the reverse of EELS `apply_body`.
 ///
 /// EIP-8025 tests omit code from the witness when the block wrote the same code before reading it,
-/// through a CREATE earlier in the transaction or an EIP-7702 delegation earlier in the block.
-/// EELS serves such reads from the block's code writes, but the guest reads code only from the
-/// witness and rejects the block.
+/// through a CREATE or an EIP-7702 delegation earlier in the same transaction. EELS serves such
+/// reads from the block's code writes. evm2 only does so for code written by an earlier
+/// transaction, so the read goes to the witness, which lacks the code, and the guest rejects the
+/// block.
 const KNOWN_FAILURES: &[&str] = &[
     // EIP-7928
-    "test_bal_post_execution_calls_net_storage_at_last_index[",
-    "test_bal_same_index_call_keeps_one_nonce_and_code_change[",
     "test_bal_withdrawals_and_dequeues_net_balance_at_last_index[",
     // EIP-8025
     "test_witness_codes_create_same_hash_then_read_same_tx[",
-    "test_witness_codes_delegation_same_marker_cleared_then_read[",
-    "test_witness_codes_delegation_same_marker_then_read[",
+    "test_witness_codes_delegation_same_marker_cleared_then_read[fork_Amsterdam-blockchain_test-clear_in_same_tx]",
+    "test_witness_codes_delegation_same_marker_cleared_then_read[fork_Amsterdam-blockchain_test_engine-clear_in_same_tx]",
     "test_witness_codes_delegation_same_marker_then_read_same_tx[",
-    "test_witness_codes_delegation_same_marker_tx_outcome[fork_Amsterdam-blockchain_test-outcome_execution_reverts]",
-    "test_witness_codes_delegation_same_marker_tx_outcome[fork_Amsterdam-blockchain_test-outcome_preparation_exact_gas]",
-    "test_witness_codes_delegation_same_marker_tx_outcome[fork_Amsterdam-blockchain_test_engine-outcome_execution_reverts]",
-    "test_witness_codes_delegation_same_marker_tx_outcome[fork_Amsterdam-blockchain_test_engine-outcome_preparation_exact_gas]",
 ];
 
 fn is_known_failure(name: &str) -> bool {
