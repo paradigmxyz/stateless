@@ -7,7 +7,7 @@ for OpenVM, SP1, and ZisK under these names:
 ```text
 stateless-validator-reth-openvm-v2.1.0-preview.elf
 stateless-validator-reth-sp1-v6.9.0.elf
-stateless-validator-reth-zisk-v1.3.2-alpha.elf
+stateless-validator-reth-zisk-v1.4.0-alpha.elf
 ```
 
 Each ELF has a verification key with the same basename and a `.vk` extension.
@@ -15,7 +15,7 @@ Releases also contain `SHA256SUMS` and GitHub artifact attestations.
 
 ## Build
 
-The build scripts use digest-pinned ERE v0.19.5 compiler and server images:
+The build scripts use digest-pinned ERE v0.20.0 compiler and server images:
 
 ```bash
 scripts/guests/build.sh openvm output

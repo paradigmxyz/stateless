@@ -32,17 +32,8 @@ if [[ "$ZKVM" != openvm ]]; then
     git_cache_mount+=",readonly"
 fi
 
-compiler_options=()
-case "$ZKVM" in
-    zisk)
-        # The ZisK RV64IMA target leaves unaligned scalar access off by default.
-        compiler_options+=(-e "ERE_RUSTFLAGS=-C target-feature=+unaligned-scalar-mem")
-        ;;
-esac
-
 docker run --rm --network none \
     -e RUST_LOG=info \
-    "${compiler_options[@]}" \
     --mount "type=bind,src=$SCRIPT_DIR/cargo-offline.toml,dst=/usr/local/cargo/config.toml,readonly" \
     --mount "type=bind,src=$DEPENDENCY_CACHE/registry,dst=/usr/local/cargo/registry,readonly" \
     --mount "$git_cache_mount" \
