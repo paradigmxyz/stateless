@@ -1,16 +1,18 @@
-//! Provides the [`WitnessDatabase`] type, an implementation of [`revm_database_interface::Database`]
+//! Provides the [`WitnessDatabase`] type, an implementation of [`evm2::evm::Database`]
 //! specifically designed for stateless execution environments.
 
 use alloc::{collections::btree_map::BTreeMap, format};
-use alloy_primitives::{Address, B256, Bytes, U256, map::B256IndexMap};
-use revm_bytecode::Bytecode;
-use revm_database_interface::Database;
-use revm_state::AccountInfo;
+use alloy_primitives::{Address, B256, Bytes, map::B256IndexMap};
+use evm2::{
+    bytecode::Bytecode,
+    evm::{AccountInfo, Database},
+    interpreter::Word,
+};
 use tries::{StatelessTrie, WitnessDbError};
 
 /// An EVM database implementation backed by witness data.
 ///
-/// This struct implements the [`revm_database_interface::Database`] trait, allowing the EVM to execute
+/// This struct implements the [`evm2::evm::Database`] trait, allowing the EVM to execute
 /// transactions using:
 ///  - Account and storage slot data provided by a [`StatelessTrie`] implementation.
 ///  - Bytecode and ancestor block hashes provided by in-memory maps.
@@ -70,14 +72,10 @@ where
     /// in the underlying [`StatelessTrie`] implementation.
     ///
     /// Returns `Ok(None)` if the account is not found in the trie.
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        self.trie.account(address).map(|opt| {
-            opt.map(|account| AccountInfo {
-                balance: account.balance,
-                nonce: account.nonce,
-                code_hash: account.code_hash,
-                code: None,
-                account_id: None,
+    fn get_account(&mut self, address: &Address) -> Result<Option<AccountInfo>, Self::Error> {
+        self.trie.account(*address).map(|opt| {
+            opt.map(|account| {
+                AccountInfo::new(account.balance, account.nonce, account.code_hash, None)
             })
         })
     }
@@ -85,15 +83,15 @@ where
     /// Get storage value of an account at a specific slot.
     ///
     /// Returns `U256::ZERO` if the slot is not found in the trie.
-    fn storage(&mut self, address: Address, slot: U256) -> Result<U256, Self::Error> {
-        self.trie.storage(address, slot)
+    fn get_storage(&mut self, address: &Address, slot: &Word) -> Result<Word, Self::Error> {
+        self.trie.storage(*address, *slot)
     }
 
     /// Get account code by its hash from the provided bytecode map.
     ///
     /// Returns an error if the bytecode for the given hash is not found in the map.
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        let raw = self.bytecode.get(&code_hash).cloned().ok_or_else(|| {
+    fn get_code_by_hash(&mut self, code_hash: &B256) -> Result<Bytecode, Self::Error> {
+        let raw = self.bytecode.get(code_hash).cloned().ok_or_else(|| {
             WitnessDbError::TrieWitness(format!("bytecode for {code_hash} not found"))
         })?;
         Ok(Bytecode::new_raw(raw))
@@ -102,7 +100,8 @@ where
     /// Get block hash by block number from the provided ancestor hashes map.
     ///
     /// Returns an error if the hash for the given block number is not found in the map.
-    fn block_hash(&mut self, block_number: u64) -> Result<B256, Self::Error> {
+    fn get_block_hash(&mut self, block_number: &Word) -> Result<B256, Self::Error> {
+        let block_number = block_number.saturating_to::<u64>();
         self.block_hashes_by_block_number
             .get(&block_number)
             .copied()

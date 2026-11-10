@@ -1,4 +1,4 @@
-//! revm [`Crypto`] and alloy [`CryptoProvider`] implementations using [`zkvm_interface`].
+//! evm2 [`Crypto`] and alloy [`CryptoProvider`] implementations using [`zkvm_interface`].
 
 use alloc::{sync::Arc, vec, vec::Vec};
 use core::mem::transmute;
@@ -6,11 +6,8 @@ use core::mem::transmute;
 use alloy_consensus::crypto::{CryptoProvider, RecoveryError, install_default_provider};
 use alloy_primitives::Address;
 #[cfg(target_vendor = "zisk")]
-use revm::precompile::DefaultCrypto;
-use revm::precompile::{
-    Crypto, PrecompileHalt,
-    bls12_381::{G1Point, G1PointScalar, G2Point, G2PointScalar},
-};
+use evm2::precompiles::DefaultCrypto;
+use evm2::precompiles::{Crypto, PrecompileHalt};
 #[cfg(not(target_vendor = "zisk"))]
 use zkvm_interface::zkvm_bls12_381_fp;
 use zkvm_interface::{
@@ -23,18 +20,24 @@ use zkvm_interface::{
     zkvm_secp256r1_hash, zkvm_secp256r1_pubkey, zkvm_secp256r1_signature, zkvm_sha256_hash,
 };
 
-/// Installs [`ZkVMInterfaceCrypto`] as [`revm::precompile::Crypto`] backend and as
+// evm2 keeps its BLS12-381 point aliases crate-private, so these mirror them.
+type G1Point = ([u8; 48], [u8; 48]);
+type G2Point = ([u8; 48], [u8; 48], [u8; 48], [u8; 48]);
+type G1PointScalar = (G1Point, [u8; 32]);
+type G2PointScalar = (G2Point, [u8; 32]);
+
+/// Installs [`ZkVMInterfaceCrypto`] as [`evm2::precompiles::Crypto`] backend and as
 /// [`alloy_consensus::crypto::CryptoProvider`].
 ///
 /// # Panics
 ///
-/// Panics if a revm or Alloy crypto backend has already been installed.
+/// Panics if an evm2 or Alloy crypto backend has already been installed.
 pub fn install_crypto() {
-    assert!(revm::install_crypto(ZkVMInterfaceCrypto));
+    assert!(evm2::install_crypto(ZkVMInterfaceCrypto));
     install_default_provider(Arc::new(ZkVMInterfaceCrypto)).unwrap();
 }
 
-/// revm and Alloy crypto provider backed by the standard zkVM interface.
+/// evm2 and Alloy crypto provider backed by the standard zkVM interface.
 #[derive(Debug, Default)]
 struct ZkVMInterfaceCrypto;
 
@@ -77,7 +80,7 @@ impl Crypto for ZkVMInterfaceCrypto {
                 output.as_mut_ptr(),
             )
         };
-        (ret == 0).then_some(output).ok_or_else(|| PrecompileHalt::other("modexp failed"))
+        (ret == 0).then_some(output).ok_or_else(|| PrecompileHalt::Other("modexp failed".into()))
     }
 
     #[inline]
@@ -113,31 +116,33 @@ impl Crypto for ZkVMInterfaceCrypto {
     #[inline]
     fn bn254_g1_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileHalt> {
         let p1: &[u8; 64] =
-            p1.try_into().map_err(|_| PrecompileHalt::other("bn254 g1_add bad p1 len"))?;
+            p1.try_into().map_err(|_| PrecompileHalt::Other("bn254 g1_add bad p1 len".into()))?;
         let p2: &[u8; 64] =
-            p2.try_into().map_err(|_| PrecompileHalt::other("bn254 g1_add bad p2 len"))?;
+            p2.try_into().map_err(|_| PrecompileHalt::Other("bn254 g1_add bad p2 len".into()))?;
         let p1 = zkvm_bn254_g1_point { data: *p1 };
         let p2 = zkvm_bn254_g1_point { data: *p2 };
         let mut result = zkvm_bn254_g1_point { data: [0; 64] };
         let ret = unsafe { zkvm_interface::zkvm_bn254_g1_add(&p1, &p2, &mut result) };
         (ret == 0)
             .then_some(result.data)
-            .ok_or_else(|| PrecompileHalt::other("bn254_g1_add failed"))
+            .ok_or_else(|| PrecompileHalt::Other("bn254_g1_add failed".into()))
     }
 
     #[inline]
     fn bn254_g1_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileHalt> {
-        let point: &[u8; 64] =
-            point.try_into().map_err(|_| PrecompileHalt::other("bn254 g1_mul bad point len"))?;
-        let scalar: &[u8; 32] =
-            scalar.try_into().map_err(|_| PrecompileHalt::other("bn254 g1_mul bad scalar len"))?;
+        let point: &[u8; 64] = point
+            .try_into()
+            .map_err(|_| PrecompileHalt::Other("bn254 g1_mul bad point len".into()))?;
+        let scalar: &[u8; 32] = scalar
+            .try_into()
+            .map_err(|_| PrecompileHalt::Other("bn254 g1_mul bad scalar len".into()))?;
         let point = zkvm_bn254_g1_point { data: *point };
         let scalar = zkvm_bn254_scalar { data: *scalar };
         let mut result = zkvm_bn254_g1_point { data: [0; 64] };
         let ret = unsafe { zkvm_interface::zkvm_bn254_g1_mul(&point, &scalar, &mut result) };
         (ret == 0)
             .then_some(result.data)
-            .ok_or_else(|| PrecompileHalt::other("bn254_g1_mul failed"))
+            .ok_or_else(|| PrecompileHalt::Other("bn254_g1_mul failed".into()))
     }
 
     #[inline]
@@ -153,7 +158,9 @@ impl Crypto for ZkVMInterfaceCrypto {
         let ret = unsafe {
             zkvm_interface::zkvm_bn254_pairing(pairs.as_ptr(), pairs.len(), &mut verified)
         };
-        (ret == 0).then_some(verified).ok_or_else(|| PrecompileHalt::other("bn254_pairing failed"))
+        (ret == 0)
+            .then_some(verified)
+            .ok_or_else(|| PrecompileHalt::Other("bn254_pairing failed".into()))
     }
 
     #[inline]
@@ -242,14 +249,14 @@ impl Crypto for ZkVMInterfaceCrypto {
         };
         (ret == 0)
             .then_some(verified)
-            .ok_or_else(|| PrecompileHalt::other("bls12_381_pairing failed"))
+            .ok_or_else(|| PrecompileHalt::Other("bls12_381_pairing failed".into()))
     }
 
     #[inline]
     fn bls12_381_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileHalt> {
         // The ZisK hint panics on valid EIP-2537 isogeny-kernel inputs.
         #[cfg(target_vendor = "zisk")]
-        return DefaultCrypto.bls12_381_fp_to_g1(fp);
+        return DefaultCrypto::new().bls12_381_fp_to_g1(fp);
 
         #[cfg(not(target_vendor = "zisk"))]
         let fp = zkvm_bls12_381_fp { data: *fp };
@@ -260,7 +267,7 @@ impl Crypto for ZkVMInterfaceCrypto {
         #[cfg(not(target_vendor = "zisk"))]
         (ret == 0)
             .then_some(result.data)
-            .ok_or_else(|| PrecompileHalt::other("bls12_381_fp_to_g1 failed"))
+            .ok_or_else(|| PrecompileHalt::Other("bls12_381_fp_to_g1 failed".into()))
     }
 
     #[inline]
@@ -275,7 +282,7 @@ impl Crypto for ZkVMInterfaceCrypto {
         let ret = unsafe { zkvm_interface::zkvm_bls12_map_fp2_to_g2(&fp2, &mut result) };
         (ret == 0)
             .then_some(result.data)
-            .ok_or_else(|| PrecompileHalt::other("bls12_381_fp2_to_g2 failed"))
+            .ok_or_else(|| PrecompileHalt::Other("bls12_381_fp2_to_g2 failed".into()))
     }
 
     #[inline]
@@ -373,7 +380,7 @@ fn validate_zisk_bls12_g1_subgroups(
     points.sort_unstable();
     points.dedup();
     let mut pairs = points.into_iter().map(|point| Ok((point, [0; 32])));
-    DefaultCrypto.bls12_381_g1_msm(&mut pairs).map(|_| ())
+    DefaultCrypto::new().bls12_381_g1_msm(&mut pairs).map(|_| ())
 }
 
 #[inline]
