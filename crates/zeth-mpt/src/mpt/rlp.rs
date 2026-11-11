@@ -182,13 +182,24 @@ impl<M: Memoization> Node<M> {
         Ok(root)
     }
 
-    /// Resolves all applicable digest nodes with the node corresponding to the RLP encoding. If
-    /// `key_len` is set, it also checks that every resolved path below this node is exactly
-    /// `key_len` nibbles long.
+    /// Resolves all applicable digest nodes in the trie rooted at this node with the node
+    /// corresponding to the RLP encoding. If `key_len` is set, it also checks that every resolved
+    /// path below this node is exactly `key_len` nibbles long.
     pub(super) fn resolve_digests(
         &mut self,
         rlp_by_digest: &B256IndexMap<impl AsRef<[u8]>>,
         key_len: Option<usize>,
+    ) -> alloy_rlp::Result<()> {
+        self.resolve_digests_at(rlp_by_digest, key_len, true)
+    }
+
+    /// Resolves digests like [`Node::resolve_digests`], where `is_root` tells whether this node is
+    /// the root of the trie.
+    fn resolve_digests_at(
+        &mut self,
+        rlp_by_digest: &B256IndexMap<impl AsRef<[u8]>>,
+        key_len: Option<usize>,
+        is_root: bool,
     ) -> alloy_rlp::Result<()> {
         match self {
             Node::Null => {}
@@ -202,7 +213,7 @@ impl<M: Memoization> Node<M> {
                     return Err(alloy_rlp::Error::Custom("extension path exceeds key length"));
                 }
                 let child_key_len = key_len.map(|len| len - prefix.len());
-                child.resolve_digests(rlp_by_digest, child_key_len)?;
+                child.resolve_digests_at(rlp_by_digest, child_key_len, false)?;
                 if !matches!(**child, Node::Branch(..) | Node::Digest(..)) {
                     return Err(alloy_rlp::Error::Custom("extension node with invalid child"));
                 }
@@ -214,18 +225,26 @@ impl<M: Memoization> Node<M> {
                 let child_key_len = key_len.map(|len| len - 1);
                 for entry in children.entries() {
                     if let Entry::Occupied(mut entry) = entry {
-                        entry.get_mut().resolve_digests(rlp_by_digest, child_key_len)?;
+                        entry.get_mut().resolve_digests_at(rlp_by_digest, child_key_len, false)?;
                     }
                 }
             }
             Node::Digest(digest) => {
                 if let Some(bytes) = rlp_by_digest.get(digest) {
-                    let mut node: Node<M> = alloy_rlp::decode_exact(bytes.as_ref())?;
+                    let bytes = bytes.as_ref();
+                    // a node shorter than a hash is embedded in its parent, so only the root can be
+                    // referenced by the hash of such a node
+                    if !is_root && bytes.len() < B256::len_bytes() {
+                        return Err(alloy_rlp::Error::Custom(
+                            "hash reference to an embeddable node",
+                        ));
+                    }
+                    let mut node: Node<M> = alloy_rlp::decode_exact(bytes)?;
                     // do not try to replace a node by a digest
                     if !matches!(node, Node::Digest(_)) {
                         node.cache_set(RlpNode::from_digest(digest));
                         *self = node;
-                        self.resolve_digests(rlp_by_digest, key_len)?;
+                        self.resolve_digests_at(rlp_by_digest, key_len, is_root)?;
                     }
                 }
             }
@@ -263,7 +282,7 @@ impl<M: Memoization> Decodable for Node<M> {
                             if i == 16 {
                                 return Err(alloy_rlp::Error::Custom("branch node with value"));
                             } else {
-                                children.insert(i as u8, Node::decode(&mut &child_rlp[..])?.into());
+                                children.insert(i as u8, decode_child(child_rlp)?.into());
                             }
                         }
                     }
@@ -281,7 +300,7 @@ impl<M: Memoization> Decodable for Node<M> {
                     if is_leaf {
                         Ok(Node::Leaf(path, Bytes::decode(&mut v)?, M::default()))
                     } else {
-                        let node = Node::decode(&mut v)?;
+                        let node = decode_child(v)?;
                         if !matches!(node, Node::Branch(..) | Node::Digest(..)) {
                             return Err(alloy_rlp::Error::Custom(
                                 "extension node with invalid child",
@@ -294,6 +313,16 @@ impl<M: Memoization> Decodable for Node<M> {
             },
         }
     }
+}
+
+/// Decodes the reference to a child of a branch or extension node. A child is embedded in its
+/// parent exactly when its encoding is shorter than a hash, so a longer embedded child is rejected.
+fn decode_child<M: Memoization>(rlp: &[u8]) -> alloy_rlp::Result<Node<M>> {
+    let node = Node::decode(&mut &rlp[..])?;
+    if !matches!(node, Node::Null | Node::Digest(_)) && rlp.len() >= B256::len_bytes() {
+        return Err(alloy_rlp::Error::Custom("embedded node not shorter than a hash"));
+    }
+    Ok(node)
 }
 
 /// An RLP-encoded node.

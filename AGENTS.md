@@ -35,7 +35,7 @@ Make each change in the crate that owns the behavior.
 - The guest packages under `bin/stateless-validator-reth/` are independent Cargo
   workspaces with committed lockfiles. Leave those lockfiles unchanged unless the
   change updates guest dependencies; a guest build fails if its lockfile changes.
-- The fixture tests pin `tests-zkevm@v21.0.6` through the URL and SHA-256 in
+- The fixture tests pin `tests-zkevm@v21.0.7` through the URL and SHA-256 in
   `testing/stateless-validator/src/fixture.rs`. When updating the version, update
   the checksum, `README.md`, and the execution-specs links in the guest crates
   together.
