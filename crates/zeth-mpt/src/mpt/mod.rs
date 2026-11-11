@@ -609,6 +609,56 @@ mod tests {
         assert!(Trie::from_rlp([leaf_rlp([[0x30].as_slice(), &[0; 33]].concat())]).is_err());
     }
 
+    /// Returns the RLP encoding of a one-nibble leaf, which is `value_len + 3` bytes long.
+    fn short_leaf_rlp(value_len: usize) -> Vec<u8> {
+        Node::<NoCache>::Leaf(Nibbles::from_nibbles([0]), vec![0; value_len].into(), NoCache)
+            .rlp_encoded()
+    }
+
+    #[test]
+    fn decode_embedded_child_length() {
+        // a branch with two children that embeds both of them as they are given
+        let branch_rlp = |child: &[u8]| {
+            let payload = [child, child, &[alloy_rlp::EMPTY_STRING_CODE; 15]].concat();
+            let mut out = Vec::new();
+            alloy_rlp::Header { list: true, payload_length: payload.len() }.encode(&mut out);
+            out.extend_from_slice(&payload);
+            out
+        };
+
+        assert_eq!(short_leaf_rlp(28).len(), 31);
+        assert!(Trie::from_rlp([branch_rlp(&short_leaf_rlp(28))]).is_ok());
+        // a child of 32 bytes or more must be referenced by its hash
+        assert!(Trie::from_rlp([branch_rlp(&short_leaf_rlp(29))]).is_err());
+    }
+
+    #[test]
+    fn from_prehashed_nodes_hash_reference_length() {
+        // a branch that references both of its children by the hash of `child`
+        let rebuild = |child: Vec<u8>| {
+            let digest = Node::Digest(keccak256(&child));
+            let branch = Node::<NoCache>::Branch(
+                Children::from([(0, digest.clone()), (1, digest)]),
+                NoCache,
+            );
+            let root = branch.rlp_encoded();
+            let rlp_by_digest = B256IndexMap::from_iter([
+                (keccak256(&root), root.clone()),
+                (keccak256(&child), child),
+            ]);
+            CachedTrie::from_prehashed_nodes(keccak256(&root), &rlp_by_digest)
+        };
+
+        assert!(rebuild(short_leaf_rlp(29)).is_ok());
+        // a child shorter than 32 bytes must be embedded in its parent
+        assert!(rebuild(short_leaf_rlp(28)).is_err());
+
+        // the root is referenced by its hash regardless of its length
+        let root = short_leaf_rlp(28);
+        let rlp_by_digest = B256IndexMap::from_iter([(keccak256(&root), root.clone())]);
+        assert!(CachedTrie::from_prehashed_nodes(keccak256(&root), &rlp_by_digest).is_ok());
+    }
+
     #[test]
     fn short_encoding() {
         // 4 leaves with 1-byte long keys, the resulting root node should be shorter than 32 bytes

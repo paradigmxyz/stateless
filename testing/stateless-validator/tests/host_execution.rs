@@ -7,7 +7,7 @@ use stateless_validator_tests::{
 
 /// Tests whose fixtures fail, matched by test name or, where only some cases fail, by test ID.
 ///
-/// EIP-7928 tests fail on upstream block access list bugs:
+/// EIP-7685 and EIP-7928 tests fail on upstream alloy-evm and revm bugs:
 ///
 /// - alloy-evm runs the post-execution system calls before it credits withdrawals, the reverse of
 ///   EELS `apply_body`.
@@ -21,6 +21,8 @@ use stateless_validator_tests::{
 /// EELS serves such reads from the block's code writes, but the guest reads code only from the
 /// witness and rejects the block.
 const KNOWN_FAILURES: &[&str] = &[
+    // EIP-7685
+    "test_withdrawals_credited_before_request_system_call[",
     // EIP-7928
     "test_bal_post_execution_calls_net_storage_at_last_index[",
     "test_bal_same_index_call_keeps_one_nonce_and_code_change[",

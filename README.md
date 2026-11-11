@@ -68,7 +68,7 @@ EF_TEST_TRIE=default cargo test -p ef-tests --release --features "asm-keccak ef-
 
 ## Running stateless validator tests
 
-The Reth validator tests use the `tests-zkevm@v21.0.6` execution-spec fixtures,
+The Reth validator tests use the `tests-zkevm@v21.0.7` execution-spec fixtures,
 in both the `blockchain_test` and `blockchain_test_engine` formats.
 The first run downloads the archive and checks its SHA-256 checksum.
 Later runs reuse the versioned fixture cache.
@@ -79,7 +79,7 @@ cargo test -p stateless-validator-tests --test host_execution --locked
 
 The suite requires every fixture to pass, except the tests listed in
 `KNOWN_FAILURES` in `testing/stateless-validator/tests/host_execution.rs`.
-The EIP-7928 tests there fail on upstream alloy-evm and revm bugs.
+The EIP-7685 and EIP-7928 tests there fail on upstream alloy-evm and revm bugs.
 The EIP-8025 tests omit code from the witness after the block wrote the same code,
 and the guest reads code only from the witness.
 The suite fails once any of them pass.

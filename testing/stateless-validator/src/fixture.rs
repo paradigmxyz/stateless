@@ -14,9 +14,9 @@ use sha2::{Digest, Sha256};
 use tar::Archive;
 use walkdir::{DirEntry, WalkDir};
 
-const EEST_FIXTURES_URL: &str = "https://github.com/ethereum/execution-specs/releases/download/tests-zkevm@v21.0.6/fixtures_zkevm.tar.gz";
+const EEST_FIXTURES_URL: &str = "https://github.com/ethereum/execution-specs/releases/download/tests-zkevm@v21.0.7/fixtures_zkevm.tar.gz";
 const EEST_FIXTURES_SHA256: &str =
-    "3a1051fb20272e4aaad58d8f78204123e281e4e0e935ddc8f71364535cae5b73";
+    "240685d8c50a0b8efbe9f911cd78c34552101124d99fb7add475deb6397a0e56";
 
 /// A fixture normalized to canonical schema-prefixed SSZ input and output bytes.
 #[derive(Debug, Clone)]
@@ -48,7 +48,7 @@ impl FixtureFormat {
     }
 }
 
-/// Returns all `tests-zkevm@v21.0.6` fixtures of the given format, downloading them on first use.
+/// Returns all `tests-zkevm@v21.0.7` fixtures of the given format, downloading them on first use.
 pub fn eest_fixtures(format: FixtureFormat) -> Vec<StatelessValidatorFixture> {
     load_fixtures_from_dir(ensure_eest_fixtures().join(format.dir_name()), format)
 }
@@ -108,7 +108,7 @@ fn ensure_eest_fixtures() -> PathBuf {
     let _guard = LOCK.lock().unwrap_or_else(|err| err.into_inner());
 
     let dir =
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures").join("eest-tests-zkevm-v21.0.6");
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures").join("eest-tests-zkevm-v21.0.7");
     if !dir.exists() {
         download_and_unpack(&dir);
     }
