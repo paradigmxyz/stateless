@@ -8,7 +8,7 @@ REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 source "$SCRIPT_DIR/config.sh"
 
 if [[ $# -lt 1 || $# -gt 2 ]]; then
-    echo "usage: $0 <openvm|sp1|zisk> [artifact-directory]" >&2
+    echo "usage: $0 <openvm|pico|sp1|zisk> [artifact-directory]" >&2
     exit 2
 fi
 

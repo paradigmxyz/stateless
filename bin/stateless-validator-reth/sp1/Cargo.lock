@@ -1272,12 +1272,12 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 [[package]]
 name = "ere-platform-core"
 version = "0.20.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.20.0#a1bf10e04a54476e85dc8507028d2767e3a47c60"
+source = "git+https://github.com/eth-act/ere?rev=c0a4126fe62c444be0b87398c48d8cb7ae530c88#c0a4126fe62c444be0b87398c48d8cb7ae530c88"
 
 [[package]]
 name = "ere-platform-sp1"
 version = "0.20.0"
-source = "git+https://github.com/eth-act/ere?tag=v0.20.0#a1bf10e04a54476e85dc8507028d2767e3a47c60"
+source = "git+https://github.com/eth-act/ere?rev=c0a4126fe62c444be0b87398c48d8cb7ae530c88#c0a4126fe62c444be0b87398c48d8cb7ae530c88"
 dependencies = [
  "ere-platform-core",
  "libzkevm",

@@ -1,0 +1,25 @@
+[workspace]
+
+[package]
+name = "stateless-validator-reth-pico"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# enable features
+alloy-primitives = { version = "1.6.1", default-features = false, features = [
+    "map-foldhash",
+    "native-keccak",
+] }
+
+# ere
+ere-platform-pico = { git = "https://github.com/eth-act/ere", rev = "c0a4126fe62c444be0b87398c48d8cb7ae530c88" }
+
+# local
+stateless-validator-reth = { path = "../../../crates/stateless-validator-reth", default-features = false, features = [
+    "pico",
+] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
