@@ -170,13 +170,6 @@ impl Crypto for ZkVMInterfaceCrypto {
         &self,
         pairs: &mut dyn Iterator<Item = Result<G1PointScalar, PrecompileHalt>>,
     ) -> Result<[u8; 96], PrecompileHalt> {
-        #[cfg(target_vendor = "zisk")]
-        let pairs = {
-            let pairs = pairs.collect::<Result<Vec<_>, _>>()?;
-            validate_zisk_bls12_g1_subgroups(pairs.iter().map(|(point, _)| *point))?;
-            pairs.into_iter().map(Ok)
-        };
-
         let pairs: Vec<zkvm_bls12_381_g1_msm_pair> = pairs
             .map(|pair| {
                 let (point, scalar) = pair?;
@@ -226,9 +219,6 @@ impl Crypto for ZkVMInterfaceCrypto {
         &self,
         pairs: &[(G1Point, G2Point)],
     ) -> Result<bool, PrecompileHalt> {
-        #[cfg(target_vendor = "zisk")]
-        validate_zisk_bls12_g1_subgroups(pairs.iter().map(|(point, _)| *point))?;
-
         let pairs: Vec<zkvm_bls12_381_pairing_pair> = pairs
             .iter()
             .map(|(g1, g2)| zkvm_bls12_381_pairing_pair {
@@ -362,18 +352,6 @@ fn keccak256(data: &[u8]) -> [u8; 32] {
     let ret = unsafe { zkvm_interface::zkvm_keccak256(data.as_ptr(), data.len(), &mut output) };
     assert_eq!(ret, 0, "keccak256 failed");
     output.data
-}
-
-#[cfg(target_vendor = "zisk")]
-fn validate_zisk_bls12_g1_subgroups(
-    points: impl Iterator<Item = G1Point>,
-) -> Result<(), PrecompileHalt> {
-    // ZisK's G1 MSM and pairing hints panic instead of rejecting non-subgroup points.
-    let mut points = points.collect::<Vec<_>>();
-    points.sort_unstable();
-    points.dedup();
-    let mut pairs = points.into_iter().map(|point| Ok((point, [0; 32])));
-    DefaultCrypto.bls12_381_g1_msm(&mut pairs).map(|_| ())
 }
 
 #[inline]
