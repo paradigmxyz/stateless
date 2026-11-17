@@ -18,7 +18,7 @@ use core::{cell::RefCell, marker::PhantomData};
 
 use crate::{StatelessTrie, StatelessTrieError, WitnessDbError};
 use alloy_primitives::{
-    Address, B256, Bytes, KECCAK256_EMPTY, U256, keccak256,
+    Address, B256, Bytes, U256, keccak256,
     map::{B256IndexMap, indexmap::map::Entry},
 };
 use alloy_rpc_types_debug::ExecutionWitness;
@@ -209,13 +209,7 @@ impl StatelessTrie for SparseState {
             };
 
             // update/insert the account after all changes have been processed
-            let account = TrieAccount {
-                nonce: account.nonce,
-                balance: account.balance,
-                storage_root,
-                code_hash: account.bytecode_hash.unwrap_or(KECCAK256_EMPTY),
-            };
-            self.state.insert(hashed_address, account);
+            self.state.insert(hashed_address, account.into_trie_account(storage_root));
         }
         for hashed_address in &removed_accounts {
             self.remove_account(hashed_address)
