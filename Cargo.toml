@@ -49,23 +49,23 @@ stateless-validator-reth = { path = "crates/stateless-validator-reth", default-f
 tries = { path = "crates/tries", default-features = false }
 
 # reth
-reth-chainspec = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80", default-features = false }
-reth-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80", default-features = false }
-reth-db = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80" }
-reth-db-api = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80" }
-reth-db-common = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80" }
-reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80", default-features = false }
-reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80", default-features = false }
-reth-evm = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80", default-features = false }
-reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80", default-features = false }
+reth-chainspec = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f", default-features = false }
+reth-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f", default-features = false }
+reth-db = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f" }
+reth-db-api = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f" }
+reth-db-common = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f" }
+reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f", default-features = false }
+reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f", default-features = false }
+reth-evm = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f", default-features = false }
+reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f", default-features = false }
 reth-primitives-traits = { version = "0.8.2", default-features = false }
-reth-payload-validator = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80", default-features = false }
-reth-provider = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80" }
-reth-tracing = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80" }
-reth-trie = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80" }
-reth-trie-common = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80", default-features = false }
-reth-trie-db = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80" }
-reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", rev = "c9a780f4f23d6752ca299b104c93b7f099673c80", default-features = false }
+reth-payload-validator = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f", default-features = false }
+reth-provider = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f" }
+reth-tracing = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f" }
+reth-trie = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f" }
+reth-trie-common = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f", default-features = false }
+reth-trie-db = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f" }
+reth-trie-sparse = { git = "https://github.com/paradigmxyz/reth", rev = "b9abbcc1b982755baa9021e6874e2e58936ca65f", default-features = false }
 
 # alloy
 alloy-consensus = { version = "2.5.0", default-features = false }
@@ -75,10 +75,10 @@ alloy-primitives = { version = "1.6.1", default-features = false, features = ["m
 alloy-rlp = { version = "0.3.16", default-features = false }
 alloy-rpc-types-debug = { version = "2.5.0", default-features = false }
 alloy-rpc-types-engine = { version = "2.5.0", default-features = false }
-alloy-trie = { version = "0.9.8", default-features = false }
+alloy-trie = { version = "0.9.9", default-features = false }
 
 # evm2
-evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "f93318f120f6300599b21170d6c7bef81ed63d87", default-features = false }
+evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "66687c18b34d3bdbb899f5eb7605070615c03475", default-features = false }
 
 # zkVM standard
 zkvm-interface = { git = "https://github.com/eth-act/zkvm-standards", rev = "282cd356c3a0498416bb0619f9c8a347ce9933fb" }
@@ -127,10 +127,15 @@ tempfile = "3.20"
 thiserror = { version = "2.0", default-features = false }
 walkdir = "2.5"
 
-# reth v2.9.0 depends on unreleased reth-core crates. Cargo does not apply a dependency's patches,
-# so these mirror the patches in reth's workspace.
+# reth v2.11.0 depends on unreleased reth-core crates, which pin an older evm2 than reth does. Cargo
+# does not apply a dependency's patches, so these mirror the patches in reth's workspace.
 [patch.crates-io]
 reth-codecs = { git = "https://github.com/paradigmxyz/reth-core", rev = "275ce4cf5befeb9f1e8acd935ff2882d2d25fc61" }
 reth-codecs-derive = { git = "https://github.com/paradigmxyz/reth-core", rev = "275ce4cf5befeb9f1e8acd935ff2882d2d25fc61" }
 reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth-core", rev = "275ce4cf5befeb9f1e8acd935ff2882d2d25fc61" }
 reth-zstd-compressors = { git = "https://github.com/paradigmxyz/reth-core", rev = "275ce4cf5befeb9f1e8acd935ff2882d2d25fc61" }
+
+# Cargo rejects a patch from the same source, so evm2 is patched through its pre-transfer URL, which
+# redirects to alloy-rs/evm2.
+[patch."https://github.com/alloy-rs/evm2"]
+evm2 = { git = "https://github.com/DaniPopes/evm2", rev = "66687c18b34d3bdbb899f5eb7605070615c03475" }

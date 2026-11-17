@@ -13,7 +13,7 @@
 
 `stateless` provides types and functions for validating Ethereum blocks without access to a full node's persistent database. Instead, it relies on pre-generated witness data that proves the specific state accessed during block execution.
 
-It is built on top of [reth](https://github.com/paradigmxyz/reth) and [revm](https://github.com/bluealloy/revm), and is designed to be `no_std` compatible for use in constrained environments such as zkVMs.
+It is built on top of [reth](https://github.com/paradigmxyz/reth) and [evm2](https://github.com/alloy-rs/evm2), and is designed to be `no_std` compatible for use in constrained environments such as zkVMs.
 
 ## How it works
 
