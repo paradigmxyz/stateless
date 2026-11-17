@@ -1,9 +1,12 @@
 //! Host-side execution of stateless validator fixtures.
 
-use std::fmt::{self, Display};
+use std::{
+    fmt::{self, Display},
+    sync::LazyLock,
+};
 
 use anyhow::{anyhow, bail};
-use rayon::prelude::*;
+use rayon::{ThreadPool, ThreadPoolBuilder, prelude::*};
 use stateless_validator_common::{SszDecode, guest::StatelessValidationResult};
 
 use crate::fixture::StatelessValidatorFixture;
@@ -32,23 +35,37 @@ impl Display for ExecutionFailures<'_> {
     }
 }
 
+/// Stack size of the threads that execute fixtures.
+///
+/// evm2 recurses on the native stack for each call frame, so in unoptimized builds a deep call
+/// chain overflows the 2 MiB default.
+const WORKER_STACK_SIZE: usize = 16 * 1024 * 1024;
+
+static POOL: LazyLock<ThreadPool> = LazyLock::new(|| {
+    ThreadPoolBuilder::new()
+        .stack_size(WORKER_STACK_SIZE)
+        .build()
+        .expect("failed to build the fixture thread pool")
+});
+
 /// Executes fixtures through the Reth guest and returns output mismatches.
 pub fn run_host_execution(
     fixtures: impl IntoIterator<Item = StatelessValidatorFixture>,
 ) -> Vec<ExecutionFailure> {
-    let mut failures = fixtures
-        .into_iter()
-        .collect::<Vec<_>>()
-        .into_par_iter()
-        .filter_map(|fixture| {
-            let output = stateless_validator_reth::guest::run_stateless_guest(
-                &fixture.stateless_input_bytes,
-            );
-            matches_output(output, fixture.stateless_output_bytes)
-                .err()
-                .map(|error| ExecutionFailure { name: fixture.name, error: error.to_string() })
-        })
-        .collect::<Vec<_>>();
+    let fixtures = fixtures.into_iter().collect::<Vec<_>>();
+    let mut failures = POOL.install(|| {
+        fixtures
+            .into_par_iter()
+            .filter_map(|fixture| {
+                let output = stateless_validator_reth::guest::run_stateless_guest(
+                    &fixture.stateless_input_bytes,
+                );
+                matches_output(output, fixture.stateless_output_bytes)
+                    .err()
+                    .map(|error| ExecutionFailure { name: fixture.name, error: error.to_string() })
+            })
+            .collect::<Vec<_>>()
+    });
     failures.sort_by(|a, b| a.name.cmp(&b.name));
     failures
 }

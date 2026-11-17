@@ -9,6 +9,12 @@ use std::{
     thread,
 };
 
+/// Stack size of the threads that run test cases.
+///
+/// evm2 recurses on the native stack for each call frame, so a deep call chain overflows the 2 MiB
+/// default.
+const WORKER_STACK_SIZE: usize = 16 * 1024 * 1024;
+
 /// A single test case, capable of loading a JSON description of itself and running it.
 ///
 /// See <https://ethereum-tests.readthedocs.io/> for test specs.
@@ -46,15 +52,22 @@ impl<T: Case> Cases<T> {
         thread::scope(|scope| {
             let workers: Vec<_> = (0..threads)
                 .map(|_| {
-                    scope.spawn(|| {
-                        let mut results = Vec::new();
-                        loop {
-                            let Some((path, case)) = cases.lock().unwrap().next() else {
-                                break results;
-                            };
-                            results.push(CaseResult::new(&path, case.description(), case.run()));
-                        }
-                    })
+                    thread::Builder::new()
+                        .stack_size(WORKER_STACK_SIZE)
+                        .spawn_scoped(scope, || {
+                            let mut results = Vec::new();
+                            loop {
+                                let Some((path, case)) = cases.lock().unwrap().next() else {
+                                    break results;
+                                };
+                                results.push(CaseResult::new(
+                                    &path,
+                                    case.description(),
+                                    case.run(),
+                                ));
+                            }
+                        })
+                        .expect("failed to spawn a test case thread")
                 })
                 .collect();
             workers.into_iter().flat_map(|worker| worker.join().unwrap()).collect()
