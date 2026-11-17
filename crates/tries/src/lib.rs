@@ -43,7 +43,8 @@ pub trait StatelessTrie: core::fmt::Debug {
 
     /// Clears an account's storage before applying its post-state changes.
     ///
-    /// The address is hashed, as in [`HashedPostState`]. Clearing must also discard blinded slots.
+    /// The address is hashed, as in [`HashedPostState`]. Clearing must also discard blinded slots,
+    /// and must apply when the post-state has no storage entry for the account.
     fn clear_storage(&mut self, hashed_address: B256);
 
     /// Computes the new state root from the [`HashedPostState`].
@@ -74,16 +75,15 @@ mod tests {
         let (mut trie, _) = T::new(witness, state.hash_slow()).unwrap();
         trie.clear_storage(hashed_address);
 
+        // Without new slot values, the post-state has no storage entry for the account.
         let mut post_state = HashedPostState::default();
         post_state.accounts.insert(hashed_address, Some(Default::default()));
-        post_state.storages.insert(
-            hashed_address,
-            if new_value.is_zero() {
-                HashedStorage::default()
-            } else {
-                HashedStorage::from_iter([(keccak256(B256::from(new_slot)), new_value)])
-            },
-        );
+        if !new_value.is_zero() {
+            post_state.storages.insert(
+                hashed_address,
+                HashedStorage::from_iter([(keccak256(B256::from(new_slot)), new_value)]),
+            );
+        }
 
         storage.clear();
         if !new_value.is_zero() {

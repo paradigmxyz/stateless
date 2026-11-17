@@ -307,15 +307,12 @@ where
     )
     .map_err(StatelessValidationError::ConsensusValidationFailed)?;
 
-    let mut hashed_state =
-        HashedPostState::from_bundle_state::<KeccakKeyHasher>(output.state.state());
+    let hashed_state = HashedPostState::from_bundle_state::<KeccakKeyHasher>(output.state.state());
     // Reth no longer carries storage-wipe markers in HashedPostState. Reset storage directly
     // so accounts destroyed and recreated in the block cannot retain untouched pre-state slots.
     for (address, account) in output.state.state() {
         if account.was_destroyed() {
-            let hashed_address = keccak256(address);
-            trie.clear_storage(hashed_address);
-            hashed_state.storages.entry(hashed_address).or_default();
+            trie.clear_storage(keccak256(address));
         }
     }
     let state_root = trie.calculate_state_root(hashed_state)?;

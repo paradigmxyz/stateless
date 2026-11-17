@@ -179,11 +179,15 @@ impl StatelessTrie for SparseState {
 
             // apply storage changes before computing the storage root
             let storage_root = match state.storages.get(&hashed_address) {
-                None => self
-                    .state
-                    .get(hashed_address)
-                    .map_err(|_| StatelessTrieError::StatelessStateRootCalculationFailed)?
-                    .map_or(EMPTY_ROOT_HASH, |account| account.storage_root),
+                // an opened storage trie is the current one, also after a reset
+                None => match self.storages.get_mut().get_mut(&hashed_address) {
+                    Some(storage_trie) => storage_trie.hash(),
+                    None => self
+                        .state
+                        .get(hashed_address)
+                        .map_err(|_| StatelessTrieError::StatelessStateRootCalculationFailed)?
+                        .map_or(EMPTY_ROOT_HASH, |account| account.storage_root),
+                },
                 Some(storage) => {
                     let storage_trie = self
                         .storage_trie_mut(hashed_address)
