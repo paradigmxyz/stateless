@@ -79,9 +79,9 @@ cargo test -p stateless-validator-tests --test host_execution --locked
 
 The suite requires every fixture to pass, except the tests listed in
 `KNOWN_FAILURES` in `testing/stateless-validator/tests/host_execution.rs`.
-The EIP-7685 and EIP-7928 tests there fail on upstream alloy-evm and revm bugs.
-The EIP-8025 tests omit code from the witness after the block wrote the same code,
-and the guest reads code only from the witness.
+The tests there are EIP-8025 tests that omit code from the witness
+when the same transaction wrote that code before reading it.
+evm2 reads such code from the witness, so the guest rejects the block.
 The suite fails once any of them pass.
 
 ## Contributing
