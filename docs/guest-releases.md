@@ -16,11 +16,7 @@ Releases also contain `SHA256SUMS` and GitHub artifact attestations.
 
 ## Build
 
-The build scripts use digest-pinned ERE compiler and server images, built from
-ERE commit `c0a4126`. This revision provides Pico v3.1.4 with the
-`zkvm-interface` accelerators; ERE v0.20.0 pins an older Pico without them.
-Keep the root workspace, all guest manifests and lockfiles, and the compiler
-and server images on the same ERE revision when updating it.
+The build scripts use digest-pinned ERE v0.20.1 compiler and server images:
 
 ```bash
 scripts/guests/build.sh openvm output
