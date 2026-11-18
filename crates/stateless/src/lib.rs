@@ -6,7 +6,7 @@
 //!
 //! # Key Components
 //!
-//! * `WitnessDatabase`: An implementation of [`revm_database_interface::Database`] that uses a
+//! * `WitnessDatabase`: An implementation of [`evm2::evm::Database`] that uses a
 //!   [`tries::StatelessTrie`] implementation populated from witness data, along with provided
 //!   bytecode and ancestor block hashes, to serve state reads during execution.
 //! * `stateless_validation`: The core function that orchestrates the stateless validation process.
@@ -37,6 +37,7 @@ extern crate alloc;
 
 mod recover_block;
 
+#[cfg(feature = "serde")]
 use alloy_genesis::ChainConfig;
 #[doc(inline)]
 pub use recover_block::recover_block;
@@ -67,10 +68,12 @@ pub use alloy_rpc_types_debug::ExecutionWitness;
 
 pub use alloy_genesis::Genesis;
 
+#[cfg(feature = "serde")]
 use reth_ethereum_primitives::Block;
 
 /// `StatelessInput` is a convenience structure for serializing the input needed
 /// for the stateless validation function.
+#[cfg(feature = "serde")]
 #[serde_with::serde_as]
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct StatelessInput {

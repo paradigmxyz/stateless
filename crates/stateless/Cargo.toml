@@ -20,36 +20,41 @@ alloy-rlp.workspace = true
 alloy-consensus.workspace = true
 alloy-eips.workspace = true
 alloy-rpc-types-debug.workspace = true
-alloy-genesis = { workspace = true, features = ["serde-bincode-compat"] }
+alloy-genesis.workspace = true
 
 # reth
 reth-ethereum-consensus.workspace = true
 reth-primitives-traits.workspace = true
-reth-ethereum-primitives = { workspace = true, features = ["serde"] }
+reth-ethereum-primitives.workspace = true
 reth-evm.workspace = true
+reth-evm-ethereum.workspace = true
 reth-trie-common.workspace = true
 reth-chainspec.workspace = true
 reth-consensus.workspace = true
 
-# revm
-revm = { workspace = true, optional = true }
-revm-bytecode.workspace = true
-revm-database-interface.workspace = true
-revm-state.workspace = true
+# evm2
+evm2.workspace = true
 
 # zkVM standard
 zkvm-interface = { workspace = true, optional = true }
 
 # misc
 thiserror.workspace = true
-serde.workspace = true
-serde_with.workspace = true
+serde = { workspace = true, optional = true }
+serde_with = { workspace = true, optional = true }
 
 [features]
-default = ["reth-trie"]
+default = ["reth-trie", "serde"]
 reth-trie = ["tries/std"]
+# `reth-ethereum-primitives/serde` enables `evm2/serde`, which pulls in `std` through
+# `ark-serialize`, so guests build without this feature.
+serde = [
+    "dep:serde",
+    "dep:serde_with",
+    "alloy-genesis/serde-bincode-compat",
+    "reth-ethereum-primitives/serde",
+]
 zkvm-interface = [
     "alloy-consensus/crypto-backend",
-    "dep:revm",
     "dep:zkvm-interface",
 ]
