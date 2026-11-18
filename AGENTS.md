@@ -17,7 +17,7 @@ Make each change in the crate that owns the behavior.
 - `crates/stateless-validator-common` and `crates/stateless-validator-reth`: shared
   guest logic. The common crate owns the execution-specs guest input and output
   types; the Reth crate owns the guest entrypoint, conversions, and crypto.
-- `bin/stateless-validator-reth/{openvm,sp1,zisk}`: thin zkVM shims that call
+- `bin/stateless-validator-reth/{openvm,pico,sp1,zisk}`: thin zkVM shims that call
   `stateless_validator_reth::guest::entrypoint`. Do not add logic or duplicate
   shared code per zkVM.
 - `testing/ef-tests` and `testing/stateless-validator`: EF blockchain tests and

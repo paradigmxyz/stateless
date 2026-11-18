@@ -1,7 +1,7 @@
 //! Crypto provider selection for the guest.
 
-#[cfg(feature = "sp1")]
-pub(crate) mod sp1;
+#[cfg(any(feature = "pico", feature = "sp1"))]
+pub(crate) mod native_keccak;
 
 use stateless_validator_common::Sha256Hasher;
 

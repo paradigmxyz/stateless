@@ -2,10 +2,11 @@
 
 The Reth guest accepts the execution-specs `statelessInputBytes` payload
 unchanged and writes the corresponding `statelessOutputBytes`. It is released
-for OpenVM, SP1, and ZisK under these names:
+for OpenVM, Pico, SP1, and ZisK under these names:
 
 ```text
 stateless-validator-reth-openvm-v2.1.0-preview.elf
+stateless-validator-reth-pico-v3.1.4.elf
 stateless-validator-reth-sp1-v6.9.0.elf
 stateless-validator-reth-zisk-v1.4.0-alpha.elf
 ```
@@ -15,19 +16,20 @@ Releases also contain `SHA256SUMS` and GitHub artifact attestations.
 
 ## Build
 
-The build scripts use digest-pinned ERE v0.20.0 compiler and server images:
+The build scripts use digest-pinned ERE v0.20.1 compiler and server images:
 
 ```bash
 scripts/guests/build.sh openvm output
+scripts/guests/build.sh pico output
 scripts/guests/build.sh sp1 output
 scripts/guests/build.sh zisk output
 ```
 
-The three guest packages are independent Cargo workspaces with committed
+The four guest packages are independent Cargo workspaces with committed
 lockfiles. A build fails if its lockfile changes or if the compiler does not
 produce a non-empty ELF and verification key.
 
-Manual workflow runs build and smoke-test all three artifacts without write
+Manual workflow runs build and smoke-test all four artifacts without write
 permissions. Pushing a `reth-guest-v*` tag runs the same matrix, creates
 checksums, attests the artifacts, and creates a GitHub release after every
 build and smoke test succeeds.
